@@ -1,14 +1,6 @@
 from django.db import models
 
 from uuid import uuid4
-from functools import partial
-
-
-def upload_file_to_problem(instance, filename, extension):
-    """
-    This is a callable to upload a file based on the problem ID
-    """
-    return '/'.join(['content', instance.code, filename + extension])
 
 
 class Problem(models.Model):
@@ -30,8 +22,8 @@ class Problem(models.Model):
     # Output format [Char]
     output_format = models.CharField(max_length=500)
 
-    # Difficulty [PositiveInt, Nullable]
-    difficulty = models.PositiveSmallIntegerField(null=True)
+    # Difficulty [PositiveInt]
+    difficulty = models.PositiveSmallIntegerField(default=0)
 
     # Time Limit [Duration]
     time_limit = models.DurationField()
@@ -45,19 +37,19 @@ class Problem(models.Model):
     file_format = models.CharField(max_length=100)
 
     # Start code [File]
-    start_code = models.FileField(upload_to=partial(upload_file_to_problem, filename='start_code.zip'))
+    start_code = models.FileField(upload_to='content/{}/start_code.zip'.format(code))
 
     # Max score [PositiveInt]
     max_score = models.PositiveSmallIntegerField()
 
     # Compilation script [File]
-    comp_script = models.FileField(upload_to=partial(upload_file_to_problem, filename='comp_script'))
+    comp_script = models.FileField(upload_to='content/{}/comp_script.sh'.format(code))
 
     # Test script [File]
-    test_script = models.FileField(upload_to=partial(upload_file_to_problem, filename='test_script'))
+    test_script = models.FileField(upload_to='content/{}/test_script.sh'.format(code))
 
     # Setter solution script [File, Nullable]
-    setter_solution = models.FileField(upload_to=partial(upload_file_to_problem, filename='setter_soln'), null=True)
+    setter_solution = models.FileField(upload_to='content/{}/setter_soln'.format(code), null=True)
 
 
 class Submission(models.Model):
@@ -98,5 +90,5 @@ class Submission(models.Model):
     # Final score [Int]
     final_score = models.FloatField(default=0.0)
 
-    # Linter score [Int, Nullable]
+    # Linter score [Int]
     linter_score = models.FloatField(default=0.0)
