@@ -1,6 +1,7 @@
 from django.db import models
 
 from uuid import uuid4
+from os.path import splitext
 
 
 class Problem(models.Model):
@@ -49,7 +50,11 @@ class Problem(models.Model):
     test_script = models.FileField(upload_to='content/{}/test_script.sh'.format(code))
 
     # Setter solution script [File, Nullable]
-    setter_solution = models.FileField(upload_to='content/{}/setter_soln'.format(code), null=True)
+    setter_solution = models.FileField(upload_to=(
+                                       lambda instance, filename: 'content/{}/setter_soln.{}'
+                                                                  .format(instance.code,
+                                                                          splitext(filename)[1])),
+                                       null=True)
 
 
 class Submission(models.Model):
@@ -69,17 +74,19 @@ class Submission(models.Model):
     PERMISSIBLE_FILE_TYPES = (
                                 ('.none', 'NOT_SELECTED'),
                                 ('.py', 'PYTHON'),
+                                ('.c', 'C'),
+                                ('.cpp', 'CPP'),
                              )
 
     # File Type [Char]
     file_type = models.CharField(max_length=5, choices=PERMISSIBLE_FILE_TYPES, default='.none')
 
     # Submission file [File]
-    submission_file = models.FileField(upload_to=
-                                       'content/submissions/submission_{}{}'.format(id, file_type))
+    submission_file = models.FileField(upload_to='content/submissions/submission_{}{}'
+                                                 .format(id, file_type))
 
     # Timestamp of submission [Time]
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField()
 
     # Judge score [Int]
     judge_score = models.PositiveSmallIntegerField(default=0)
