@@ -77,11 +77,11 @@ class TestCase(models.Model):
 
     # Store the inputfile for the testcase.
     # Sample: ./content/PROBLEMCODE/testcase/inputfile_UUID.txt
-    inputfile = models.FileField(upload_to="/".join(['content', problem.code, 'testcase', 'inputfile'+_id + '.txt']))
+    inputfile = models.FileField(upload_to="/".join(['content', problem.code, 'testcase', 'inputfile_' + _id + '.txt']))
 
     # Store the outputfile for the testcase
     # ./content/APPLE/testcase/outputfile_UUID.txt
-    outputfile = models.FileField(upload_to="/".join(['content', problem.code, 'testcase', 'outputfile'+_id + '.txt']))
+    outputfile = models.FileField(upload_to="/".join(['content', problem.code, 'testcase', 'outputfile_' + _id + '.txt']))
 
 
 class SubmissionTestCase(models.Model):
@@ -90,7 +90,14 @@ class SubmissionTestCase(models.Model):
     """
 
     # Possible Verdicts
-    Verdict = (('P', 'Pass'), ('F', 'Fail'), ('TE', 'TLE'), ('CE', 'COMPILATIONERROR'), ('RE', 'RUNTIMEERROR'), ('NA', 'NOTAVAILABLE'))
+    VERDICT = (
+        ('P', 'Pass'), 
+        ('F', 'Fail'), 
+        ('TE', 'TLE'), 
+        ('ME', 'OOM'), 
+        ('CE', 'COMPILATION_ERROR'), 
+        ('RE', 'RUNTIME_ERROR'), 
+        ('NA', 'NOT_AVAILABLE'))
 
     # (FK) Submission ID of the Submission.
     submission = models.ForeignKey(Submission)
@@ -99,7 +106,7 @@ class SubmissionTestCase(models.Model):
     testcase = models.ForeignKey(TestCase)
 
     # Verdict by the judge
-    verdict = models.CharField(max_length=2, choices=Verdict, default='NA')
+    verdict = models.CharField(max_length=2, choices=VERDICT, default='NA')
 
     # Memory taken by the Submission on this TestCase
     memory_taken = models.PositiveIntegerField()
@@ -120,5 +127,5 @@ class Comment(models.Model):
     person = models.ForeignKey(Person)
 
     # Store a comment file for each Problem Student pair.
-    # Sample path: ./content/PROBLEMCODE/comment/person.txt
+    # Sample path: ./content/PROBLEMCODE/comment/person.yml
     comment = models.FileField(upload_to="/".join(['content', problem.code, 'comment', person.id + '.yml']))
