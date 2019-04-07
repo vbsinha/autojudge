@@ -174,7 +174,7 @@ class TestCase(models.Model):
 
     # Self Generated PrimaryKey
     _id = uuid4().hex
-    testcase_id = models.CharField(max_length=128, primary_key=True, default=_id)
+    testcase_id = models.CharField(max_length=32, primary_key=True, default=_id)
     
     # Store the inputfile for the testcase.
     # Sample: ./content/testcase/inputfile_UUID.txt
@@ -231,7 +231,7 @@ class Comment(models.Model):
 
     # Self Generated PrimaryKey
     _id = uuid4().hex
-    comment_id = models.CharField(max_length=128, primary_key=True, default=_id)
+    comment_id = models.CharField(max_length=32, primary_key=True, default=_id)
 
     # Store a comment file for each Problem Student pair.
     # Sample path: ./content/comment/UUID.yml
