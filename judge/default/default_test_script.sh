@@ -1,13 +1,21 @@
 #!/bin/sh
 
+####################################################
+# Using this script
+#    ./test_script.sh $SUB_ID [$TESTCASE_ID]+
+# where
+# - $SUB_ID is the submission ID
+# - $TESTCASE_ID is the testcase ID (pass atleast 1)
+####################################################
+
+
 # All Error Codes
 PASS=0
 FAIL=1
 TLE=2
 OOM=3
-CE=4
-RE=5
-NA=6
+RE=4
+NA=5
 
 # Run submission function
 # If the executable runs fine, then the output validation is done
@@ -17,11 +25,11 @@ run_submission() {
   TID=$2
   TLIMIT=$3
 
-  timeout ${TLIMIT} python submission_${SID}.py < inputfile_${TID}.txt > sub_output_${SID}_${TID}.txt
+  timeout ${TLIMIT} ${SUB_FDR}/submission_${SID} < ${TEST_FDR}/inputfile_${TID}.txt > ${TMP}/sub_output_${SID}_${TID}.txt
 
   case "$?" in
     "0")
-        validate_submission_output outputfile_${TID}.txt sub_output_${SID}_${TID}.txt
+        validate_submission_output ${TEST_FDR}/outputfile_${TID}.txt ${TMP}/sub_output_${SID}_${TID}.txt
         return $?
         ;;
     "1")
@@ -37,7 +45,7 @@ run_submission() {
 }
 
 clean_generated_output() {
-  rm sub_output_${1}_${2}.txt
+  rm ${TMP}/sub_output_${1}_${2}.txt
 }
 
 
@@ -100,21 +108,28 @@ error_code_to_string() {
   echo "$TESTCASE_ID: $STRCODE"
 }
 
+
+# Assume a directory structure
+# content/
+# ├── problems
+# ├── submissions
+# ├── testcases
+# └── tmp
+
+SUB_FDR="submissions"
+TEST_FDR="testcases"
+TMP="tmp"
+
 # Submission ID is passed to the script
 SUB_ID=$1
+shift
 
-# Number of inputfiles = Number of outputfiles = Number of testcases
-N_TEST=$(ls | grep -c "inputfile_")
-
+# To be set from the env
 TIMELIMIT=1
 
-# Iterate arbitrarily over testcases
-for INPFILE in $(ls | grep "inputfile_");
+# Iterate over all testcase IDs passed as command line arguments
+for TESTCASE_ID in "$@";
   do
-    # Get the TESTCASE_ID from the basename of the input file
-    # Replace "inputfile_" with "" to get the ID alone
-    TESTCASE_ID=$(basename $INPFILE ".txt" | sed 's/^inputfile_//g')
-
     # Run the submission using run_submission
     run_submission ${SUB_ID} ${TESTCASE_ID} ${TIMELIMIT}
 

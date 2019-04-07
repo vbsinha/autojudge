@@ -1,0 +1,11 @@
+# Official Python 3.7 image
+FROM python:3.7-slim
+
+# Submission ID, to be set at runtime in `docker run` calls
+ENV SUB_ID=0
+
+# Set working directory
+WORKDIR /app
+
+# Run the meta script
+CMD python compile_and_test.py --submission_config tmp/sub_run_${SUB_ID}.txt
