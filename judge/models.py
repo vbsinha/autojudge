@@ -9,10 +9,6 @@ def setter_sol_name(instance, filename):
     return 'content/{}/setter_soln.{}'.format(instance.code, splitext(filename)[1])
 
 
-def setter_sol_name(instance, filename):
-    return 'content/{}/setter_soln.{}'.format(instance.code, splitext(filename)[1])
-
-
 class Problem(models.Model):
     """
     Model for a Problem.
@@ -25,16 +21,16 @@ class Problem(models.Model):
     name = models.CharField(max_length=50, default='Name not set')
 
     # Problem statement [Char]
-    statement = models.TextField(max_length=2500, 
-                    default='The problem statement is empty. Good luck solving it!')
+    statement = models.TextField(max_length=2500,
+                                 default='The problem statement is empty. Good luck solving it!')
 
     # Input format [Char]
-    input_format = models.CharField(max_length=1000, 
-                    default='No input format specified. Figure it out yourself Sherlock!')
+    input_format = models.CharField(max_length=1000,
+                                    default='No input format specified. Figure it out yourself Sherlock!')
 
     # Output format [Char]
     output_format = models.CharField(max_length=500,
-                    default='No output format specified. Figure it out yourself Sherlock!')
+                                     default='No output format specified. Figure it out yourself Sherlock!')
 
     # Difficulty [PositiveInt]
     difficulty = models.PositiveSmallIntegerField(default=0)
@@ -51,22 +47,26 @@ class Problem(models.Model):
     file_format = models.CharField(max_length=100, default='.py,.cpp,.c')
 
     # Start code [File]
-    start_code = models.FileField(upload_to='content/{}/start_code.zip'.format(code), null=True)
+    start_code = models.FileField(
+        upload_to='content/{}/start_code.zip'.format(code), null=True)
 
     # Max score [PositiveInt]
     max_score = models.PositiveSmallIntegerField(default=0)
 
     # Compilation script [File]
-    comp_script = models.FileField(upload_to='content/{}/comp_script.sh'.format(code), default='./default/default_compilation_script.sh')
+    comp_script = models.FileField(upload_to='content/{}/comp_script.sh'.format(
+        code), default='./default/default_compilation_script.sh')
 
     # Test script [File]
-    test_script = models.FileField(upload_to='content/{}/test_script.sh'.format(code), default='./default/default_test_script.sh')
+    test_script = models.FileField(
+        upload_to='content/{}/test_script.sh'.format(code), default='./default/default_test_script.sh')
 
     # Setter solution script [File, Nullable]
     setter_solution = models.FileField(upload_to=setter_sol_name, null=True)
 
     def __str__(self):
         return self.code
+
 
 class Contest(models.Model):
     """
@@ -119,14 +119,15 @@ class Submission(models.Model):
 
     # This has to be updated periodically
     PERMISSIBLE_FILE_TYPES = (
-                                ('.none', 'NOT_SELECTED'),
-                                ('.py', 'PYTHON'),
-                                ('.c', 'C'),
-                                ('.cpp', 'CPP'),
-                             )
+        ('.none', 'NOT_SELECTED'),
+        ('.py', 'PYTHON'),
+        ('.c', 'C'),
+        ('.cpp', 'CPP'),
+    )
 
     # File Type [Char]
-    file_type = models.CharField(max_length=5, choices=PERMISSIBLE_FILE_TYPES, default='.none')
+    file_type = models.CharField(
+        max_length=5, choices=PERMISSIBLE_FILE_TYPES, default='.none')
 
     # Submission file [File]
     submission_file = models.FileField(upload_to='content/submissions/submission_{}{}'
@@ -153,7 +154,7 @@ class ContestProblem(models.Model):
     Model for ContestProblem. This maps which problems are a part of which contests.
     """
 
-    # (FK) Contest ID of the Contest. 
+    # (FK) Contest ID of the Contest.
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
 
     # (FK) Problem ID of the Problem.
@@ -165,7 +166,7 @@ class ContestPerson(models.Model):
     Model for ContestPerson. This maps how (either as a Participant or Poster) persons have access to the contests.
     """
 
-    # (FK) Contest ID of the Contest.    
+    # (FK) Contest ID of the Contest.
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
 
     # (FK) Person ID of the Person.
@@ -183,24 +184,25 @@ class TestCase(models.Model):
 
     # (FK) Problem ID of the Problem.
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
-    
+
     # Boolean to determine whether the TestCase is Private or Public
     # true for Public and false for Private
     public = models.BooleanField()
 
     # Self Generated PrimaryKey
     _id = uuid4().hex
-    testcase_id = models.CharField(max_length=32, primary_key=True, default=_id)
-    
+    testcase_id = models.CharField(
+        max_length=32, primary_key=True, default=_id)
+
     # Store the inputfile for the testcase.
     # Sample: ./content/testcase/inputfile_UUID.txt
     inputfile = models.FileField(upload_to="/".join(['content', 'testcase', 'inputfile_' + _id + '.txt']),
-                    default='./default/default_inputfile.yml')
+                                 default='./default/default_inputfile.yml')
 
     # Store the outputfile for the testcase
     # ./content/testcase/outputfile_UUID.txt
     outputfile = models.FileField(upload_to="/".join(['content', 'testcase', 'outputfile_' + _id + '.txt']),
-                    default='./default/default_outputfile.yml')
+                                  default='./default/default_outputfile.yml')
 
 
 class SubmissionTestCase(models.Model):
@@ -210,18 +212,18 @@ class SubmissionTestCase(models.Model):
 
     # Possible Verdicts
     VERDICT = (
-        ('P', 'Pass'), 
-        ('F', 'Fail'), 
-        ('TE', 'TLE'), 
-        ('ME', 'OOM'), 
-        ('CE', 'COMPILATION_ERROR'), 
-        ('RE', 'RUNTIME_ERROR'), 
+        ('P', 'Pass'),
+        ('F', 'Fail'),
+        ('TE', 'TLE'),
+        ('ME', 'OOM'),
+        ('CE', 'COMPILATION_ERROR'),
+        ('RE', 'RUNTIME_ERROR'),
         ('NA', 'NOT_AVAILABLE'))
 
     # (FK) Submission ID of the Submission.
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
-    # (FK) testCase ID of the TestCase.   
+    # (FK) testCase ID of the TestCase.
     testcase = models.ForeignKey(TestCase, on_delete=models.CASCADE)
 
     # Verdict by the judge
@@ -239,7 +241,7 @@ class Comment(models.Model):
     Model for Person.
     """
 
-    # (FK) Problem ID of the Problem.  
+    # (FK) Problem ID of the Problem.
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
 
     # (FK) Person ID of the Person.
@@ -252,4 +254,4 @@ class Comment(models.Model):
     # Store a comment file for each Problem Student pair.
     # Sample path: ./content/comment/UUID.yml
     comment = models.FileField(upload_to="/".join(['content', 'comment', _id + '.yml']),
-                default='./default/default_comment.yml')
+                               default='./default/default_comment.yml')
