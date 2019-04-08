@@ -9,6 +9,10 @@ def setter_sol_name(instance, filename):
     return 'content/{}/setter_soln.{}'.format(instance.code, splitext(filename)[1])
 
 
+def setter_sol_name(instance, filename):
+    return 'content/{}/setter_soln.{}'.format(instance.code, splitext(filename)[1])
+
+
 class Problem(models.Model):
     """
     Model for a Problem.
@@ -63,7 +67,6 @@ class Problem(models.Model):
 
     def __str__(self):
         return self.code
-
 
 class Contest(models.Model):
     """
