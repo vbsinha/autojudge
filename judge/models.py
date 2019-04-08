@@ -2,6 +2,7 @@ from django.db import models
 
 from uuid import uuid4
 from os.path import splitext
+from datetime import timedelta
 
 
 def setter_sol_name(instance, filename):
@@ -35,7 +36,7 @@ class Problem(models.Model):
     difficulty = models.PositiveSmallIntegerField(default=0)
 
     # Time Limit [Duration]
-    time_limit = models.DurationField(default=200)
+    time_limit = models.DurationField(default=timedelta(seconds=10))
 
     # Memory Limit [Int]
     # Currently this is specified in bytes
@@ -60,11 +61,17 @@ class Problem(models.Model):
     # Setter solution script [File, Nullable]
     setter_solution = models.FileField(upload_to=setter_sol_name, null=True)
 
+    def __str__(self):
+        return self.code
+
 
 class Contest(models.Model):
     """
     Model for Contest.
     """
+
+    # Contest name [Char]
+    name = models.CharField(max_length=50, default='Unnamed Contest')
 
     # Start Date and Time for Contest
     start_datetime = models.DateTimeField()
@@ -74,6 +81,9 @@ class Contest(models.Model):
 
     # Penalty for late-submission
     penalty = models.DecimalField(max_digits=3, decimal_places=2)
+
+    def __str__(self):
+        return self.name
 
 
 class Person(models.Model):
@@ -85,7 +95,10 @@ class Person(models.Model):
     email = models.EmailField()
 
     # Rank of the Person
-    rank = models.PositiveIntegerField()
+    rank = models.PositiveIntegerField(default=10)
+
+    def __str__(self):
+        return self.email
 
 
 class Submission(models.Model):
