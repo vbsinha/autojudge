@@ -16,6 +16,14 @@
 <body>
     <h1>PDP</h1>
 
+	{% if user.is_authenticated %}
+             <p class="display-4">Hello, {{ user.username }}</p>
+             <a class="lead" href="{% url 'judge:logout' %}">Log out</a>
+
+    {% else %}
+             <a class="lead" href="{% url 'judge:social:begin' 'google-oauth2' %}">Log in</a>
+	{% endif %}
+
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
