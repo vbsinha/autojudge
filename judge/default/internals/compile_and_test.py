@@ -26,7 +26,7 @@ ret = call(['./main_compiler.sh', sub_info[0], 'submission_{}{}'.format(sub_info
 if ret != 0:
     with open("submission_{}_status.txt".format(sub_info[1]), "w") as stat_file:
         for testcase_id in sub_info[3:]:
-            stat_file.write("{}: {}\n".format(testcase_id, ret))
+            stat_file.write("{}: {}\n".format(testcase_id, 'CE' if ret == 1 else 'NA'))
 else:
     call(['./main_tester.sh'] + sub_info[0:2] + sub_info[3:])
     call(['rm', 'submissions/submission_{}'.format(sub_info[1])])  # remove the executable

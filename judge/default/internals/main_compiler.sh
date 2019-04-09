@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 ####################################################
 # Using this script
@@ -43,4 +43,4 @@ case "$SUBPATH" in
 esac
 
 # Return the return value of the 
-exit $?
+return $?

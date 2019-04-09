@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 ########################################################
 # Using this script
@@ -56,7 +56,7 @@ run_submission() {
   # The last line runs the process
   timer_tool -w /dev/null --vsize-limit $MLIMIT --cores 0 --wall-clock-limit $TLIMIT \
              --var ${TMP}/submission_status_${SID}_${TID}.txt \
-             ${SUB_FDR}/submission_${SID} < ${TEST_FDR}/inputfile_${TID}.txt > ${TMP}/sub_output_${SID}_${TID}.txt
+             ${SUB_FDR}/submission_${SID} < ${TEST_FDR}/inputfile_${TID}.txt > ${TMP}/sub_output_${SID}_${TID}.txt 2> /dev/null
 
   # Make all the flags as env vars for checking and remove this file
   . ${TMP}/submission_status_${SID}_${TID}.txt
@@ -73,7 +73,7 @@ run_submission() {
     return $OOM
   else
     clean_generated_output ${SID} ${TID}  # Delete the generated file to prevent any mismatch
-    ${SUB_FDR}/submission_${SID} < ${TEST_FDR}/inputfile_${TID}.txt > ${TMP}/sub_output_${SID}_${TID}.txt
+    ${SUB_FDR}/submission_${SID} < ${TEST_FDR}/inputfile_${TID}.txt > ${TMP}/sub_output_${SID}_${TID}.txt 2> /dev/null
 
     case "$?" in
       "0")
