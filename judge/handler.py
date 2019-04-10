@@ -1,11 +1,13 @@
 import django
+import traceback
 
 from . import models
 
 
-def process_problem(code, name, statement, input_format,
-                        output_format, difficulty, time_limit, memory_limit,
-                        file_format, start_code, max_score, comp_script,
+
+def process_problem(code: str, name: str, statement: str, input_format: str,
+                        output_format: str, difficulty: int, time_limit: int, memory_limit: int,
+                        file_format: str, start_code, max_score, comp_script,
                         test_script, setter_solution):
     """ None able Fields: start_code, comp_script, test_script, file_format"""
     try:
@@ -27,7 +29,9 @@ def process_problem(code, name, statement, input_format,
                         test_script=test_script, setter_solution=setter_solution)
         p.save()
         return True
-    except:
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
         return False
 
 
@@ -73,7 +77,8 @@ def process_contest(name, start_datetime, end_datetime, penalty):
                            end_datetime=end_datetime, penalty=penalty)
         c.save()
         return True
-    except:
+    except Exception as e:
+        print(e)
         return False
 
 

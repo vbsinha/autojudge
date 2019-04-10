@@ -6,7 +6,19 @@ from datetime import timedelta
 
 
 def setter_sol_name(instance, filename):
-    return 'content/{}/setter_soln.{}'.format(instance.code, splitext(filename)[1])
+    return 'content/{}/setter_soln{}'.format(instance.code, splitext(filename)[1])
+
+
+def start_code_name(instance, filename):
+    return 'content/{}/start_code{}'.format(instance.code, splitext(filename)[1])
+
+
+def comp_script_name(instance, filename):
+    return 'content/{}/comp_script.sh'.format(instance.code)
+
+
+def test_script_name(instance, filename):
+    return 'content/{}/test_script.sh'.format(instance.code)
 
 
 class Problem(models.Model):
@@ -47,19 +59,18 @@ class Problem(models.Model):
     file_format = models.CharField(max_length=100, default='.py,.cpp,.c')
 
     # Start code [File]
-    start_code = models.FileField(
-        upload_to='content/{}/start_code.zip'.format(code), null=True)
+    start_code = models.FileField(upload_to=start_code_name, null=True)
 
     # Max score [PositiveInt]
     max_score = models.PositiveSmallIntegerField(default=0)
 
     # Compilation script [File]
-    comp_script = models.FileField(upload_to='content/{}/comp_script.sh'.format(
-        code), default='./default/default_compilation_script.sh')
+    comp_script = models.FileField(
+        upload_to=comp_script_name, default='./default/default_compilation_script.sh')
 
     # Test script [File]
     test_script = models.FileField(
-        upload_to='content/{}/test_script.sh'.format(code), default='./default/default_test_script.sh')
+        upload_to=test_script_name, default='./default/default_test_script.sh')
 
     # Setter solution script [File, Nullable]
     setter_solution = models.FileField(upload_to=setter_sol_name, null=True)
@@ -83,7 +94,7 @@ class Contest(models.Model):
     end_datetime = models.DateTimeField()
 
     # Penalty for late-submission
-    penalty = models.DecimalField(max_digits=3, decimal_places=2)
+    penalty = models.DecimalField(max_digits=4, decimal_places=3)
 
     def __str__(self):
         return self.name

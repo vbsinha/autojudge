@@ -12,4 +12,6 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('auth/', include('social_django.urls', namespace='social')),
     path('contest/new/', views.new_contest, name='new_contest'),
+    path('contest/<int:contest_id>/', views.contest_detail, name='contest_detail'),
+    path('contest/<int:contest_id>/problem/new/', views.new_problem, name='new_problem'),
 ]

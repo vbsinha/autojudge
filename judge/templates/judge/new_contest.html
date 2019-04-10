@@ -9,7 +9,7 @@
 <script>
     let picker_options = {
         uiLibrary: 'bootstrap4',
-        format: 'dd/mm/yyyy HH:MM',
+        format: 'yyyy-mm-dd HH:MM',
         footer: true,
     }
     $('#startDateField').datetimepicker(picker_options)
@@ -38,27 +38,28 @@
             <div class="form-group">
                 <label for="contestNameField">Contest name</label>
                 <input type="text" class="form-control" id="contestNameField" aria-describedby="contestNameHelp"
-                    placeholder="Enter name of the contest">
+                    placeholder="Enter name of the contest" name="name" value="{{ post_data.name }}">
                 <small id="contestNameHelp" class="form-text text-muted"></small>
             </div>
             <div class="form-group">
                 <label for="startDateField">Start Date</label>
                 <input type="text" class="form-control" id="startDateField" aria-describedby="startDateHelp"
-                    placeholder="Start date">
+                    placeholder="Start date" name="start_date" value="{{ post_data.start_date }}">
                 <small id="startDateHelp" class="form-text text-muted"></small>
             </div>
             <div class="form-group">
                 <label for="endDateField">End Date</label>
                 <input type="text" class="form-control" id="endDateField" aria-describedby="endDateHelp"
-                    placeholder="End date">
+                    placeholder="End date" name="end_date" value="{{ post_data.end_date }}">
                 <small id="endDateHelp" class="form-text text-muted"></small>
             </div>
             <div class="form-group">
                 <label for="penaltyField">Penalty</label>
-                <input type="text" class="form-control" id="penaltyField" aria-describedby="penaltyHelp"
-                    placeholder="Penalty">
+                <input type="number" step="any" class="form-control" id="penaltyField" aria-describedby="penaltyHelp"
+                    placeholder="Penalty" name="penalty" value="{{ post_data.penalty }}">
                 <small id="penaltyHelp" class="form-text text-muted">
-                    <!-- TODO -->Write description of penalty</small>
+                    A decimal between 0.000 and 1.000 TODO <!-- TODO -->
+                </small>
             </div>
             <button type="submit" class="btn btn-primary">Create</button>
         </form>
