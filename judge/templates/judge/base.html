@@ -2,15 +2,16 @@
 <html lang="en">
 
 <head>
-    <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>PDP - Home</title>
 
-    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-    <title>PDP - Home</title>
+
+    {% block styles %}
+    {% endblock %}
 </head>
 
 <body>
@@ -23,11 +24,18 @@
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
+                {% url 'judge:index' as homepage %}
+                {% if request.path == homepage %}
                 <li class="nav-item active">
-                    <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+                    <a class="nav-link" href="{{ homepage }}">Home <span class="sr-only">(current)</span></a>
                 </li>
+                {% else %}
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Link</a>
+                    <a class="nav-link" href="{{ homepage }}">Home <span class="sr-only">(current)</span></a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'judge:new_contest' %}">New contest</a>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
@@ -64,12 +72,15 @@
             </ul>
         </div>
     </nav>
+    <div class="container">
+        <div class="row my-4">
+            <div class="col-12">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
+    </div>
 
-    {% block content %}
-    {% endblock %}
-
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
         integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
         crossorigin="anonymous"></script>
@@ -86,6 +97,8 @@
             })
         })
     </script>
+    {% block scripts %}
+    {% endblock %}
 </body>
 
 </html>

@@ -9,3 +9,12 @@ from django.shortcuts import render
 def index(request):
     context = {}
     return render(request, 'judge/index.html', context)
+
+def new_contest(request):
+    if request.method == 'POST':
+        # TODO
+        context = {}
+        return render(request, 'judge/new_contest.html', context)
+    else:
+        context = {}
+        return render(request, 'judge/new_contest.html', context)
