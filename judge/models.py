@@ -95,7 +95,7 @@ class Person(models.Model):
     """
 
     # Email ID of the Person
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
 
     # Rank of the Person
     rank = models.PositiveIntegerField(default=10)
