@@ -1,0 +1,109 @@
+{% extends "judge/base.html" %}
+
+{% block content %}
+<div class="row my-2">
+    <div class="col-12">
+        <h2>New Problem</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-md-8">
+        <form action="{% url 'judge:new_problem' contest.pk %}" method="POST" enctype="multipart/form-data">
+            {% if error_msg %}
+            <div class="alert alert-danger alter-dismissible fade show" role="alert">
+                <strong>Error: </strong>{{ error_msg }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endif %}
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="codeField">Code</label>
+                <input type="text" class="form-control" id="codeField" aria-describedby="codeHelp"
+                    placeholder="Problem code" name="code" value="{{ post_data.code }}">
+                <small id="codeHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="form-group">
+                <label for="nameField">Name</label>
+                <input type="text" class="form-control" id="nameField" aria-describedby="nameHelp"
+                    placeholder="Problem name" name="name" value="{{ post_data.name }}">
+                <small id="nameHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="form-group">
+                <label for="statementField">Statement</label>
+                <textarea class="form-control" id="statementField" aria-describedby="statementHelp"
+                    placeholder="Problem statement" name="statement">{{ post_data.statement }}</textarea>
+                <small id="statementHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="form-group">
+                <label for="inputFormatField">Input Format</label>
+                <textarea class="form-control" id="inputFormatField" aria-describedby="inputFormatHelp"
+                    placeholder="Input Format" name="input_format">{{ post_data.input_format }}</textarea>
+                <small id="inputFormatHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="form-group">
+                <label for="FormatField">Output Format</label>
+                <textarea class="form-control" id="outputFormatField" aria-describedby="outputFormatHelp"
+                    placeholder="Output Format" name="output_format">{{ post_data.output_format }}</textarea>
+                <small id="outputFormatHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="form-group">
+                <label for="difficultyField">Difficulty</label>
+                <input type="number" class="form-control" id="difficultyField" aria-describedby="difficultyHelp"
+                    placeholder="Difficulty" name="difficulty" value="{{ post_data.difficulty }}">
+                <small id="difficultyHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="form-group">
+                <label for="timeLimitField">Time Limit</label>
+                <input type="number" class="form-control" id="timeLimitField" aria-describedby="timeLimitHelp"
+                    placeholder="Time Limt" name="time_limit" value="{{ post_data.time_limit }}">
+                <small id="timeLimitHelp" class="form-text text-muted">Time limit in milliseconds</small>
+            </div>
+            <div class="form-group">
+                <label for="memoryLimitField">Memory Limit</label>
+                <input type="number" class="form-control" id="memoryLimitField" aria-describedby="memoryLimitHelp"
+                    placeholder="Memory Limt" name="memory_limit" value="{{ post_data.memory_limit }}">
+                <small id="memoryLimitHelp" class="form-text text-muted">Memory limit in bytes</small>
+            </div>
+            <div class="form-group">
+                <label for="fileExtField">File Extensions</label>
+                <input type="text" class="form-control" id="fileExtField" aria-describedby="fileExtHelp"
+                    placeholder="File Extensions" name="file_format" value="{{ post_data.file_format }}">
+                <small id="fileExtHelp" class="form-text text-muted">Accepted file extensions in submissions</small>
+            </div>
+            <div class="form-group">
+                <label for="startCodeField">Start Code</label>
+                <input type="file" class="form-control-file" id="startCodeField" aria-describedby="startCodeHelp"
+                    placeholder="Start Code" name="start_code">
+                <small id="startCodeHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="form-group">
+                <label for="maxScoreField">Max. Score</label>
+                <input type="number" class="form-control" id="maxScoreField" aria-describedby="maxScoreHelp"
+                    placeholder="Max. score" name="max_score" value="{{ post_data.max_score }}">
+                <small id="maxScoreHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="form-group">
+                <label for="compScriptField">Compilation Script</label>
+                <input type="file" class="form-control-file" id="compScriptField" aria-describedby="compScriptHelp"
+                    placeholder="Compilation script" name="comp_script">
+                <small id="compScriptHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="form-group">
+                <label for="testScriptField">Test Script</label>
+                <input type="file" class="form-control-file" id="testScriptField" aria-describedby="testScriptHelp"
+                    placeholder="Test script" name="test_script">
+                <small id="testScriptHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="form-group">
+                <label for="setterSolField">Setter Solution</label>
+                <input type="file" class="form-control-file" id="setterSolField" aria-describedby="setterSolHelp"
+                    placeholder="Setter solution" name="setter_solution">
+                <small id="setterSOlHelp" class="form-text text-muted"></small>
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

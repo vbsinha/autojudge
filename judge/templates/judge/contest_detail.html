@@ -1,0 +1,11 @@
+{% extends 'judge/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 col-md-7"><h2>{{ contest.name }}</h2></div>
+    <div class="col-12 col-md-5">{{ contest_start }} - {{ contest_end }}</div>
+</div>
+
+<!-- TODO List all the problems here -->
+<a class="btn btn-primary" href="{% url 'judge:new_problem' contest.pk %}">Add Problem</a>
+{% endblock %}
