@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from datetime import timedelta
 
-from .models import Contest
+from .models import Contest, Problem
 from . import handler
 
 # Create your views here.
@@ -57,6 +57,7 @@ def new_problem(request, contest_id):
                                    request.FILES.get('compilation_script'),  # Nullable field
                                    request.FILES.get('test_script'),  # Nullable field
                                    request.FILES.get('setter_solution')):  # Nullable field
+            contest.contestproblem_set.create(problem=Problem.objects.get(pk=request.POST['code']))
             return redirect('/judge/contest/{}/'.format(contest_id))
         else:
             context = {'error_msg': 'Could not create new problem',

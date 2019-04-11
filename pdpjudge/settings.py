@@ -27,7 +27,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-MEDIA_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# The path where content folder is stored: MEDIA_ROOT/content/
+MEDIA_ROOT = BASE_DIR
+
+MEDIA_URL = '/media/'
 
 
 # Application definition
