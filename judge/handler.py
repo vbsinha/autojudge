@@ -4,29 +4,29 @@ import traceback
 from . import models
 
 
-
-def process_problem(code: str, name: str, statement: str, input_format: str,
-                        output_format: str, difficulty: int, time_limit: int, memory_limit: int,
-                        file_format: str, start_code, max_score, comp_script,
-                        test_script, setter_solution):
-    """ None able Fields: start_code, comp_script, test_script, file_format"""
+def process_problem(code: str, name: str, statement: str, input_format: str, output_format: str,
+                    difficulty: int, time_limit: int, memory_limit: int, file_format: str,
+                    start_code, max_score, compilation_script, test_script, setter_solution):
+    """ Nullable Fields: start_code, compilation_script, test_script, file_format"""
     try:
         models.Problem.objects.get(pk=code)
         raise Exception('{} already a used Question code.'.format(code))
     except models.Problem.DoesNotExist:
         pass
-    
-    if comp_script is None:
-        comp_script = './default/default_compilation_script.sh'
+
+    if compilation_script is None:
+        compilation_script = './default/compilation_script.sh'
     if test_script is None:
-        test_script = './default/default_test_script.sh'
+        test_script = './default/test_script.sh'
     if file_format is None:
         file_format = '.py,.cpp,.c'
     try:
         p = models.Problem(code=code, name=name, statement=statement, input_format=input_format,
-                        output_format=output_format, difficulty=difficulty, time_limit=time_limit, memory_limit=memory_limit,
-                        file_format=file_format, start_code=start_code, max_score=max_score, comp_script=comp_script,
-                        test_script=test_script, setter_solution=setter_solution)
+                           output_format=output_format, difficulty=difficulty,
+                           time_limit=time_limit, memory_limit=memory_limit,
+                           file_format=file_format, start_code=start_code, max_score=max_score,
+                           compilation_script=compilation_script,
+                           test_script=test_script, setter_solution=setter_solution)
         p.save()
         return True
     except Exception as e:
@@ -57,14 +57,16 @@ def update_problem(code, name=None, statement=None, input_format=None,
 
 
 def process_person(email, rank):
-    """ None able Fields: rank"""
-    if rank == None:
+    """ Nullable Fields: rank"""
+    if rank is None:
         rank = 10
     try:
         p = models.Person(email=email, rank=rank)
         p.save()
         return True
-    except:
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
         return False
 
 
@@ -89,16 +91,18 @@ def process_testcase(problem, ispublic, inputfile, outputfile):
             public=ispublic, inputfile=inputfile, outputfile=outputfile)
         t.save()
         return True
-    except:
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
         return False
 
 
 def process_solution(problem, participant, file_type, submission_file, timestamp):
-    #TODO Handle Exceptions here
+    # TODO Handle Exceptions here
     problem = models.Problem.objects.get(pk=problem)
     participant = models.Person.objects.get(pk=participant)
-    s = problem.submission_set.create(
-        participant=participant, file_type=file_type, submission_file=submission_file, timestamp=timestamp)
+    s = problem.submission_set.create(participant=participant, file_type=file_type,
+                                      submission_file=submission_file, timestamp=timestamp)
     s.save()
 
     testcases = models.TestCase.objects.get(problem=problem)
@@ -114,8 +118,8 @@ def process_solution(problem, participant, file_type, submission_file, timestamp
     # Based on the result populate SubmsissionTestCase table and return the result
 
     for i in range(len(testcase_ids)):
-        st = models.SubmissionTestCase(
-            submission=s, testcase=testcases[i], verdict=verdict[i], memory_taken=memory[i], timetaken=time[i])
+        st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict=verdict[i],
+                                       memory_taken=memory[i], timetaken=time[i])
         st.save()
 
     return verdict, memory, time

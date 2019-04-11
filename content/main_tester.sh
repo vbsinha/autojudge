@@ -19,14 +19,18 @@ NA=5
 
 # Assume a directory structure
 # content/
-# ├── problems
-# ├── submissions
-# ├── testcases
-# └── tmp
+# ├── problems/
+# ├── submissions/
+# ├── testcase/
+# ├── tmp/
+# ├── compile_and_test.py
+# ├── main_compiler.sh
+# ├── main_tester.sh
+# └── Dockerfile
 
 PROB_FDR="problems"
 SUB_FDR="submissions"
-TEST_FDR="testcases"
+TEST_FDR="testcase"
 TMP="tmp"
 
 # Problem code

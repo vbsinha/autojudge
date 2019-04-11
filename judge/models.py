@@ -6,19 +6,19 @@ from datetime import timedelta
 
 
 def setter_sol_name(instance, filename):
-    return 'content/{}/setter_soln{}'.format(instance.code, splitext(filename)[1])
+    return 'content/problems/{}/setter_soln{}'.format(instance.code, splitext(filename)[1])
 
 
 def start_code_name(instance, filename):
-    return 'content/{}/start_code{}'.format(instance.code, splitext(filename)[1])
+    return 'content/problems/{}/start_code{}'.format(instance.code, splitext(filename)[1])
 
 
-def comp_script_name(instance, filename):
-    return 'content/{}/comp_script.sh'.format(instance.code)
+def compilation_script_name(instance, filename):
+    return 'content/problems/{}/compilation_script.sh'.format(instance.code)
 
 
 def test_script_name(instance, filename):
-    return 'content/{}/test_script.sh'.format(instance.code)
+    return 'content/problems/{}/test_script.sh'.format(instance.code)
 
 
 class Problem(models.Model):
@@ -34,15 +34,15 @@ class Problem(models.Model):
 
     # Problem statement [Char]
     statement = models.TextField(max_length=2500,
-                                 default='The problem statement is empty. Good luck solving it!')
+                                 default='The problem statement is empty.')
 
     # Input format [Char]
     input_format = models.CharField(max_length=1000,
-                                    default='No input format specified. Figure it out yourself Sherlock!')
+                                    default='No input format specified.')
 
     # Output format [Char]
     output_format = models.CharField(max_length=500,
-                                     default='No output format specified. Figure it out yourself Sherlock!')
+                                     default='No output format specified.')
 
     # Difficulty [PositiveInt]
     difficulty = models.PositiveSmallIntegerField(default=0)
@@ -65,12 +65,12 @@ class Problem(models.Model):
     max_score = models.PositiveSmallIntegerField(default=0)
 
     # Compilation script [File]
-    comp_script = models.FileField(
-        upload_to=comp_script_name, default='./default/default_compilation_script.sh')
+    compilation_script = models.FileField(
+        upload_to=compilation_script_name, default='./default/compilation_script.sh')
 
     # Test script [File]
     test_script = models.FileField(
-        upload_to=test_script_name, default='./default/default_test_script.sh')
+        upload_to=test_script_name, default='./default/test_script.sh')
 
     # Setter solution script [File, Nullable]
     setter_solution = models.FileField(upload_to=setter_sol_name, null=True)
@@ -162,7 +162,8 @@ class Submission(models.Model):
 
 class ContestProblem(models.Model):
     """
-    Model for ContestProblem. This maps which problems are a part of which contests.
+    Model for ContestProblem.
+    This maps which problems are a part of which contests.
     """
 
     # (FK) Contest ID of the Contest.
@@ -174,7 +175,8 @@ class ContestProblem(models.Model):
 
 class ContestPerson(models.Model):
     """
-    Model for ContestPerson. This maps how (either as a Participant or Poster) persons have access to the contests.
+    Model for ContestPerson.
+    This maps how (either as a Participant or Poster) persons have access to the contests.
     """
 
     # (FK) Contest ID of the Contest.
@@ -190,7 +192,8 @@ class ContestPerson(models.Model):
 
 class TestCase(models.Model):
     """
-    Model for TestCase. Maintains testcases and mapping between TestCase and Problem.
+    Model for TestCase.
+    Maintains testcases and mapping between TestCase and Problem.
     """
 
     # (FK) Problem ID of the Problem.
@@ -207,18 +210,21 @@ class TestCase(models.Model):
 
     # Store the inputfile for the testcase.
     # Sample: ./content/testcase/inputfile_UUID.txt
-    inputfile = models.FileField(upload_to="/".join(['content', 'testcase', 'inputfile_' + _id + '.txt']),
-                                 default='./default/default_inputfile.yml')
+    inputfile = models.FileField(upload_to="/".join(['content', 'testcase',
+                                                     'inputfile_' + _id + '.txt']),
+                                 default='./default/inputfile.txt')
 
     # Store the outputfile for the testcase
     # ./content/testcase/outputfile_UUID.txt
-    outputfile = models.FileField(upload_to="/".join(['content', 'testcase', 'outputfile_' + _id + '.txt']),
-                                  default='./default/default_outputfile.yml')
+    outputfile = models.FileField(upload_to="/".join(['content', 'testcase',
+                                                      'outputfile_' + _id + '.txt']),
+                                  default='./default/outputfile.txt')
 
 
 class SubmissionTestCase(models.Model):
     """
-    Model for SubmissionTestCase. Maintains mapping between TestCase and Submission. 
+    Model for SubmissionTestCase.
+    Maintains mapping between TestCase and Submission.
     """
 
     # Possible Verdicts
@@ -265,4 +271,4 @@ class Comment(models.Model):
     # Store a comment file for each Problem Student pair.
     # Sample path: ./content/comment/UUID.yml
     comment = models.FileField(upload_to="/".join(['content', 'comment', _id + '.yml']),
-                               default='./default/default_comment.yml')
+                               default='./default/comment.yml')
