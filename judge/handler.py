@@ -6,9 +6,11 @@ from . import models
 
 
 def process_contest(name, start_datetime, end_datetime, penalty):
-    """ Process a New Contest
+    """
+    Process a New Contest
     Only penalty can be None in which case Penalty will be set to 0
-    Returns: (True, None) or (False, Exception string)"""
+    Returns: (True, None) or (False, Exception string)
+    """
 
     # Set penalty to defualt value 0
     if penalty is None:
@@ -29,9 +31,11 @@ def process_contest(name, start_datetime, end_datetime, penalty):
 def process_problem(code: str, name: str, statement: str, input_format: str, output_format: str,
                     difficulty: int, time_limit: int, memory_limit: int, file_format: str,
                     start_code, max_score: int, compilation_script, test_script, setter_solution):
-    """ Process a new Problem
+    """
+    Process a new Problem
     Nullable [None-able] Fields: start_code, compilation_script, test_script, file_format
-    Returns: (True, None) or (False, Exception string)"""
+    Returns: (True, None) or (False, Exception string)
+    """
 
     # Check if the Problem Code has already been taken
     try:
@@ -70,9 +74,8 @@ def process_problem(code: str, name: str, statement: str, input_format: str, out
                             os.path.join('content', 'problems', p.code, 'compilation_script.sh')])
         if cp_test_script is True:
             # Copy the default test_script if the user did not upload custom
-            subprocess.run(
-                ['cp', os.path.join('judge', test_script), 
-                os.path.join('content', 'problems', p.code, 'test_script.sh')])
+            subprocess.run(['cp', os.path.join('judge', test_script), 
+                            os.path.join('content', 'problems', p.code, 'test_script.sh')])
 
         return (True, None)
     except Exception as e:
@@ -102,8 +105,10 @@ def update_problem(code, name=None, statement=None, input_format=None,
 
 
 def process_person(email, rank):
-    """ Process a new Person
-    Nullable Fields: rank"""
+    """
+    Process a new Person
+    Nullable Fields: rank
+    """
     if rank is None:
         rank = 10
     try:
