@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from django.http import HttpResponse
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -18,7 +17,10 @@ def index(request):
 def new_contest(request):
     if request.method == 'POST':
         # TODO Sanitize input
-        if handler.process_contest(request.POST['name'], request.POST['start_date'] + '+0530', request.POST['end_date'] + '+0530', request.POST['penalty']):
+        if handler.process_contest(request.POST['name'],
+                                   request.POST['start_date'] + '+0530',
+                                   request.POST['end_date'] + '+0530',
+                                   request.POST['penalty']):
             return redirect('/judge/')
         context = {'error_msg': 'Could not create new contest',
                    'post_data': request.POST}
@@ -41,14 +43,25 @@ def new_problem(request, contest_id):
     contest = get_object_or_404(Contest, pk=contest_id)
     if request.method == 'POST':
         # TODO Sanitize input
-        if handler.process_problem(request.POST['code'], request.POST['name'], request.POST['statement'], request.POST['input_format'], request.POST['output_format'],
-                                   request.POST['difficulty'], timedelta(milliseconds=int(
-                                       request.POST['time_limit'])), request.POST['memory_limit'], request.POST['file_format'],
-                                   request.FILES['start_code'], request.POST['max_score'], None if 'comp_script' not in request.FILES else request.FILES['comp_script'], None if 'test_script' not in request.FILES else request.FILES['test_script'], None if 'setter_solution' not in request.FILES else request.FILES['setter_solution']):
+        if handler.process_problem(request.POST['code'],
+                                   request.POST['name'],
+                                   request.POST['statement'],
+                                   request.POST['input_format'],
+                                   request.POST['output_format'],
+                                   request.POST['difficulty'],
+                                   timedelta(milliseconds=int(request.POST['time_limit'])),
+                                   request.POST['memory_limit'],
+                                   request.POST['file_format'],
+                                   request.FILES.get('start_code'),  # Nullable field
+                                   request.POST['max_score'],
+                                   request.FILES.get('compilation_script'),  # Nullable field
+                                   request.FILES.get('test_script'),  # Nullable field
+                                   request.FILES.get('setter_solution')):  # Nullable field
             return redirect('/judge/contest/{}/'.format(contest_id))
         else:
             context = {'error_msg': 'Could not create new problem',
-                       'post_data': request.POST, 'contest': contest}
+                       'post_data': request.POST,
+                       'contest': contest}
             return render(request, 'judge/new_problem.html', context)
     else:
         context = {'contest': contest}
