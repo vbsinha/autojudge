@@ -71,7 +71,8 @@ def process_problem(code: str, name: str, statement: str, input_format: str, out
         if cp_test_script is True:
             # Copy the default test_script if the user did not upload custom
             subprocess.run(
-                ['cp', os.path.join('judge', test_script), os.path.join('content', 'problems', p.code, 'test_script.sh')])
+                ['cp', os.path.join('judge', test_script), 
+                os.path.join('content', 'problems', p.code, 'test_script.sh')])
 
         return (True, None)
     except Exception as e:
