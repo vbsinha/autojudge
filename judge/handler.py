@@ -1,25 +1,56 @@
 import django
+
+import subprocess
 import traceback
+import os
 
 from . import models
 
 
+def process_contest(name, start_datetime, end_datetime, penalty):
+    """ Process a New Contest
+    Only penalty can be None in which case Penalty will be set to 0
+    Returns: (True, None) or (False, Exception string)"""
+
+    # Set penalty to defualt value 0
+    if penalty is None:
+        penalty = 0.0
+
+    try:
+        c = models.Contest(name=name, start_datetime=start_datetime,
+                           end_datetime=end_datetime, penalty=penalty)
+        c.save()
+        # Successfully added to Database
+        return (True, None)
+    except Exception as e:
+        # Exception Case
+        return (False, e.__str__)
+
+
 def process_problem(code: str, name: str, statement: str, input_format: str, output_format: str,
                     difficulty: int, time_limit: int, memory_limit: int, file_format: str,
-                    start_code, max_score, compilation_script, test_script, setter_solution):
-    """ Nullable Fields: start_code, compilation_script, test_script, file_format"""
+                    start_code, max_score: int, compilation_script, test_script, setter_solution):
+    """ Process a new Problem
+    Nullable [None-able] Fields: start_code, compilation_script, test_script, file_format
+    Returns: (True, None) or (False, Exception string)"""
+
+    # Check if the Problem Code has already been taken
     try:
         models.Problem.objects.get(pk=code)
-        raise Exception('{} already a used Question code.'.format(code))
+        return (False, '{} already a used Question code.'.format(code))
     except models.Problem.DoesNotExist:
         pass
 
+    # Set up default values
+    cp_comp_script, cp_test_script = False, False
     if compilation_script is None:
         compilation_script = './default/compilation_script.sh'
+        cp_comp_script = True
     if test_script is None:
         test_script = './default/test_script.sh'
-    if file_format is None:
-        file_format = '.py,.cpp,.c'
+        cp_test_script = True
+    file_format = '.py,.cpp,.c' if file_format is None else file_format
+
     try:
         p = models.Problem(code=code, name=name, statement=statement, input_format=input_format,
                            output_format=output_format, difficulty=difficulty,
@@ -28,11 +59,19 @@ def process_problem(code: str, name: str, statement: str, input_format: str, out
                            compilation_script=compilation_script,
                            test_script=test_script, setter_solution=setter_solution)
         p.save()
-        return True
+
+        # Copy the default comp_script and test_script if the user did not upload custom
+        if cp_comp_script is True:
+            subprocess.run(['cp', 'judge/'+compilation_script,
+                            'content/problems/'+p.code+'/compilation_script.sh'])
+        if cp_test_script is True:
+            subprocess.run(
+                ['cp', 'judge/'+test_script, 'content/problems/'+p.code+'/test_script.sh'])
+
+        return (True, None)
     except Exception as e:
-        print(e)
         traceback.print_exc()
-        return False
+        return (False, e.__str__)
 
 
 def update_problem(code, name=None, statement=None, input_format=None,
@@ -67,20 +106,6 @@ def process_person(email, rank):
     except Exception as e:
         print(e)
         traceback.print_exc()
-        return False
-
-
-def process_contest(name, start_datetime, end_datetime, penalty):
-    """ None able Fields: penalty"""
-    if penalty is None:
-        penalty = 0.0
-    try:
-        c = models.Contest(name=name, start_datetime=start_datetime,
-                           end_datetime=end_datetime, penalty=penalty)
-        c.save()
-        return True
-    except Exception as e:
-        print(e)
         return False
 
 
