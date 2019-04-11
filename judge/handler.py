@@ -1,5 +1,3 @@
-import django
-
 import subprocess
 import traceback
 import os
@@ -24,6 +22,7 @@ def process_contest(name, start_datetime, end_datetime, penalty):
         return (True, None)
     except Exception as e:
         # Exception Case
+        traceback.print_exc()
         return (False, e.__str__)
 
 
@@ -60,13 +59,19 @@ def process_problem(code: str, name: str, statement: str, input_format: str, out
                            test_script=test_script, setter_solution=setter_solution)
         p.save()
 
-        # Copy the default comp_script and test_script if the user did not upload custom
+        if not os.path.exists(os.path.join('content', 'problems', p.code)):
+            # Create the problem directory explictly if not yet created
+            # This will happen when both compilation_script and test_script were None
+            os.mkdir(os.path.join('content', 'problems', p.code))
+
         if cp_comp_script is True:
-            subprocess.run(['cp', 'judge/'+compilation_script,
-                            'content/problems/'+p.code+'/compilation_script.sh'])
+            # Copy the default comp_script if the user did not upload custom
+            subprocess.run(['cp', os.path.join('judge', compilation_script),
+                            os.path.join('content', 'problems', p.code, 'compilation_script.sh')])
         if cp_test_script is True:
+            # Copy the default test_script if the user did not upload custom
             subprocess.run(
-                ['cp', 'judge/'+test_script, 'content/problems/'+p.code+'/test_script.sh'])
+                ['cp', os.path.join('judge', test_script), os.path.join('content', 'problems', p.code, 'test_script.sh')])
 
         return (True, None)
     except Exception as e:
@@ -96,22 +101,22 @@ def update_problem(code, name=None, statement=None, input_format=None,
 
 
 def process_person(email, rank):
-    """ Nullable Fields: rank"""
+    """ Process a new Person
+    Nullable Fields: rank"""
     if rank is None:
         rank = 10
     try:
         p = models.Person(email=email, rank=rank)
         p.save()
-        return True
+        return (True, None)
     except Exception as e:
-        print(e)
         traceback.print_exc()
-        return False
+        return (False, e.__str__)
 
 
 def process_testcase(problem, ispublic, inputfile, outputfile):
     try:
-        problem = models.Problem.get(pk=problem)
+        problem = models.Problem.objects.get(pk=problem)
         t = problem.testcase_set.create(
             public=ispublic, inputfile=inputfile, outputfile=outputfile)
         t.save()
