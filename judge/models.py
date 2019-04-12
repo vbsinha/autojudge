@@ -85,7 +85,7 @@ class Contest(models.Model):
     """
 
     # Contest name [Char]
-    name = models.CharField(max_length=50, default='Unnamed Contest')
+    name = models.CharField(max_length=50, default='Unnamed Contest', unique=True)
 
     # Start Date and Time for Contest
     start_datetime = models.DateTimeField()
@@ -94,7 +94,7 @@ class Contest(models.Model):
     end_datetime = models.DateTimeField()
 
     # Penalty for late-submission
-    penalty = models.DecimalField(max_digits=4, decimal_places=3)
+    penalty = models.DecimalField(max_digits=4, decimal_places=3, default=0.0)
 
     def __str__(self):
         return self.name

@@ -162,9 +162,69 @@ def process_solution(problem: str, participant: str, file_type, submission_file,
         for testcase in testcases:
             f.write(testcase.pk)
 
-    for i in range(len(testcases)):
-        st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict='R',
-                                       memory_taken=0, timetaken=0)
-        st.save()
-
+    try:
+        for i in range(len(testcases)):
+            st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict='R',
+                                        memory_taken=0, timetaken=0)
+            st.save()
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
+    
     return (True, None)
+
+
+def add_person_to_contest(person: str, contest: str, permission: bool):
+    """
+    Add the relation between Person and Contest
+    person is the email of the person
+    contest is the **name** of the contest and not the pk
+    permission is False if participant and True is poster
+    """
+    try:
+        p = models.Person.objects.get(email=person)
+        c = models.Contest.objects.get(name=contest)
+        cp = p.contestperson_set.create(contest=c, role=permission)
+        cp.save()
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
+
+
+def get_personcontest_permission(person: str, contest: str):
+    """
+    Determine the relation between Person and Contest
+    person is the email of the person
+    contest is the **name** of the contest and not the pk
+    returns False if participant and True is poster None if neither
+    """
+    try:
+        p = models.Problem.objects.get(email=person)
+        c = models.Contest.objects.get(name=contest)
+        cp = models.ContestPerson.objects.get(person=p, contest=c)
+        return cp.role
+    except models.ContestPerson.DoesNotExist:
+        q_set = models.ContestPerson.filter(name=contest, role=False)
+        return (False if len(q_set) == 0 else None)
+
+
+def get_personproblem_permission(person: str, problem: str):
+    """
+    Determine the relation between Person and Problem
+    person is the email of the person
+    problem is the code(pk) of the problem
+    returns False if participant and True is poster None if neither
+    """
+    c = models.ContestProblem.objects.get(problem=problem)
+    return get_personcontest_permission(person, c.name)
+
+
+def get_submission_status(person: str, problem: str, submission: str):
+    """
+    Get the current status of the submission.
+    Pass email as person and problem code as problem to get a tuple
+    ({SubmissionID: [(TestcaseID, Verdict, Time_taken, Memory_taken, Timestamp)]}, {SubmissionID: (judge_score, ta_score, linter_score, final_score)})
+    The tuple consists of 2 dictionaries:
+        First list ... TODO
+    """
+    pass
