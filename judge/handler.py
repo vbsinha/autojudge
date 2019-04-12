@@ -137,7 +137,7 @@ def process_testcase(problem: str, ispublic: bool, inputfile, outputfile):
         return (False, e.__str__)
 
 
-def process_solution(problem: str, participant, file_type, submission_file, timestamp):
+def process_solution(problem: str, participant: str, file_type, submission_file, timestamp: str):
     """
     Process a new Solution
     problem is the 'code' (pk) of the problem. participant is email of the participant
@@ -163,6 +163,7 @@ def process_solution(problem: str, participant, file_type, submission_file, time
             f.write(testcase.pk)
 
     # Call Docker here with the submission_id
+    # subprocess.run(['docker', 'run', '-v', os.path.join(os.path.dirname(os.getcwd()), 'content')+':'+'/app/', ... ])
     # Store Docker's reply in verdict, memory and time lists
 
     # Based on the result populate SubmsissionTestCase table and return the result
@@ -181,10 +182,17 @@ def process_solution(problem: str, participant, file_type, submission_file, time
     # Delete the file after reading
     os.remove(os.path.join('content', 'tmp', 'sub_run_'+id+'.txt'))
 
+    score_recieved = 0
+    max_score = problem.max_score
     for i in range(len(testcases)):
         if not testcases[i].public:
+            if verdict == 'P':
+                score_recieved += max_score
             st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict=verdict[i],
                                            memory_taken=memory[i], timetaken=time[i])
             st.save()
 
+    s.judge_score = score_recieved
+    s.final_score = s.judge_score + s.ta_score + s.linter_score
+    s.save()
     return verdict, memory, time
