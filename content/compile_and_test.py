@@ -16,9 +16,9 @@ args = parser.parse_args()
 with open(args.submission_config) as f:
     sub_info = [x[:-1] for x in f.readlines()]
 
-# Retain the first 3 lines alone
+# Retain the first 2 lines alone
 call(['rm', args.submission_config])
-with open(args.submission_config, "w+") as stat_file:
+with open(args.submission_config, "w") as stat_file:
     stat_file.write("{}\n{}\n".format(sub_info[0], sub_info[1]))
 
 # First compile

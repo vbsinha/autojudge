@@ -165,12 +165,12 @@ def process_solution(problem: str, participant: str, file_type, submission_file,
     try:
         for i in range(len(testcases)):
             st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict='R',
-                                        memory_taken=0, timetaken=0)
+                                           memory_taken=0, timetaken=0)
             st.save()
     except Exception as e:
         traceback.print_exc()
         return (False, e.__str__)
-    
+
     return (True, None)
 
 
@@ -223,7 +223,8 @@ def get_submission_status(person: str, problem: str, submission: str):
     """
     Get the current status of the submission.
     Pass email as person and problem code as problem to get a tuple
-    ({SubmissionID: [(TestcaseID, Verdict, Time_taken, Memory_taken, Timestamp)]}, {SubmissionID: (judge_score, ta_score, linter_score, final_score)})
+    ({SubmissionID: [(TestcaseID, Verdict, Time_taken, Memory_taken, Timestamp)]},
+     {SubmissionID: (judge_score, ta_score, linter_score, final_score)})s
     The tuple consists of 2 dictionaries:
         First list ... TODO
     """
