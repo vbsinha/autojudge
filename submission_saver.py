@@ -6,7 +6,7 @@ from subprocess import call
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pdpjudge.settings")
 django.setup()
 
-from judge import models
+from judge import models  # noqa: E402
 
 MONITOR_DIRECTORY = os.path.join('content', 'tmp')
 DOCKER_IMAGE_NAME = 'pdp_docker'
@@ -14,18 +14,17 @@ DOCKER_IMAGE_NAME = 'pdp_docker'
 LS = []
 REFRESH_LS_TRIGGER = 10
 
+
 def saver(sub_id):
     # Based on the result populate SubmsissionTestCase table and return the result
-    with open(os.path.join(MONITOR_DIRECTORY, 'sub_run_' + subid + '.txt'), 'r') as f:
+    with open(os.path.join(MONITOR_DIRECTORY, 'sub_run_' + sub_id + '.txt'), 'r') as f:
         # Assumed format to sub_run_ID.txt file
         # PROBLEM_CODE
         # SUBMISSION_ID
-        # SUBMISSION_FORMAT
         # TESTCASEID VERDICT TIME MEMORY
         # Read the output into verdict, memory and time.
         problem = f.readline()
         submission = f.readline()
-        sub_format = f.readline()
         testcase_id, verdict, time, memory = [], [], [], []
         for line in f:
             sep = line.split()
@@ -36,7 +35,7 @@ def saver(sub_id):
         # Also collect Compilation / Runtime Error for Public testcases
 
     # Delete the file after reading
-    os.remove(os.path.join(MONITOR_DIRECTORY, 'sub_run_' + subid + '.txt'))
+    os.remove(os.path.join(MONITOR_DIRECTORY, 'sub_run_' + sub_id + '.txt'))
 
     problem = models.Problem.objects.get(pk=problem)
     s = models.Submission.objects.get(pk=submission)
@@ -59,10 +58,12 @@ def saver(sub_id):
     s.save()
     return True
 
+
 # Watcher loop
 while True:
     if len(LS) < REFRESH_LS_TRIGGER:
-        LS = [os.path.join(MONITOR_DIRECTORY, sub_file) for sub_file in os.listdir(MONITOR_DIRECTORY)]
+        LS = [os.path.join(MONITOR_DIRECTORY, sub_file)
+              for sub_file in os.listdir(MONITOR_DIRECTORY)]
         LS.sort(key=os.path.getctime)
     sub_file = LS[0]  # The first file submission-wise
     sub_id = os.path.basename(sub_file)[8:-4]  # This is the submission ID

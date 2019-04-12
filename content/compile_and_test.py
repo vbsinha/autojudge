@@ -19,7 +19,7 @@ with open(args.submission_config) as f:
 # Retain the first 3 lines alone
 call(['rm', args.submission_config])
 with open(args.submission_config, "w+") as stat_file:
-    stat_file.write("{}\n{}\n{}\n".format(sub_info[0], sub_info[1], sub_info[2]))
+    stat_file.write("{}\n{}\n".format(sub_info[0], sub_info[1]))
 
 # First compile
 ret = call(['./main_compiler.sh', sub_info[0], 'submission_{}{}'.format(sub_info[1], sub_info[2])])
