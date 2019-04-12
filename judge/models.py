@@ -229,8 +229,9 @@ class SubmissionTestCase(models.Model):
 
     # Possible Verdicts
     VERDICT = (
-        ('P', 'Pass'),
         ('F', 'Fail'),
+        ('P', 'Pass'),
+        ('R', 'Running'),
         ('TE', 'TLE'),
         ('ME', 'OOM'),
         ('CE', 'COMPILATION_ERROR'),

@@ -162,37 +162,9 @@ def process_solution(problem: str, participant: str, file_type, submission_file,
         for testcase in testcases:
             f.write(testcase.pk)
 
-    # Call Docker here with the submission_id
-    # subprocess.run(['docker', 'run', '-v', os.path.join(os.path.dirname(os.getcwd()), 'content')+':'+'/app/', ... ])
-    # Store Docker's reply in verdict, memory and time lists
-
-    # Based on the result populate SubmsissionTestCase table and return the result
-    with open(os.path.join('content', 'tmp', 'sub_run_'+id+'.txt'), 'r') as f:
-        # Assumed format to sub_run_ID.txt file
-        # TESTCASEID VERDICT TIME MEMORY
-        # Read the output into verdict, memory and time.
-        verdict, time, memory = [], [], []
-        for line in f:
-            sep = line.split()
-            verdict.append(sep[1])
-            memory.append(sep[2])
-            time.append(sep[3])
-        # Also collect Compilation / Runtime Error for Public testcases
-
-    # Delete the file after reading
-    os.remove(os.path.join('content', 'tmp', 'sub_run_'+id+'.txt'))
-
-    score_recieved = 0
-    max_score = problem.max_score
     for i in range(len(testcases)):
-        if not testcases[i].public:
-            if verdict == 'P':
-                score_recieved += max_score
-            st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict=verdict[i],
-                                           memory_taken=memory[i], timetaken=time[i])
-            st.save()
+        st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict='R',
+                                       memory_taken=0, timetaken=0)
+        st.save()
 
-    s.judge_score = score_recieved
-    s.final_score = s.judge_score + s.ta_score + s.linter_score
-    s.save()
-    return verdict, memory, time
+    return (True, None)
