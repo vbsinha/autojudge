@@ -71,10 +71,12 @@ run_submission() {
   #     - If no, return the appropriate errors
   #     - If yes, re-run again to get the final submission output
   #       This is then checked normally using a diff
+  #       The status is appended to the verdict_string along with the memory and time consumed
+  VERDICT=""
   if [ "$TIMEOUT" = true ] ; then
-    return $TLE
+    VERDICT=$(error_code_to_string $TLE ${TID})
   elif [ "$MEMOUT" = true ] ; then
-    return $OOM
+    VERDICT=$(error_code_to_string $OOM ${TID})
   else
     clean_generated_output ${SID} ${TID}  # Delete the generated file to prevent any mismatch
     ${SUB_FDR}/submission_${SID} < ${TEST_FDR}/inputfile_${TID}.txt > ${TMP}/sub_output_${SID}_${TID}.txt 2> /dev/null
@@ -82,16 +84,18 @@ run_submission() {
     case "$?" in
       "0")
           validate_submission_output ${TEST_FDR}/outputfile_${TID}.txt ${TMP}/sub_output_${SID}_${TID}.txt
-          return $?
+          VERDICT=$(error_code_to_string $? ${TID})
           ;;
       "1")
-          return $RE
+          VERDICT=$(error_code_to_string $RE ${TID})
           ;;
       *)
-          return $NA
+          VERDICT=$(error_code_to_string $NA ${TID})
           ;;
     esac
   fi
+  VERDICT="${VERDICT} ${WCTIME} ${MAXVM}"
+  echo ${VERDICT}
 }
 
 clean_generated_output() {
@@ -131,23 +135,20 @@ error_code_to_string() {
         ;;
   esac
 
-  echo "$TESTCASE_ID: $STRCODE"
+  echo "$TESTCASE_ID $STRCODE"
 }
 
 # To be set from the env, in seconds
 TIMELIMIT=1
 
 # To be set from the env, in MB
-MEMLIMIT=100
+MEMLIMIT=26
 
 # Iterate over all testcase IDs passed as command line arguments
 for TESTCASE_ID in "$@";
   do
     # Run the submission using run_submission
-    run_submission ${SUB_ID} ${TESTCASE_ID} ${TIMELIMIT} ${MEMLIMIT}
-
-    # The return value of the function will determine what goes into the submission status
-    error_code_to_string $? ${TESTCASE_ID} >> submission_${SUB_ID}_status.txt
+    run_submission ${SUB_ID} ${TESTCASE_ID} ${TIMELIMIT} ${MEMLIMIT} >> ${TMP}/sub_run_${SUB_ID}.txt
 
     # Remove the generated output files
     clean_generated_output ${SUB_ID} ${TESTCASE_ID}

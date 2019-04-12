@@ -17,16 +17,16 @@ with open(args.submission_config) as f:
     sub_info = [x[:-1] for x in f.readlines()]
 
 # Remove this file once used
-# call(['rm', args.submission_config])
+call(['rm', args.submission_config])
 
 # First compile
 ret = call(['./main_compiler.sh', sub_info[0], 'submission_{}{}'.format(sub_info[1], sub_info[2])])
 
 # If compilation fails, end this script here
 if ret != 0:
-    with open("submission_{}_status.txt".format(sub_info[1]), "w") as stat_file:
+    with open(args.submission_config, "w") as stat_file:
         for testcase_id in sub_info[3:]:
-            stat_file.write("{}: {}\n".format(testcase_id, 'CE' if ret == 1 else 'NA'))
+            stat_file.write("{} {} 0 0\n".format(testcase_id, 'CE' if ret == 1 else 'NA'))
 else:
     call(['./main_tester.sh'] + sub_info[0:2] + sub_info[3:])
     call(['rm', 'submissions/submission_{}'.format(sub_info[1])])  # remove the executable
