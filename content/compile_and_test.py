@@ -26,7 +26,7 @@ ret = call(['./main_compiler.sh', sub_info[0], 'submission_{}{}'.format(sub_info
 
 # If compilation fails, end this script here
 if ret != 0:
-    with open(args.submission_config, "w+") as stat_file:
+    with open(args.submission_config, "a") as stat_file:
         for testcase_id in sub_info[3:]:
             stat_file.write("{} {} 0 0\n".format(testcase_id, 'CE' if ret == 1 else 'NA'))
 else:
