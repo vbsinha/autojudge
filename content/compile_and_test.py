@@ -16,15 +16,17 @@ args = parser.parse_args()
 with open(args.submission_config) as f:
     sub_info = [x[:-1] for x in f.readlines()]
 
-# Remove this file once used
+# Retain the first 3 lines alone
 call(['rm', args.submission_config])
+with open(args.submission_config, "w+") as stat_file:
+    stat_file.write("{}\n{}\n{}\n".format(sub_info[0], sub_info[1], sub_info[2]))
 
 # First compile
 ret = call(['./main_compiler.sh', sub_info[0], 'submission_{}{}'.format(sub_info[1], sub_info[2])])
 
 # If compilation fails, end this script here
 if ret != 0:
-    with open(args.submission_config, "w") as stat_file:
+    with open(args.submission_config, "w+") as stat_file:
         for testcase_id in sub_info[3:]:
             stat_file.write("{} {} 0 0\n".format(testcase_id, 'CE' if ret == 1 else 'NA'))
 else:
