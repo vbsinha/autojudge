@@ -1,6 +1,7 @@
 import subprocess
 import traceback
 import os
+from uuid import uuid4
 
 from . import models
 
@@ -74,7 +75,7 @@ def process_problem(code: str, name: str, statement: str, input_format: str, out
                             os.path.join('content', 'problems', p.code, 'compilation_script.sh')])
         if cp_test_script is True:
             # Copy the default test_script if the user did not upload custom
-            subprocess.run(['cp', os.path.join('judge', test_script), 
+            subprocess.run(['cp', os.path.join('judge', test_script),
                             os.path.join('content', 'problems', p.code, 'test_script.sh')])
 
         return (True, None)
@@ -120,42 +121,70 @@ def process_person(email, rank):
         return (False, e.__str__)
 
 
-def process_testcase(problem, ispublic, inputfile, outputfile):
+def process_testcase(problem: str, ispublic: bool, inputfile, outputfile):
+    """
+    Process a new Testcase
+    problem is the 'code' (pk) of the problem.
+    """
     try:
         problem = models.Problem.objects.get(pk=problem)
         t = problem.testcase_set.create(
             public=ispublic, inputfile=inputfile, outputfile=outputfile)
         t.save()
-        return True
+        return (True, None)
     except Exception as e:
-        print(e)
         traceback.print_exc()
-        return False
+        return (False, e.__str__)
 
 
-def process_solution(problem, participant, file_type, submission_file, timestamp):
-    # TODO Handle Exceptions here
-    problem = models.Problem.objects.get(pk=problem)
-    participant = models.Person.objects.get(pk=participant)
-    s = problem.submission_set.create(participant=participant, file_type=file_type,
-                                      submission_file=submission_file, timestamp=timestamp)
-    s.save()
+def process_solution(problem: str, participant, file_type, submission_file, timestamp):
+    """
+    Process a new Solution
+    problem is the 'code' (pk) of the problem. participant is email of the participant
+    """
+    try:
+        problem = models.Problem.objects.get(pk=problem)
+        participant = models.Person.objects.get(email=participant)
+        s = problem.submission_set.create(participant=participant, file_type=file_type,
+                                          submission_file=submission_file, timestamp=timestamp)
+        s.save()
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
 
     testcases = models.TestCase.objects.get(problem=problem)
-    sub_id = s.pk
-    prob_id = problem.id
-    testcase_ids = []
-    for testcase in testcases:
-        testcase_ids.append(testcase.pk)
 
-    # Call Docker here with the prob_id, sub_id, testcase_id
+    id = uuid4().hex
+    with open(os.path.join('content', 'tmp', 'sub_run_'+id+'.txt'), 'w') as f:
+        f.write(problem.pk)
+        f.write(s.pk)
+        f.write(file_type)
+        for testcase in testcases:
+            f.write(testcase.pk)
+
+    # Call Docker here with the submission_id
     # Store Docker's reply in verdict, memory and time lists
 
     # Based on the result populate SubmsissionTestCase table and return the result
+    with open(os.path.join('content', 'tmp', 'sub_run_'+id+'.txt'), 'r') as f:
+        # Assumed format to sub_run_ID.txt file
+        # TESTCASEID VERDICT TIME MEMORY
+        # Read the output into verdict, memory and time.
+        verdict, time, memory = [], [], []
+        for line in f:
+            sep = line.split()
+            verdict.append(sep[1])
+            memory.append(sep[2])
+            time.append(sep[3])
+        # Also collect Compilation / Runtime Error for Public testcases
 
-    for i in range(len(testcase_ids)):
-        st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict=verdict[i],
-                                       memory_taken=memory[i], timetaken=time[i])
-        st.save()
+    # Delete the file after reading
+    os.remove(os.path.join('content', 'tmp', 'sub_run_'+id+'.txt'))
+
+    for i in range(len(testcases)):
+        if not testcases[i].public:
+            st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict=verdict[i],
+                                           memory_taken=memory[i], timetaken=time[i])
+            st.save()
 
     return verdict, memory, time
