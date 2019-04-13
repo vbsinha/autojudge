@@ -223,9 +223,43 @@ def get_submission_status(person: str, problem: str, submission: str):
     """
     Get the current status of the submission.
     Pass email as person and problem code as problem to get a tuple
-    ({SubmissionID: [(TestcaseID, Verdict, Time_taken, Memory_taken, Timestamp)]},
-     {SubmissionID: (judge_score, ta_score, linter_score, final_score)})s
+    In case the submission is None:
+    ({SubmissionID: [(TestcaseID, Verdict, Time_taken, Memory_taken, ispublic)]},
+     {SubmissionID: (judge_score, ta_score, linter_score, final_score, timestamp, file_type)})
     The tuple consists of 2 dictionaries:
-        First list ... TODO
+        First dictionary: Key: Submission ID
+                          Value: list of (TestcaseID, Verdict, Time_taken, Memory_taken, ispublic)
+        Second dictionary: Key: Submission ID
+                           Value: tuple: (judge_score, ta_score, linter_score, final_score, timestamp, file_type)
+    In case submission ID is provided:
+    Returns: The same dictionaries in a tuple but having only 1 key in both
     """
-    pass
+    try:
+        if submission is None:
+            p = models.Person.objects.get(email=person)
+            q = models.Problem.objects.get(code=problem)
+            s = models.Submission.objects.filter(
+                participant=p, problem=q).order_by('-timestamp')
+            t = models.TestCase.objects.filter(problem=p)
+        else:
+            submission = models.Submission.objects.get(pk=submission)
+            t = models.TestCase.objects.filter(problem=submission.problem)
+            s = [submission]
+
+        verdict_dict = dict()
+        score_dict = dict()
+
+        for submission in s:
+            score_dict[submission.pk] = (submission.judge_score, submission.ta_score,
+                                         submission.linter_score, submission.final_score,
+                                         submission.timestamp, submission.file_type)
+            verdict_dict[submission.pk] = []
+            for testcase in t:
+                st = models.SubmissionTestCase.objects.get(
+                    submission=submission, testcase=testcase)
+                verdict_dict[submission.pk].append(
+                    (testcase.pk, st.verdict, st.time_taken, st.memory_taken, testcase.public))
+        return (verdict_dict, score_dict)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
