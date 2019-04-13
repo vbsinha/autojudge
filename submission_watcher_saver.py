@@ -65,19 +65,21 @@ while True:
         LS = [os.path.join(MONITOR_DIRECTORY, sub_file)
               for sub_file in os.listdir(MONITOR_DIRECTORY)]
         LS.sort(key=os.path.getctime)
-    sub_file = LS[0]  # The first file submission-wise
-    sub_id = os.path.basename(sub_file)[8:-4]  # This is the submission ID
 
-    # Move to content
-    cur_dir = os.getcwd()
-    os.chdir(os.path.join(cur_dir, 'content'))
+    if len(LS) > 0:
+        sub_file = LS[0]  # The first file submission-wise
+        sub_id = os.path.basename(sub_file)[8:-4]  # This is the submission ID
 
-    # Run docker image
-    call(['docker', 'run', '--rm',
-          '-v', '$(pwd):/app', '-e', 'SUB_ID={}'.format(sub_id), DOCKER_IMAGE_NAME])
+        # Move to content
+        cur_dir = os.getcwd()
+        os.chdir(os.path.join(cur_dir, 'content'))
 
-    # Come back to parent directory
-    os.chdir(cur_dir)
+        # Run docker image
+        call(['docker', 'run', '--rm', '-v', '{}:/app'.format(os.getcwd()),
+              '-e', 'SUB_ID={}'.format(sub_id), DOCKER_IMAGE_NAME])
 
-    saver(sub_id)
-    LS.remove(sub_file)
+        # Come back to parent directory
+        os.chdir(cur_dir)
+
+        saver(sub_id)
+        LS.remove(sub_file)

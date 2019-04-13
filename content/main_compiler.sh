@@ -2,7 +2,7 @@
 
 ####################################################
 # Using this script
-#   ./compilation_script.sh $PROB_CODE $SUB_FILE
+#   ./main_compiler.sh $PROB_CODE $SUB_FILE
 # where
 # - $PROB_CODE is the problem code of the problem
 # - $SUB_FILE is the file that is submitted
