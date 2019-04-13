@@ -2,7 +2,7 @@
 
 ########################################################
 # Using this script
-#    ./test_script.sh $PROB_CODE $SUB_ID [$TESTCASE_ID]+
+#    ./main_tester.sh $PROB_CODE $SUB_ID [$TESTCASE_ID]+
 # where
 # - $PROB_CODE is the problem code
 # - $SUB_ID is the submission ID
@@ -73,13 +73,14 @@ run_submission() {
   #       This is then checked normally using a diff
   #       The status is appended to the verdict_string along with the memory and time consumed
   VERDICT=""
+  ERR_MSG=""
   if [ "$TIMEOUT" = true ] ; then
     VERDICT=$(error_code_to_string $TLE ${TID})
   elif [ "$MEMOUT" = true ] ; then
     VERDICT=$(error_code_to_string $OOM ${TID})
   else
     clean_generated_output ${SID} ${TID}  # Delete the generated file to prevent any mismatch
-    ${SUB_FDR}/submission_${SID} < ${TEST_FDR}/inputfile_${TID}.txt > ${TMP}/sub_output_${SID}_${TID}.txt 2> /dev/null
+    ERR_MSG=$({ ${SUB_FDR}/submission_${SID} < ${TEST_FDR}/inputfile_${TID}.txt > ${TMP}/sub_output_${SID}_${TID}.txt; } 2>&1)
 
     case "$?" in
       "0")
@@ -94,7 +95,7 @@ run_submission() {
           ;;
     esac
   fi
-  VERDICT="${VERDICT} ${WCTIME} ${MAXVM}"
+  VERDICT="${VERDICT} ${WCTIME} ${MAXVM} \"${ERR_MSG}\""
   echo ${VERDICT}
 }
 
