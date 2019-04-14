@@ -95,7 +95,7 @@ run_submission() {
           ;;
     esac
   fi
-  VERDICT="${VERDICT} ${WCTIME} ${MAXVM} \"${ERR_MSG}\""
+  VERDICT="${VERDICT} ${WCTIME} ${MAXVM} ${ERR_MSG}"
   echo ${VERDICT}
 }
 

@@ -21,36 +21,38 @@ def saver(sub_id):
         # Assumed format to sub_run_ID.txt file
         # PROBLEM_CODE
         # SUBMISSION_ID
-        # TESTCASEID VERDICT TIME MEMORY
+        # TESTCASEID VERDICT TIME MEMORY MESSAGE
         # Read the output into verdict, memory and time.
         problem = f.readline()
         submission = f.readline()
-        testcase_id, verdict, time, memory = [], [], [], []
+        testcase_id, verdict, time, memory, msg = [], [], [], [], []
         for line in f:
-            sep = line.split()
+            sep = line.split(' ', maxsplit=4)
             testcase_id.append(sep[0])
             verdict.append(sep[1])
             memory.append(sep[2])
             time.append(sep[3])
-        # Also collect Compilation / Runtime Error for Public testcases
+            msg.append(sep[4])
 
     # Delete the file after reading
     os.remove(os.path.join(MONITOR_DIRECTORY, 'sub_run_' + sub_id + '.txt'))
 
     problem = models.Problem.objects.get(pk=problem)
     s = models.Submission.objects.get(pk=submission)
-    # testcases = models.TestCase.objects.get(problem=problem)
 
     score_received = 0
     max_score = problem.max_score
     for i in range(len(testcase_id)):
         if verdict[i] == 'P':
             score_received += max_score
+        # TODO: Add message attribute for SubmissionTestCase
         st = models.SubmissionTestCase.objects.get(submission=submission,
                                                    testcase=testcase_id[i])
         st.verdict = verdict[i]
         st.memory_taken = memory[i]
         st.time_taken = time[i]
+        if models.TestCase.objects.get(pk=testcase_id[i]).public:
+            st.message = msg[i] if len(msg[i]) < 1000 else msg[i][:1000] + '\\nMessage Truncated'
         st.save()
 
     s.judge_score = score_received

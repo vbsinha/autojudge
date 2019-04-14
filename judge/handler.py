@@ -155,7 +155,7 @@ def process_solution(problem: str, participant: str, file_type, submission_file,
     testcases = models.TestCase.objects.get(problem=problem)
 
     id = uuid4().hex
-    with open(os.path.join('content', 'tmp', 'sub_run_'+id+'.txt'), 'w') as f:
+    with open(os.path.join('content', 'tmp', 'sub_run_' + id + '.txt'), 'w') as f:
         f.write(problem.pk)
         f.write(s.pk)
         f.write(file_type)

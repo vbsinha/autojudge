@@ -30,10 +30,10 @@ except subprocess.CalledProcessError as e:  # If compilation fails, end this scr
     error_msg = e.output.decode('utf-8').replace('\n', '\\n')
     with open(args.submission_config, "a") as stat_file:
         for testcase_id in sub_info[3:]:
-            stat_file.write("{} {} 0 0 \"{}\"\n"
+            stat_file.write("{} {} 0 0 {}\n"
                             .format(testcase_id,
                                     'CE' if e.returncode == 1 else 'NA',
                                     error_msg))
 else:
-    subprocess.call(['./main_tester.sh'] + sub_info[0:2] + sub_info[3:])  # run the tests        
-    subprocess.call(['rm', 'submissions/submission_{}'.format(sub_info[1])])  # remove the executable
+    subprocess.call(['./main_tester.sh'] + sub_info[0:2] + sub_info[3:])  # run tests
+    subprocess.call(['rm', 'submissions/submission_{}'.format(sub_info[1])])  # remove executable
