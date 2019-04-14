@@ -9,7 +9,7 @@ FAILURE=1
 compile_cpp() {
   SUBPATH=$1
   EXPATH=$2
-  if g++ $SUBPATH -o $EXPATH 2> /dev/null ; then
+  if g++ $SUBPATH -o $EXPATH ; then
     return $SUCCESS
   else
     return $FAILURE

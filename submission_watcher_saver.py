@@ -21,25 +21,24 @@ def saver(sub_id):
         # Assumed format to sub_run_ID.txt file
         # PROBLEM_CODE
         # SUBMISSION_ID
-        # TESTCASEID VERDICT TIME MEMORY
+        # TESTCASEID VERDICT TIME MEMORY MESSAGE
         # Read the output into verdict, memory and time.
         problem = f.readline()
         submission = f.readline()
-        testcase_id, verdict, time, memory = [], [], [], []
+        testcase_id, verdict, time, memory, msg = [], [], [], [], []
         for line in f:
-            sep = line.split()
+            sep = line.split(' ', maxsplit=4)
             testcase_id.append(sep[0])
             verdict.append(sep[1])
             memory.append(sep[2])
             time.append(sep[3])
-        # Also collect Compilation / Runtime Error for Public testcases
+            msg.append(sep[4])
 
     # Delete the file after reading
     os.remove(os.path.join(MONITOR_DIRECTORY, 'sub_run_' + sub_id + '.txt'))
 
     problem = models.Problem.objects.get(pk=problem)
     s = models.Submission.objects.get(pk=submission)
-    # testcases = models.TestCase.objects.get(problem=problem)
 
     score_received = 0
     max_score = problem.max_score
@@ -51,6 +50,8 @@ def saver(sub_id):
         st.verdict = verdict[i]
         st.memory_taken = memory[i]
         st.time_taken = time[i]
+        if models.TestCase.objects.get(pk=testcase_id[i]).public:
+            st.message = msg[i] if len(msg[i]) < 1000 else msg[i][:1000] + '\\nMessage Truncated'
         st.save()
 
     s.judge_score = score_received
@@ -65,19 +66,21 @@ while True:
         LS = [os.path.join(MONITOR_DIRECTORY, sub_file)
               for sub_file in os.listdir(MONITOR_DIRECTORY)]
         LS.sort(key=os.path.getctime)
-    sub_file = LS[0]  # The first file submission-wise
-    sub_id = os.path.basename(sub_file)[8:-4]  # This is the submission ID
 
-    # Move to content
-    cur_dir = os.getcwd()
-    os.chdir(os.path.join(cur_dir, 'content'))
+    if len(LS) > 0:
+        sub_file = LS[0]  # The first file submission-wise
+        sub_id = os.path.basename(sub_file)[8:-4]  # This is the submission ID
 
-    # Run docker image
-    call(['docker', 'run', '--rm',
-          '-v', '$(pwd):/app', '-e', 'SUB_ID={}'.format(sub_id), DOCKER_IMAGE_NAME])
+        # Move to content
+        cur_dir = os.getcwd()
+        os.chdir(os.path.join(cur_dir, 'content'))
 
-    # Come back to parent directory
-    os.chdir(cur_dir)
+        # Run docker image
+        call(['docker', 'run', '--rm', '-v', '{}:/app'.format(os.getcwd()),
+              '-e', 'SUB_ID={}'.format(sub_id), DOCKER_IMAGE_NAME])
 
-    saver(sub_id)
-    LS.remove(sub_file)
+        # Come back to parent directory
+        os.chdir(cur_dir)
+
+        saver(sub_id)
+        LS.remove(sub_file)
