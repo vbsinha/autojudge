@@ -224,11 +224,11 @@ def get_submission_status(person: str, problem: str, submission: str):
     Get the current status of the submission.
     Pass email as person and problem code as problem to get a tuple
     In case the submission is None:
-    ({SubmissionID: [(TestcaseID, Verdict, Time_taken, Memory_taken, ispublic)]},
+    ({SubmissionID: [(TestcaseID, Verdict, Time_taken, Memory_taken, ispublic, message)]},
      {SubmissionID: (judge_score, ta_score, linter_score, final_score, timestamp, file_type)})
     The tuple consists of 2 dictionaries:
         First dictionary: Key: Submission ID
-                          Value: list of (TestcaseID, Verdict, Time_taken, Memory_taken, ispublic)
+                          Value: list of (TestcaseID, Verdict, Time_taken, Memory_taken, ispublic, message)
         Second dictionary: Key: Submission ID
                            Value: tuple: (judge_score, ta_score, linter_score, final_score, timestamp, file_type)
     In case submission ID is provided:
@@ -257,8 +257,8 @@ def get_submission_status(person: str, problem: str, submission: str):
             for testcase in t:
                 st = models.SubmissionTestCase.objects.get(
                     submission=submission, testcase=testcase)
-                verdict_dict[submission.pk].append(
-                    (testcase.pk, st.verdict, st.time_taken, st.memory_taken, testcase.public))
+                verdict_dict[submission.pk].append((testcase.pk, st.verdict, st.time_taken,
+                                                    st.memory_taken, testcase.public, st.message))
         return (verdict_dict, score_dict)
     except Exception as e:
         traceback.print_exc()
