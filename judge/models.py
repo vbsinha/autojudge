@@ -253,6 +253,9 @@ class SubmissionTestCase(models.Model):
     # Time taken by the Submission on this TestCase
     time_taken = models.DurationField()
 
+    # Compiler Message
+    message = models.TextField(default='')
+
 
 class Comment(models.Model):
     """
