@@ -253,7 +253,7 @@ class SubmissionTestCase(models.Model):
     # Time taken by the Submission on this TestCase
     time_taken = models.DurationField()
 
-    # Compiler Message
+    # Message placeholder, used for erroneous submissions
     message = models.TextField(default='')
 
 

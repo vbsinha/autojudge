@@ -45,7 +45,6 @@ def saver(sub_id):
     for i in range(len(testcase_id)):
         if verdict[i] == 'P':
             score_received += max_score
-        # TODO: Add message attribute for SubmissionTestCase
         st = models.SubmissionTestCase.objects.get(submission=submission,
                                                    testcase=testcase_id[i])
         st.verdict = verdict[i]
