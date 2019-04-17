@@ -137,7 +137,7 @@ def process_testcase(problem: str, ispublic: bool, inputfile, outputfile):
         return (False, e.__str__)
 
 
-def process_solution(problem: str, participant, file_type, submission_file, timestamp):
+def process_solution(problem: str, participant: str, file_type, submission_file, timestamp: str):
     """
     Process a new Solution
     problem is the 'code' (pk) of the problem. participant is email of the participant
@@ -155,36 +155,120 @@ def process_solution(problem: str, participant, file_type, submission_file, time
     testcases = models.TestCase.objects.get(problem=problem)
 
     id = uuid4().hex
-    with open(os.path.join('content', 'tmp', 'sub_run_'+id+'.txt'), 'w') as f:
+    with open(os.path.join('content', 'tmp', 'sub_run_' + id + '.txt'), 'w') as f:
         f.write(problem.pk)
         f.write(s.pk)
         f.write(file_type)
         for testcase in testcases:
             f.write(testcase.pk)
 
-    # Call Docker here with the submission_id
-    # Store Docker's reply in verdict, memory and time lists
-
-    # Based on the result populate SubmsissionTestCase table and return the result
-    with open(os.path.join('content', 'tmp', 'sub_run_'+id+'.txt'), 'r') as f:
-        # Assumed format to sub_run_ID.txt file
-        # TESTCASEID VERDICT TIME MEMORY
-        # Read the output into verdict, memory and time.
-        verdict, time, memory = [], [], []
-        for line in f:
-            sep = line.split()
-            verdict.append(sep[1])
-            memory.append(sep[2])
-            time.append(sep[3])
-        # Also collect Compilation / Runtime Error for Public testcases
-
-    # Delete the file after reading
-    os.remove(os.path.join('content', 'tmp', 'sub_run_'+id+'.txt'))
-
-    for i in range(len(testcases)):
-        if not testcases[i].public:
-            st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict=verdict[i],
-                                           memory_taken=memory[i], timetaken=time[i])
+    try:
+        for i in range(len(testcases)):
+            st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict='R',
+                                           memory_taken=0, timetaken=0)
             st.save()
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
 
-    return verdict, memory, time
+    return (True, None)
+
+
+def add_person_to_contest(person: str, contest: str, permission: bool):
+    """
+    Add the relation between Person and Contest
+    person is the email of the person
+    contest is the **name** of the contest and not the pk
+    permission is False if participant and True is poster
+    """
+    try:
+        p = models.Person.objects.get(email=person)
+        c = models.Contest.objects.get(name=contest)
+        cp = p.contestperson_set.create(contest=c, role=permission)
+        cp.save()
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
+
+
+def get_personcontest_permission(person: str, contest: str):
+    """
+    Determine the relation between Person and Contest
+    person is the email of the person
+    contest is the **name** of the contest and not the pk
+    returns False if participant and True is poster None if neither
+    """
+    try:
+        p = models.Problem.objects.get(email=person)
+        c = models.Contest.objects.get(name=contest)
+        cp = models.ContestPerson.objects.get(person=p, contest=c)
+        return cp.role
+    except models.ContestPerson.DoesNotExist:
+        q_set = models.ContestPerson.filter(name=contest, role=False)
+        return (False if len(q_set) == 0 else None)
+
+
+def get_personproblem_permission(person: str, problem: str):
+    """
+    Determine the relation between Person and Problem
+    person is the email of the person
+    problem is the code(pk) of the problem
+    returns False if participant and True is poster None if neither
+    """
+    c = models.ContestProblem.objects.get(problem=problem)
+    return get_personcontest_permission(person, c.name)
+
+
+def get_submission_status(person: str, problem: str, submission: str):
+    """
+    Get the current status of the submission.
+    Pass email as person and problem code as problem to get a tuple
+    In case the submission is None, returns:
+    (True, ({SubmissionID: [(TestcaseID, Verdict, Time_taken, Memory_taken, ispublic, message)]},
+     {SubmissionID: (judge_score, ta_score, linter_score, final_score, timestamp, file_type)}))
+    The tuple consists of 2 dictionaries:
+        First dictionary: Key: Submission ID
+                          Value: list of (TestcaseID, Verdict, Time_taken,
+                                          Memory_taken, ispublic, message)
+        Second dictionary: Key: Submission ID
+                           Value: tuple: (judge_score, ta_score, linter_score,
+                                          final_score, timestamp, file_type)
+    In case submission ID is provided:
+    The passed parameters person and problem are ignored and so None is accepted.
+    Returns: The same dictionaries in a tuple but having only 1 key in both
+    """
+    try:
+        if submission is None:
+            p = models.Person.objects.get(email=person)
+            q = models.Problem.objects.get(code=problem)
+            s = models.Submission.objects.filter(
+                participant=p, problem=q).order_by('-timestamp')
+            t = models.TestCase.objects.filter(problem=p)
+        else:
+            submission = models.Submission.objects.get(pk=submission)
+            t = models.TestCase.objects.filter(problem=submission.problem)
+            s = [submission]
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
+
+    verdict_dict = dict()
+    score_dict = dict()
+
+    for submission in s:
+        score_dict[submission.pk] = (submission.judge_score, submission.ta_score,
+                                     submission.linter_score, submission.final_score,
+                                     submission.timestamp, submission.file_type)
+        verdict_dict[submission.pk] = []
+        try:
+            for testcase in t:
+                st = models.SubmissionTestCase.objects.get(
+                    submission=submission, testcase=testcase)
+                verdict_dict[submission.pk].append((testcase.pk, st.verdict, st.time_taken,
+                                                    st.memory_taken, testcase.public, st.message))
+        except Exception as e:
+            # In case Exception occurs for any submission, then
+            # that submission's verdict_dict is left empty.
+            # This is done to allow the other submissions to give output.
+            traceback.print_exc()
+    return (True, (verdict_dict, score_dict))
