@@ -29,7 +29,7 @@ def process_contest(name, start_datetime, end_datetime, penalty):
         return (False, e.__str__)
 
 
-def process_problem(code: str, name: str, statement: str, input_format: str, output_format: str,
+def process_problem(code: str, contest: str, name: str, statement: str, input_format: str, output_format: str,
                     difficulty: int, time_limit: int, memory_limit: int, file_format: str,
                     start_code, max_score: int, compilation_script, test_script, setter_solution):
     """
@@ -56,7 +56,8 @@ def process_problem(code: str, name: str, statement: str, input_format: str, out
     file_format = '.py,.cpp,.c' if file_format is None else file_format
 
     try:
-        p = models.Problem(code=code, name=name, statement=statement, input_format=input_format,
+        c = models.Problem(pk=contest)
+        p = models.Problem(code=code, contest=c, name=name, statement=statement, input_format=input_format,
                            output_format=output_format, difficulty=difficulty,
                            time_limit=time_limit, memory_limit=memory_limit,
                            file_format=file_format, start_code=start_code, max_score=max_score,
@@ -110,6 +111,12 @@ def process_person(email, rank):
     Process a new Person
     Nullable Fields: rank
     """
+    try:
+        models.Person.objects.get(email=email)
+        return (True, None)
+    except models.Problem.DoesNotExist:
+        pass
+    
     if rank is None:
         rank = 10
     try:
@@ -140,7 +147,7 @@ def process_testcase(problem: str, ispublic: bool, inputfile, outputfile):
 def process_solution(problem: str, participant: str, file_type, submission_file, timestamp: str):
     """
     Process a new Solution
-    problem is the 'code' (pk) of the problem. participant is email of the participant
+    problem is the 'code' (pk) of the problem. participant is email(pk) of the participant
     """
     try:
         problem = models.Problem.objects.get(pk=problem)
@@ -178,12 +185,12 @@ def add_person_to_contest(person: str, contest: str, permission: bool):
     """
     Add the relation between Person and Contest
     person is the email of the person
-    contest is the **name** of the contest and not the pk
+    contest is the pk of the contest
     permission is False if participant and True is poster
     """
     try:
         p = models.Person.objects.get(email=person)
-        c = models.Contest.objects.get(name=contest)
+        c = models.Contest.objects.get(pk=contest)
         cp = p.contestperson_set.create(contest=c, role=permission)
         cp.save()
     except Exception as e:
@@ -195,12 +202,12 @@ def get_personcontest_permission(person: str, contest: str):
     """
     Determine the relation between Person and Contest
     person is the email of the person
-    contest is the **name** of the contest and not the pk
+    contest is the pk of the contest
     returns False if participant and True is poster None if neither
     """
     try:
-        p = models.Problem.objects.get(email=person)
-        c = models.Contest.objects.get(name=contest)
+        p = models.Person.objects.get(email=person)
+        c = models.Contest.objects.get(pk=contest)
         cp = models.ContestPerson.objects.get(person=p, contest=c)
         return cp.role
     except models.ContestPerson.DoesNotExist:
@@ -215,8 +222,10 @@ def get_personproblem_permission(person: str, problem: str):
     problem is the code(pk) of the problem
     returns False if participant and True is poster None if neither
     """
-    c = models.ContestProblem.objects.get(problem=problem)
-    return get_personcontest_permission(person, c.name)
+    p = models.Problem.objects.get(pk=problem)
+    if p.content is None:
+        return False
+    return get_personcontest_permission(person, p.contest)
 
 
 def get_submission_status(person: str, problem: str, submission: str):
