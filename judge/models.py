@@ -38,6 +38,10 @@ class Contest(models.Model):
     # Penalty for late-submission
     penalty = models.DecimalField(max_digits=4, decimal_places=3, default=0.0)
 
+    # Is the contest public
+    # In public Contests everyone except posters can participate
+    public = models.BooleanField()
+
     def __str__(self):
         return self.name
 
@@ -109,7 +113,7 @@ class Person(models.Model):
     """
 
     # Email ID of the Person
-    email = models.EmailField(unique=True, primary_key=True)
+    email = models.EmailField(primary_key=True)
 
     # Rank of the Person
     rank = models.PositiveIntegerField(default=10)
