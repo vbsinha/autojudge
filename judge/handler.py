@@ -6,7 +6,7 @@ from uuid import uuid4
 from . import models
 
 
-def process_contest(name, start_datetime, end_datetime, penalty):
+def process_contest(name: str, start_datetime, end_datetime, penalty: float, public: bool):
     """
     Process a New Contest
     Only penalty can be None in which case Penalty will be set to 0
@@ -19,7 +19,7 @@ def process_contest(name, start_datetime, end_datetime, penalty):
 
     try:
         c = models.Contest(name=name, start_datetime=start_datetime,
-                           end_datetime=end_datetime, penalty=penalty)
+                           end_datetime=end_datetime, penalty=penalty, public=public)
         c.save()
         # Successfully added to Database
         return (True, None)
@@ -29,9 +29,10 @@ def process_contest(name, start_datetime, end_datetime, penalty):
         return (False, e.__str__)
 
 
-def process_problem(code: str, contest: str, name: str, statement: str, input_format: str, output_format: str,
-                    difficulty: int, time_limit: int, memory_limit: int, file_format: str,
-                    start_code, max_score: int, compilation_script, test_script, setter_solution):
+def process_problem(code: str, contest: str, name: str, statement: str, input_format: str,
+                    output_format: str, difficulty: int, time_limit: int, memory_limit: int,
+                    file_format: str, start_code, max_score: int, compilation_script, test_script,
+                    setter_solution):
     """
     Process a new Problem
     Nullable [None-able] Fields: start_code, compilation_script, test_script, file_format
@@ -57,9 +58,9 @@ def process_problem(code: str, contest: str, name: str, statement: str, input_fo
 
     try:
         c = models.Contest.objects.get(pk=contest)
-        p = models.Problem(code=code, contest=c, name=name, statement=statement, input_format=input_format,
-                           output_format=output_format, difficulty=difficulty,
-                           time_limit=time_limit, memory_limit=memory_limit,
+        p = models.Problem(code=code, contest=c, name=name, statement=statement,
+                           input_format=input_format, output_format=output_format,
+                           difficulty=difficulty, time_limit=time_limit, memory_limit=memory_limit,
                            file_format=file_format, start_code=start_code, max_score=max_score,
                            compilation_script=compilation_script,
                            test_script=test_script, setter_solution=setter_solution)
@@ -112,16 +113,10 @@ def process_person(email, rank=0):
     Nullable Fields: rank
     """
     try:
-        models.Person.objects.get(email=email)
-        return (True, None)
-    except models.Person.DoesNotExist:
-        pass
-
-    if rank is None:
-        rank = 0
-    try:
-        p = models.Person(email=email, rank=rank)
-        p.save()
+        (p, status) = models.Person.objects.get_or_create(email=email)
+        if status:
+            p.rank = 0 if rank is None else rank
+            p.save()
         return (True, None)
     except Exception as e:
         traceback.print_exc()
@@ -189,10 +184,20 @@ def add_person_to_contest(person: str, contest: str, permission: bool):
     permission is False if participant and True is poster
     """
     try:
-        p = models.Person.objects.get(email=person)
+        (p, _) = models.Person.objects.get_or_create(email=person)
         c = models.Contest.objects.get(pk=contest)
-        cp = p.contestperson_set.create(contest=c, role=permission)
-        cp.save()
+        if c.public is True and permission is False:
+            # Do not store participants for public contests
+            return (True, None)
+        try:
+            # Check that the person is not already registered in the contest with other permission
+            cp = models.ContestPerson.objects.get(
+                person=p, contest=c, permission=(not permission))
+            return (False, '{} Already exists with other permission'.format(p.email))
+        except models.ContestProblem.DoesNotExist:
+            cp = p.contestperson_set.create(contest=c, role=permission)
+            cp.save()
+            return (True, None)
     except Exception as e:
         traceback.print_exc()
         return (False, e.__str__)
@@ -223,9 +228,44 @@ def get_personproblem_permission(person: str, problem: str):
     returns False if participant and True is poster None if neither
     """
     p = models.Problem.objects.get(pk=problem)
-    if p.content is None:
+    if p.contest is None:
         return False
     return get_personcontest_permission(person, p.contest)
+
+
+def get_posters(contest: str):
+    """
+    Return the posters for the contest.
+    contest is the pk of the Contest
+    Return (True, List of the email of the posters)
+    """
+    try:
+        c = models.Contest.objects.get(pk=contest)
+        cps = models.ContestPerson.objects.filter(contest=c, role=True)
+        cps = [cp.email for cp in cps]
+        return (True, cps)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
+
+
+def get_participants(contest: str):
+    """
+    Return the posters for the contest.
+    contest is the pk of the Contest
+    Returns (True, List of the email of the posters)
+    Returns (True, []) if contest is public
+    """
+    try:
+        c = models.Contest.objects.get(pk=contest)
+        if c.public is True:
+            return (True, [])
+        cps = models.ContestPerson.objects.filter(contest=c, role=True)
+        cps = [cp.email for cp in cps]
+        return (True, cps)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
 
 
 def get_submission_status(person: str, problem: str, submission: str):
@@ -275,7 +315,7 @@ def get_submission_status(person: str, problem: str, submission: str):
                     submission=submission, testcase=testcase)
                 verdict_dict[submission.pk].append((testcase.pk, st.verdict, st.time_taken,
                                                     st.memory_taken, testcase.public, st.message))
-        except Exception as e:
+        except Exception as _:
             # In case Exception occurs for any submission, then
             # that submission's verdict_dict is left empty.
             # This is done to allow the other submissions to give output.
