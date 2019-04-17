@@ -56,7 +56,7 @@ def process_problem(code: str, contest: str, name: str, statement: str, input_fo
     file_format = '.py,.cpp,.c' if file_format is None else file_format
 
     try:
-        c = models.Problem(pk=contest)
+        c = models.Contest.objects.get(pk=contest)
         p = models.Problem(code=code, contest=c, name=name, statement=statement, input_format=input_format,
                            output_format=output_format, difficulty=difficulty,
                            time_limit=time_limit, memory_limit=memory_limit,
@@ -114,9 +114,9 @@ def process_person(email, rank=0):
     try:
         models.Person.objects.get(email=email)
         return (True, None)
-    except models.Problem.DoesNotExist:
+    except models.Person.DoesNotExist:
         pass
-    
+
     if rank is None:
         rank = 0
     try:
