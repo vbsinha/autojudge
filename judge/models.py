@@ -21,6 +21,27 @@ def test_script_name(instance, filename):
     return 'content/problems/{}/test_script.sh'.format(instance.code)
 
 
+class Contest(models.Model):
+    """
+    Model for Contest.
+    """
+
+    # Contest name [Char]
+    name = models.CharField(max_length=50, default='Unnamed Contest', unique=True)
+
+    # Start Date and Time for Contest
+    start_datetime = models.DateTimeField()
+
+    # End Date and Time for Contest
+    end_datetime = models.DateTimeField()
+
+    # Penalty for late-submission
+    penalty = models.DecimalField(max_digits=4, decimal_places=3, default=0.0)
+
+    def __str__(self):
+        return self.name
+
+
 class Problem(models.Model):
     """
     Model for a Problem.
@@ -28,6 +49,9 @@ class Problem(models.Model):
     # Problem code [Char, PrimaryKey]
     # UNSET is a special problem code which other problems must not use.
     code = models.CharField(max_length=10, primary_key=True, default='UNSET')
+
+    # Contest for the problem [Contest]
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, null=True)
 
     # Problem name [Char]
     name = models.CharField(max_length=50, default='Name not set')
@@ -79,34 +103,13 @@ class Problem(models.Model):
         return self.code
 
 
-class Contest(models.Model):
-    """
-    Model for Contest.
-    """
-
-    # Contest name [Char]
-    name = models.CharField(max_length=50, default='Unnamed Contest', unique=True)
-
-    # Start Date and Time for Contest
-    start_datetime = models.DateTimeField()
-
-    # End Date and Time for Contest
-    end_datetime = models.DateTimeField()
-
-    # Penalty for late-submission
-    penalty = models.DecimalField(max_digits=4, decimal_places=3, default=0.0)
-
-    def __str__(self):
-        return self.name
-
-
 class Person(models.Model):
     """
     Model for Person.
     """
 
     # Email ID of the Person
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, primary_key=True)
 
     # Rank of the Person
     rank = models.PositiveIntegerField(default=10)
@@ -158,19 +161,6 @@ class Submission(models.Model):
 
     # Linter score [Int]
     linter_score = models.FloatField(default=0.0)
-
-
-class ContestProblem(models.Model):
-    """
-    Model for ContestProblem.
-    This maps which problems are a part of which contests.
-    """
-
-    # (FK) Contest ID of the Contest.
-    contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
-
-    # (FK) Problem ID of the Problem.
-    problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
 
 
 class ContestPerson(models.Model):
