@@ -1,11 +1,46 @@
 {% extends 'judge/base.html' %}
 
 {% block content %}
+
 <div class="row">
-    <div class="col-12 col-md-7"><h2>{{ contest.name }}</h2></div>
+    <div class="col-12 col-md-7">
+        <h2>{{ contest.name }}</h2>
+    </div>
     <div class="col-12 col-md-5">{{ contest_start }} - {{ contest_end }}</div>
 </div>
 
-<!-- TODO List all the problems here -->
-<a class="btn btn-primary" href="{% url 'judge:new_problem' contest.pk %}">Add Problem</a>
+
+<div class="row">
+    <div class="col-12 col-md-7">
+
+        <!-- TODO List all the problems here -->
+        <a class="btn btn-primary" href="{% url 'judge:new_problem' contest.pk %}">Add Problem</a>
+    </div>
+    <div class="col-12 col-md-5">
+        <div class="col-12">
+            <h4>Posters</h4>
+            <form action="{% url 'judge:contest_add_poster' contest.pk %}" method="POST" class="form-inline">
+                {% csrf_token %}
+                <div class="form-group mr-2">
+                    <input type="text" class="form-control" name="email">
+                </div>
+                <input type="submit" class="btn btn-primary" value="Add Poster">
+            </form>
+            <!-- TODO List all posters -->
+        </div>
+        <hr>
+        <div class="col-12">
+            <h4>Participants</h4>
+            <form action="{% url 'judge:contest_add_participant' contest.pk %}" method="POST" class="form-inline">
+                {% csrf_token %}
+                <div class="form-group mr-2">
+                    <input type="text" class="form-control" name="email">
+                </div>
+                <input type="submit" class="btn btn-primary" value="Add Participant">
+            </form>
+            <!-- TODO List all participants -->
+        </div>
+    </div>
+</div>
+
 {% endblock %}

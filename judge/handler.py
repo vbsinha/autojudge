@@ -105,13 +105,13 @@ def update_problem(code, name=None, statement=None, input_format=None,
         raise Exception('{} code does not exist.'.format(code))
 
 
-def process_person(email, rank):
+def process_person(email, rank=0):
     """
     Process a new Person
     Nullable Fields: rank
     """
     if rank is None:
-        rank = 10
+        rank = 0
     try:
         p = models.Person(email=email, rank=rank)
         p.save()

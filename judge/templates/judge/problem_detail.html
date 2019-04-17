@@ -1,0 +1,11 @@
+{% extends 'judge/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12"><h2>{{ problem.code }}</h2></div>
+    <div class="col-12">
+        <h3>{{ problem.name }}</h3>
+        <p>{{ problem.statement }}</p>
+    </div>
+</div>
+{% endblock %}

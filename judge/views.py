@@ -1,5 +1,3 @@
-from django.http import HttpResponse
-from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from datetime import timedelta
 
@@ -11,6 +9,8 @@ from . import handler
 
 def index(request):
     context = {}
+    if request.user.is_authenticated:
+        handler.process_person(request.user.email)
     return render(request, 'judge/index.html', context)
 
 
@@ -30,12 +30,32 @@ def new_contest(request):
         return render(request, 'judge/new_contest.html', context)
 
 
+def add_poster(request, contest_id, permission=True):
+    # TODO Error handling
+    if request.method == 'POST':
+        status, err = handler.add_person_to_contest(request.POST['email'], contest_id, permission)
+        if status:
+            return redirect(request.META['HTTP_REFERER'])
+    return redirect(request.META['HTTP_REFERER'])
+
+
+def add_participant(request, contest_id):
+    return add_poster(request, contest_id, False)
+
+
 def contest_detail(request, contest_id):
     contest = get_object_or_404(Contest, pk=contest_id)
     return render(request, 'judge/contest_detail.html', {
         'contest': contest,
         'contest_start': contest.start_datetime.strftime('%d-%m-%Y %H:%M'),
         'contest_end': contest.end_datetime.strftime('%d-%m-%Y %H:%M'),
+    })
+
+
+def problem_detail(request, problem_id):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    return render(request, 'judge/problem_detail.html', {
+        'problem': problem,
     })
 
 
@@ -49,15 +69,20 @@ def new_problem(request, contest_id):
                                    request.POST['input_format'],
                                    request.POST['output_format'],
                                    request.POST['difficulty'],
-                                   timedelta(milliseconds=int(request.POST['time_limit'])),
+                                   timedelta(milliseconds=int(
+                                       request.POST['time_limit'])),
                                    request.POST['memory_limit'],
                                    request.POST['file_format'],
-                                   request.FILES.get('start_code'),  # Nullable field
+                                   # Nullable field
+                                   request.FILES.get('start_code'),
                                    request.POST['max_score'],
-                                   request.FILES.get('compilation_script'),  # Nullable field
-                                   request.FILES.get('test_script'),  # Nullable field
+                                   # Nullable field
+                                   request.FILES.get('compilation_script'),
+                                   # Nullable field
+                                   request.FILES.get('test_script'),
                                    request.FILES.get('setter_solution')):  # Nullable field
-            contest.contestproblem_set.create(problem=Problem.objects.get(pk=request.POST['code']))
+            contest.contestproblem_set.create(
+                problem=Problem.objects.get(pk=request.POST['code']))
             return redirect('/judge/contest/{}/'.format(contest_id))
         else:
             context = {'error_msg': 'Could not create new problem',
