@@ -17,12 +17,14 @@ def index(request):
 def new_contest(request):
     if request.method == 'POST':
         # TODO Sanitize input
+        print(request.POST)
         status, err = handler.process_contest(request.POST['name'],
                                               request.POST['start_date'] +
                                               '+0530',
                                               request.POST['end_date'] +
                                               '+0530',
-                                              request.POST['penalty'])
+                                              request.POST['penalty'],
+                                              True if request.POST['public'] == 'on' else False)
         if status:
             return redirect('/judge/')
         context = {'error_msg': 'Could not create new contest',
@@ -95,3 +97,10 @@ def new_problem(request, contest_id):
     else:
         context = {'contest': contest}
         return render(request, 'judge/new_problem.html', context)
+
+
+def edit_problem(request, problem_id):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    contest = get_object_or_404(Contest, pk=problem.contest_id)
+    # TODO
+    pass
