@@ -17,10 +17,13 @@ def index(request):
 def new_contest(request):
     if request.method == 'POST':
         # TODO Sanitize input
-        if handler.process_contest(request.POST['name'],
-                                   request.POST['start_date'] + '+0530',
-                                   request.POST['end_date'] + '+0530',
-                                   request.POST['penalty']):
+        status, err = handler.process_contest(request.POST['name'],
+                                              request.POST['start_date'] +
+                                              '+0530',
+                                              request.POST['end_date'] +
+                                              '+0530',
+                                              request.POST['penalty'])
+        if status:
             return redirect('/judge/')
         context = {'error_msg': 'Could not create new contest',
                    'post_data': request.POST}
@@ -33,7 +36,8 @@ def new_contest(request):
 def add_poster(request, contest_id, permission=True):
     # TODO Error handling
     if request.method == 'POST':
-        status, err = handler.add_person_to_contest(request.POST['email'], contest_id, permission)
+        status, err = handler.add_person_to_contest(
+            request.POST['email'], contest_id, permission)
         if status:
             return redirect(request.META['HTTP_REFERER'])
     return redirect(request.META['HTTP_REFERER'])
@@ -64,6 +68,7 @@ def new_problem(request, contest_id):
     if request.method == 'POST':
         # TODO Sanitize input
         if handler.process_problem(request.POST['code'],
+                                   contest_id,
                                    request.POST['name'],
                                    request.POST['statement'],
                                    request.POST['input_format'],
@@ -81,8 +86,6 @@ def new_problem(request, contest_id):
                                    # Nullable field
                                    request.FILES.get('test_script'),
                                    request.FILES.get('setter_solution')):  # Nullable field
-            contest.contestproblem_set.create(
-                problem=Problem.objects.get(pk=request.POST['code']))
             return redirect('/judge/contest/{}/'.format(contest_id))
         else:
             context = {'error_msg': 'Could not create new problem',

@@ -1,5 +1,50 @@
 {% extends "judge/base.html" %}
 
+{% block styles %}
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script>
+    let quillModules = {
+        toolbar: [
+            ['bold', 'italic'],
+            ['link', 'blockquote', 'code-block'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+        ]
+    }
+
+    let statementQuill = new Quill('#statementEditor', {
+        modules: quillModules,
+        placeholder: 'Add problem statement',
+        theme: 'snow',
+    })
+
+    let inputFormatQuill = new Quill('#inputFormatEditor', {
+        modules: quillModules,
+        placeholder: 'Input format',
+        theme: 'snow',
+    })
+
+    let outputFormatQuill = new Quill('#outputFormatEditor', {
+        modules: quillModules,
+        placeholder: 'Output format',
+        theme: 'snow',
+    })
+
+    {% if post_data.statement %}
+    statementQuill.setContents(JSON.parse('{{ post_data.statement }}'))
+    {% endif %}
+
+    $('form').submit(function (e) {
+        $('#statementField').val(JSON.stringify(statementQuill.getContents()))
+        $('#inputFormatField').val(JSON.stringify(inputFormatQuill.getContents()))
+        $('#outputFormatField').val(JSON.stringify(outputFormatQuill.getContents()))
+    })
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="row my-2">
     <div class="col-12">
@@ -31,21 +76,21 @@
                 <small id="nameHelp" class="form-text text-muted"></small>
             </div>
             <div class="form-group">
-                <label for="statementField">Statement</label>
-                <textarea class="form-control" id="statementField" aria-describedby="statementHelp"
-                    placeholder="Problem statement" name="statement">{{ post_data.statement }}</textarea>
+                <label for="statementEditor">Statement</label>
+                <input id="statementField" type="hidden" name="statement">
+                <div id="statementEditor" aria-describedby="statementHelp"></div>
                 <small id="statementHelp" class="form-text text-muted"></small>
             </div>
             <div class="form-group">
-                <label for="inputFormatField">Input Format</label>
-                <textarea class="form-control" id="inputFormatField" aria-describedby="inputFormatHelp"
-                    placeholder="Input Format" name="input_format">{{ post_data.input_format }}</textarea>
+                <label for="inputFormatEditor">Input Format</label>
+                <input id="inputFormatField" type="hidden" name="input_format">
+                <div id="inputFormatEditor" aria-describedby="inputFormatHelp"></div>
                 <small id="inputFormatHelp" class="form-text text-muted"></small>
             </div>
             <div class="form-group">
-                <label for="FormatField">Output Format</label>
-                <textarea class="form-control" id="outputFormatField" aria-describedby="outputFormatHelp"
-                    placeholder="Output Format" name="output_format">{{ post_data.output_format }}</textarea>
+                <label for="outputFormatEditor">Output Format</label>
+                <input id="outputFormatField" type="hidden" name="output_format">
+                <div id="outputFormatEditor" aria-describedby="outputFormatHelp"></div>
                 <small id="outputFormatHelp" class="form-text text-muted"></small>
             </div>
             <div class="form-group">
