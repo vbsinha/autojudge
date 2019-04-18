@@ -14,19 +14,19 @@
     let statementQuill = new Quill('#statementEditor', {
         modules: quillModules,
         placeholder: 'Add problem statement',
-        theme: 'snow',
+        theme: 'bubble',
     })
 
     let inputFormatQuill = new Quill('#inputFormatEditor', {
         modules: quillModules,
         placeholder: 'Input format',
-        theme: 'snow',
+        theme: 'bubble',
     })
 
     let outputFormatQuill = new Quill('#outputFormatEditor', {
         modules: quillModules,
         placeholder: 'Output format',
-        theme: 'snow',
+        theme: 'bubble',
     })
 
     {% if problem.statement != None %}
@@ -38,6 +38,11 @@
     statementQuill.disable()
     inputFormatQuill.disable()
     outputFormatQuill.disable()
+
+    $(".custom-file-input").on("change", function () {
+        var fileName = $(this).val().split("\\").pop();
+        $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+    });
 </script>
 {% endblock %}
 
@@ -64,4 +69,20 @@
     </div>
 </div>
 
+<!-- TODO Restrict to participant only -->
+<div class="row">
+    <div class="col-12 my-4">
+        <h3>Submit Solution</h3>
+        <form action="" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group custom-file my-2">
+                <input type="file" name="file" class="custom-file-input" id="submitFileField">
+                <label class="custom-file-label" for="submitFileField">Choose</label>
+            </div>
+            <div class="form-group my-2">
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

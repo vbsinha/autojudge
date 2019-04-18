@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from .models import Contest, Problem
 from . import handler
@@ -103,4 +103,14 @@ def edit_problem(request, problem_id):
     problem = get_object_or_404(Problem, pk=problem_id)
     contest = get_object_or_404(Contest, pk=problem.contest_id)
     # TODO
+    pass
+
+
+def problem_submit(request, problem_id):
+    if request.method == 'POST':
+        # TODO What is file_type?
+        # TODO Process return and display result
+        handler.process_solution(problem_id, request.user.email, '', request.FILE['file'], datetime.now())
+    else:
+        redirect('/judge/')
     pass
