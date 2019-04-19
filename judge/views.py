@@ -94,18 +94,19 @@ def new_problem(request, contest_id):
                                                   'compilation_script'),
                                               # Nullable field
                                               request.FILES.get('test_script'),
-                                              request.FILES.get('setter_solution')
+                                              request.FILES.get(
+                                                  'setter_solution')
                                               # Nullable field
                                               )
         print(request.POST)
         if status:
-            no_test_cases = int(request.POST['no_test_cases'])
-            print(no_test_cases)
-            for i in range(no_test_cases):
-                status, err = handler.process_testcase(
-                    request.POST['code'], True if request.POST['test'+str(i)] == 'on' else False,
-                    request.FILES.get('input'+str(i)), request.FILES.get('output'+str(i)))
-                print(status, err)
+            # no_test_cases = int(request.POST['no_test_cases'])
+            # print(no_test_cases)
+            # for i in range(no_test_cases):
+            #     status, err = handler.process_testcase(
+            #         request.POST['code'], True if request.POST['test'+str(i)] == 'on' else False,
+            #         request.FILES.get('input'+str(i)), request.FILES.get('output'+str(i)))
+            #     print(status, err)
             return redirect('/judge/contest/{}/'.format(contest_id))
         else:
             print(err)
@@ -116,6 +117,24 @@ def new_problem(request, contest_id):
     else:
         context = {'contest': contest}
         return render(request, 'judge/new_problem.html', context)
+
+
+def add_test_case_problem(request, problem_id):
+    if request.method == 'POST':
+        status, err = handler.process_testcase(problem_id,
+                                               True if request.POST.get(
+                                                   'test-type') == 'public' else False,
+                                               request.FILES.get('input'),
+                                               request.FILES.get('output'))
+        print(status, err)
+        if status:
+            return redirect(request.META['HTTP_REFERER'])
+        else:
+            print(err)
+            return redirect(request.META['HTTP_REFERER'])
+    else:
+        print('Not POST')
+        return redirect(request.META['HTTP_REFERER'])
 
 
 def edit_problem(request, problem_id):

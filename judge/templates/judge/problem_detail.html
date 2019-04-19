@@ -85,4 +85,31 @@
         </form>
     </div>
 </div>
+
+<!-- TODO Restrict to poster only -->
+<div class="row">
+    <form method="POST" action="{% url 'judge:new_problem_test' problem.pk %}" enctype="multipart/form-data">
+        <div class="col-12">
+            <h2>Add Test Case</h2>
+            {% csrf_token %}
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" name="test-type" value="public" id="testPublic" class="custom-control-input">
+                <label class="custom-control-label" for="testPublic">Public</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" name="test-type" value="private" id="testPrivate" class="custom-control-input">
+                <label class="custom-control-label" for="testPrivate">Private</label>
+            </div>
+            <div class="col-12 form-group">
+                <h6>Input</h6>
+                <input type="file" class="form-control-file" name="input">
+            </div>
+            <div class="col-12 form-group">
+                <h6>Output</h6>
+                <input type="file" class="form-control-file" name="output">
+            </div>
+            <button type="submit" class="btn btn-primary">Add test case</button>
+        </div>
+    </form>
+</div>
 {% endblock %}
