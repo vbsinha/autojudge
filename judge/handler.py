@@ -233,20 +233,24 @@ def get_personproblem_permission(person: str, problem: str):
     return get_personcontest_permission(person, p.contest)
 
 
+def _get_persons(contest: str, role: bool):
+    try:
+        c = models.Contest.objects.get(pk=contest)
+        cps = models.ContestPerson.objects.filter(contest=c, role=role)
+        cps = [cp.email for cp in cps]
+        return (True, cps)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
+
+
 def get_posters(contest: str):
     """
     Return the posters for the contest.
     contest is the pk of the Contest
     Return (True, List of the email of the posters)
     """
-    try:
-        c = models.Contest.objects.get(pk=contest)
-        cps = models.ContestPerson.objects.filter(contest=c, role=True)
-        cps = [cp.email for cp in cps]
-        return (True, cps)
-    except Exception as e:
-        traceback.print_exc()
-        return (False, e.__str__)
+    return _get_persons(contest, True)
 
 
 def get_participants(contest: str):
@@ -256,16 +260,7 @@ def get_participants(contest: str):
     Returns (True, List of the email of the participants)
     Returns (True, []) if contest is public
     """
-    try:
-        c = models.Contest.objects.get(pk=contest)
-        if c.public is True:
-            return (True, [])
-        cps = models.ContestPerson.objects.filter(contest=c, role=False)
-        cps = [cp.email for cp in cps]
-        return (True, cps)
-    except Exception as e:
-        traceback.print_exc()
-        return (False, e.__str__)
+    return _get_persons(contest, False)
 
 
 def get_submission_status(person: str, problem: str, submission: str):
