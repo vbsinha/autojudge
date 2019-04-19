@@ -58,8 +58,13 @@
                 <input type="number" step="any" class="form-control" id="penaltyField" aria-describedby="penaltyHelp"
                     placeholder="Penalty" name="penalty" value="{{ post_data.penalty }}">
                 <small id="penaltyHelp" class="form-text text-muted">
-                    A decimal between 0.000 and 1.000 TODO <!-- TODO -->
+                    A decimal between 0.000 and 1.000 TODO
+                    <!-- TODO -->
                 </small>
+            </div>
+            <div class="form-group custom-control custom-checkbox">
+                <input type="checkbox" name="public" class="custom-control-input" id="publicField">
+                <label class="custom-control-label" for="publicField">Is this contest public?</label>
             </div>
             <button type="submit" class="btn btn-primary">Create</button>
         </form>

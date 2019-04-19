@@ -2,6 +2,7 @@ from django.db import models
 
 from uuid import uuid4
 from os.path import splitext
+from functools import partial
 from datetime import timedelta
 
 
@@ -13,12 +14,29 @@ def start_code_name(instance, filename):
     return 'content/problems/{}/start_code{}'.format(instance.code, splitext(filename)[1])
 
 
-def compilation_script_name(instance, filename):
-    return 'content/problems/{}/compilation_script.sh'.format(instance.code)
+def compilation_test_upload_location(instance, filename, is_compilation):
+    # We disregard the filename argument
+    file_prefix = 'compilation' if is_compilation else 'test'
+    file_name = '{}_script.sh'.format(file_prefix)
+    return 'content/problems/{}/{}'.format(instance.code, file_name)
 
 
-def test_script_name(instance, filename):
-    return 'content/problems/{}/test_script.sh'.format(instance.code)
+def testcase_upload_location(instance, filename, is_input):
+    # We disregard the filename argument
+    file_prefix = 'input' if is_input else 'output'
+    file_name = '{}file_{}.txt'.format(file_prefix, instance.id)
+    return 'content/testcase/{}'.format(file_name)
+
+
+def submission_upload_location(instance, filename):
+    # We disregard the filename argument
+    file_name = 'submission_{}{}'.format(instance.id, instance.file_type)
+    return 'content/submissions/{}'.format(file_name)
+
+
+def comment_upload_location(instance, filename):
+    # We disregard the filename argument
+    return 'content/comment/{}.yml'.format(instance.id)
 
 
 class Contest(models.Model):
@@ -27,7 +45,8 @@ class Contest(models.Model):
     """
 
     # Contest name [Char]
-    name = models.CharField(max_length=50, default='Unnamed Contest', unique=True)
+    name = models.CharField(
+        max_length=50, default='Unnamed Contest', unique=True)
 
     # Start Date and Time for Contest
     start_datetime = models.DateTimeField()
@@ -37,6 +56,10 @@ class Contest(models.Model):
 
     # Penalty for late-submission
     penalty = models.DecimalField(max_digits=4, decimal_places=3, default=0.0)
+
+    # Is the contest public
+    # In public Contests everyone except posters can participate
+    public = models.BooleanField()
 
     def __str__(self):
         return self.name
@@ -90,11 +113,15 @@ class Problem(models.Model):
 
     # Compilation script [File]
     compilation_script = models.FileField(
-        upload_to=compilation_script_name, default='./default/compilation_script.sh')
+        upload_to=partial(compilation_test_upload_location,
+                          is_compilation=True),
+        default='./default/compilation_script.sh')
 
     # Test script [File]
     test_script = models.FileField(
-        upload_to=test_script_name, default='./default/test_script.sh')
+        upload_to=partial(compilation_test_upload_location,
+                          is_compilation=False),
+        default='./default/test_script.sh')
 
     # Setter solution script [File, Nullable]
     setter_solution = models.FileField(upload_to=setter_sol_name, null=True)
@@ -109,10 +136,10 @@ class Person(models.Model):
     """
 
     # Email ID of the Person
-    email = models.EmailField(unique=True, primary_key=True)
+    email = models.EmailField(primary_key=True)
 
     # Rank of the Person
-    rank = models.PositiveIntegerField(default=10)
+    rank = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.email
@@ -122,8 +149,8 @@ class Submission(models.Model):
     """
     Model for a Submission.
     """
-    # ID of Submission [Char]
-    id = uuid4().hex
+    # Self Generated PrimaryKey
+    id = models.CharField(max_length=32, primary_key=True, default=uuid4)
 
     # ForeignKey to Problem
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
@@ -144,8 +171,7 @@ class Submission(models.Model):
         max_length=5, choices=PERMISSIBLE_FILE_TYPES, default='.none')
 
     # Submission file [File]
-    submission_file = models.FileField(upload_to='content/submissions/submission_{}{}'
-                                                 .format(id, file_type))
+    submission_file = models.FileField(upload_to=submission_upload_location)
 
     # Timestamp of submission [Time]
     timestamp = models.DateTimeField()
@@ -194,20 +220,16 @@ class TestCase(models.Model):
     public = models.BooleanField()
 
     # Self Generated PrimaryKey
-    _id = uuid4().hex
-    testcase_id = models.CharField(
-        max_length=32, primary_key=True, default=_id)
+    id = models.CharField(max_length=32, primary_key=True, default=uuid4)
 
     # Store the inputfile for the testcase.
     # Sample: ./content/testcase/inputfile_UUID.txt
-    inputfile = models.FileField(upload_to="/".join(['content', 'testcase',
-                                                     'inputfile_' + _id + '.txt']),
+    inputfile = models.FileField(upload_to=partial(testcase_upload_location, is_input=True),
                                  default='./default/inputfile.txt')
 
     # Store the outputfile for the testcase
     # ./content/testcase/outputfile_UUID.txt
-    outputfile = models.FileField(upload_to="/".join(['content', 'testcase',
-                                                      'outputfile_' + _id + '.txt']),
+    outputfile = models.FileField(upload_to=partial(testcase_upload_location, is_input=False),
                                   default='./default/outputfile.txt')
 
 
@@ -259,10 +281,10 @@ class Comment(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
 
     # Self Generated PrimaryKey
-    _id = uuid4().hex
-    comment_id = models.CharField(max_length=32, primary_key=True, default=_id)
+    id = models.CharField(max_length=32, primary_key=True, default=uuid4)
 
     # Store a comment file for each Problem Student pair.
     # Sample path: ./content/comment/UUID.yml
-    comment = models.FileField(upload_to="/".join(['content', 'comment', _id + '.yml']),
+    # TODO: Fix this like TestCase
+    comment = models.FileField(upload_to=comment_upload_location,
                                default='./default/comment.yml')

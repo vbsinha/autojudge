@@ -1,9 +1,7 @@
-from django.http import HttpResponse
-from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from datetime import timedelta
+from datetime import timedelta, datetime
 
-from .models import Contest, Problem
+from .models import Contest, Problem, TestCase
 from . import handler
 
 # Create your views here.
@@ -11,16 +9,27 @@ from . import handler
 
 def index(request):
     context = {}
+    if request.user.is_authenticated:
+        handler.process_person(request.user.email)
+    # TODO
+    # Get all public contests if user not signed in
+    # Get contests for which the current user is poster/participant
+    contests = Contest.objects.all()
+    context['contests'] = contests
     return render(request, 'judge/index.html', context)
 
 
 def new_contest(request):
     if request.method == 'POST':
         # TODO Sanitize input
-        if handler.process_contest(request.POST['name'],
-                                   request.POST['start_date'] + '+0530',
-                                   request.POST['end_date'] + '+0530',
-                                   request.POST['penalty']):
+        status, err = handler.process_contest(request.POST.get('name'),
+                                              request.POST['start_date'] +
+                                              '+0530',
+                                              request.POST['end_date'] +
+                                              '+0530',
+                                              request.POST.get('penalty'),
+                                              True if request.POST.get('public') == 'on' else False)
+        if status:
             return redirect('/judge/')
         context = {'error_msg': 'Could not create new contest',
                    'post_data': request.POST}
@@ -30,12 +39,37 @@ def new_contest(request):
         return render(request, 'judge/new_contest.html', context)
 
 
+def add_poster(request, contest_id, permission=True):
+    # TODO Error handling
+    if request.method == 'POST':
+        status, err = handler.add_person_to_contest(
+            request.POST.get('email'), contest_id, permission)
+        if status:
+            return redirect(request.META['HTTP_REFERER'])
+    return redirect(request.META['HTTP_REFERER'])
+
+
+def add_participant(request, contest_id):
+    return add_poster(request, contest_id, False)
+
+
 def contest_detail(request, contest_id):
     contest = get_object_or_404(Contest, pk=contest_id)
+    problems = Problem.objects.filter(contest_id=contest_id)
     return render(request, 'judge/contest_detail.html', {
         'contest': contest,
+        'problems': problems,
         'contest_start': contest.start_datetime.strftime('%d-%m-%Y %H:%M'),
         'contest_end': contest.end_datetime.strftime('%d-%m-%Y %H:%M'),
+    })
+
+
+def problem_detail(request, problem_id):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    return render(request, 'judge/problem_detail.html', {
+        'problem': problem,
+        'public_tests': TestCase.objects.filter(problem_id=problem_id, public=True),
+        'private_tests': TestCase.objects.filter(problem_id=problem_id, public=False),
     })
 
 
@@ -43,23 +77,41 @@ def new_problem(request, contest_id):
     contest = get_object_or_404(Contest, pk=contest_id)
     if request.method == 'POST':
         # TODO Sanitize input
-        if handler.process_problem(request.POST['code'],
-                                   request.POST['name'],
-                                   request.POST['statement'],
-                                   request.POST['input_format'],
-                                   request.POST['output_format'],
-                                   request.POST['difficulty'],
-                                   timedelta(milliseconds=int(request.POST['time_limit'])),
-                                   request.POST['memory_limit'],
-                                   request.POST['file_format'],
-                                   request.FILES.get('start_code'),  # Nullable field
-                                   request.POST['max_score'],
-                                   request.FILES.get('compilation_script'),  # Nullable field
-                                   request.FILES.get('test_script'),  # Nullable field
-                                   request.FILES.get('setter_solution')):  # Nullable field
-            contest.contestproblem_set.create(problem=Problem.objects.get(pk=request.POST['code']))
+        status, err = handler.process_problem(request.POST.get('code'),
+                                              contest_id,
+                                              request.POST.get('name'),
+                                              request.POST.get('statement'),
+                                              request.POST.get('input_format'),
+                                              request.POST.get('output_format'),
+                                              request.POST.get('difficulty'),
+                                              timedelta(milliseconds=int(
+                                                  request.POST.get('time_limit'))),  # Ensure not null
+                                              request.POST.get('memory_limit'),
+                                              request.POST.get('file_format'),
+                                              # Nullable field
+                                              request.FILES.get('start_code'),
+                                              request.POST.get('max_score'),
+                                              # Nullable field
+                                              request.FILES.get(
+                                                  'compilation_script'),
+                                              # Nullable field
+                                              request.FILES.get('test_script'),
+                                              request.FILES.get(
+                                                  'setter_solution')
+                                              # Nullable field
+                                              )
+        print(request.POST)
+        if status:
+            # no_test_cases = int(request.POST['no_test_cases'])
+            # print(no_test_cases)
+            # for i in range(no_test_cases):
+            #     status, err = handler.process_testcase(
+            #         request.POST['code'], True if request.POST['test'+str(i)] == 'on' else False,
+            #         request.FILES.get('input'+str(i)), request.FILES.get('output'+str(i)))
+            #     print(status, err)
             return redirect('/judge/contest/{}/'.format(contest_id))
         else:
+            print(err)
             context = {'error_msg': 'Could not create new problem',
                        'post_data': request.POST,
                        'contest': contest}
@@ -67,3 +119,39 @@ def new_problem(request, contest_id):
     else:
         context = {'contest': contest}
         return render(request, 'judge/new_problem.html', context)
+
+
+def add_test_case_problem(request, problem_id):
+    if request.method == 'POST':
+        status, err = handler.process_testcase(problem_id,
+                                               True if request.POST.get(
+                                                   'test-type') == 'public' else False,
+                                               request.FILES.get('input'),
+                                               request.FILES.get('output'))
+        print(status, err)
+        if status:
+            return redirect(request.META['HTTP_REFERER'])
+        else:
+            print(err)
+            return redirect(request.META['HTTP_REFERER'])
+    else:
+        print('Not POST')
+        return redirect(request.META['HTTP_REFERER'])
+
+
+def edit_problem(request, problem_id):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    contest = get_object_or_404(Contest, pk=problem.contest_id)
+    # TODO
+    pass
+
+
+def problem_submit(request, problem_id):
+    if request.method == 'POST':
+        # TODO What is file_type?
+        # TODO Process return and display result
+        handler.process_solution(
+            problem_id, request.user.email, '', request.FILE['file'], datetime.now())
+    else:
+        redirect('/judge/')
+    pass

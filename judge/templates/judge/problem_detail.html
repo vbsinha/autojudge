@@ -1,0 +1,133 @@
+{% extends 'judge/base.html' %}
+
+{% block styles %}
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script>
+    let quillModules = {
+        toolbar: false
+    }
+
+    let statementQuill = new Quill('#statementEditor', {
+        modules: quillModules,
+        placeholder: 'Add problem statement',
+        theme: 'bubble',
+    })
+
+    let inputFormatQuill = new Quill('#inputFormatEditor', {
+        modules: quillModules,
+        placeholder: 'Input format',
+        theme: 'bubble',
+    })
+
+    let outputFormatQuill = new Quill('#outputFormatEditor', {
+        modules: quillModules,
+        placeholder: 'Output format',
+        theme: 'bubble',
+    })
+
+    {% if problem.statement != None %}
+    statementQuill.setContents(JSON.parse('{{ problem.statement | safe }}'.replace('\n', '\\n')))
+    inputFormatQuill.setContents(JSON.parse('{{ problem.input_format | safe }}'.replace('\n', '\\n')))
+    outputFormatQuill.setContents(JSON.parse('{{ problem.output_format | safe }}'.replace('\n', '\\n')))
+    {% endif %}
+
+    statementQuill.disable()
+    inputFormatQuill.disable()
+    outputFormatQuill.disable()
+
+    $(".custom-file-input").on("change", function () {
+        var fileName = $(this).val().split("\\").pop();
+        $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 col-md-9 mb-3">
+        <h2 class="d-inline">{{ problem.code }}</h2>
+        <h4 class="d-inline mx-2">{{ problem.name }}</h4>
+    </div>
+    <div class="col-12 col-md-3 mb-3">
+        <a href="{% url 'judge:edit_problem' problem.pk %}" class="btn btn-primary">Edit Problem</a>
+    </div>
+    <div class="col-12 my-4">
+        <h4>Statement</h4>
+        <div id="statementEditor"></div>
+    </div>
+    <div class="col-12 my-4">
+        <h4>Input Format</h4>
+        <div id="inputFormatEditor"></div>
+    </div>
+    <div class="col-12 my-4">
+        <h4>Output Format</h4>
+        <div id="outputFormatEditor"></div>
+    </div>
+    <div class="col-12 my-4">
+        <h4>Public test cases</h4>
+        {% for test in public_tests %}
+        <h5>Test Case {{ forloop.counter }}</h5>
+        <!-- TODO Display input/output files -->
+        <!-- TODO Hide Private test cases for particpants -->
+        <div class="col-12 col-md-6"><h6>Input</h6><pre>{{ test }}</pre></div>
+        <div class="col-12 col-md-6"><h6>Output</h6><pre>{{ test }}</pre></div>
+        {% endfor %}
+    </div>
+    <div class="col-12 my-4">
+        <h4>Private test cases</h4>
+        {% for test in private_tests %}
+        <h5>Test Case {{ forloop.counter }}</h5>
+        <div class="col-12 col-md-6"><h6>Input</h6><pre>{{ test }}</pre></div>
+        <div class="col-12 col-md-6"><h6>Output</h6><pre>{{ test }}</pre></div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- TODO Restrict to participant only -->
+<div class="row">
+    <div class="col-12 my-4">
+        <h3>Submit Solution</h3>
+        <form action="" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group custom-file my-2">
+                <input type="file" name="file" class="custom-file-input" id="submitFileField">
+                <label class="custom-file-label" for="submitFileField">Choose</label>
+            </div>
+            <div class="form-group my-2">
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- TODO Restrict to poster only -->
+<div class="row">
+    <form method="POST" action="{% url 'judge:new_problem_test' problem.pk %}" enctype="multipart/form-data">
+        <div class="col-12">
+            <h2>Add Test Case</h2>
+            {% csrf_token %}
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" name="test-type" value="public" id="testPublic" class="custom-control-input">
+                <label class="custom-control-label" for="testPublic">Public</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" name="test-type" value="private" id="testPrivate" class="custom-control-input">
+                <label class="custom-control-label" for="testPrivate">Private</label>
+            </div>
+            <div class="col-12 form-group">
+                <h6>Input</h6>
+                <input type="file" class="form-control-file" name="input">
+            </div>
+            <div class="col-12 form-group">
+                <h6>Output</h6>
+                <input type="file" class="form-control-file" name="output">
+            </div>
+            <button type="submit" class="btn btn-primary">Add test case</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
