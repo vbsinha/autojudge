@@ -38,9 +38,38 @@
     {% endif %}
 
     $('form').submit(function (e) {
+        $('#noTestCasesField').val(noTestCases)
         $('#statementField').val(JSON.stringify(statementQuill.getContents()))
         $('#inputFormatField').val(JSON.stringify(inputFormatQuill.getContents()))
         $('#outputFormatField').val(JSON.stringify(outputFormatQuill.getContents()))
+    })
+
+    let testCaseBuilder = (id) => {
+        return `<div class="col-12">
+                    <h6>Test ${id+1}</h6>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" name="test${id}" id="test${id}Public" class="custom-control-input">
+                        <label class="custom-control-label" for="test${id}Public">Public</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" name="test${id}" id="test${id}Private" class="custom-control-input">
+                        <label class="custom-control-label" for="test${id}Private">Private</label>
+                    </div>
+                    <div class="col-12 col-md-6 form-group mx-0">
+                        <h6>Input</h6>
+                        <input type="file" class="form-control-file" name="input${id}">
+                    </div>
+                    <div class="col-12 col-md-6 form-group mx-0">
+                        <h6>Output</h6>
+                        <input type="file" class="form-control-file" name="output${id}">
+                    </div>
+                </div>`
+    }
+    let noTestCases = 0;
+
+    $("#addTestBtn").click(function() {
+        $("#testCasesBlock").append(testCaseBuilder(noTestCases))
+        noTestCases++;
     })
 </script>
 {% endblock %}
@@ -147,7 +176,15 @@
                     placeholder="Setter solution" name="setter_solution">
                 <small id="setterSOlHelp" class="form-text text-muted"></small>
             </div>
-            <button type="submit" class="btn btn-primary">Create</button>
+            <div class="row">
+                <div class="col-12">
+                    <h5>Test cases</h5>
+                </div>
+                <input type="hidden" id="noTestCasesField" name="no_test_cases" value="0">
+                <div class="col-12" id="testCasesBlock"></div>
+            </div>
+            <button type="button" class="btn btn-primary" id="addTestBtn">Add another test case</button><br>
+            <button type="submit" class="btn btn-primary my-3">Create</button>
         </form>
     </div>
 </div>

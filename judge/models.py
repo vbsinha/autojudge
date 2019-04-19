@@ -198,20 +198,18 @@ class TestCase(models.Model):
     public = models.BooleanField()
 
     # Self Generated PrimaryKey
-    _id = uuid4().hex
-    testcase_id = models.CharField(
-        max_length=32, primary_key=True, default=_id)
+    id = uuid4().hex
 
     # Store the inputfile for the testcase.
     # Sample: ./content/testcase/inputfile_UUID.txt
     inputfile = models.FileField(upload_to="/".join(['content', 'testcase',
-                                                     'inputfile_' + _id + '.txt']),
+                                                     'inputfile_' + id + '.txt']),
                                  default='./default/inputfile.txt')
 
     # Store the outputfile for the testcase
     # ./content/testcase/outputfile_UUID.txt
     outputfile = models.FileField(upload_to="/".join(['content', 'testcase',
-                                                      'outputfile_' + _id + '.txt']),
+                                                      'outputfile_' + id + '.txt']),
                                   default='./default/outputfile.txt')
 
 
