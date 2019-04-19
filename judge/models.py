@@ -28,13 +28,25 @@ def testcase_upload_location(instance, filename, is_input):
     return 'content/testcase/{}'.format(file_name)
 
 
+def submission_upload_location(instance, filename):
+    # We disregard the filename argument
+    file_name = 'submission_{}{}'.format(instance.id, instance.file_type)
+    return 'content/submissions/{}'.format(file_name)
+
+
+def comment_upload_location(instance, filename):
+    # We disregard the filename argument
+    return 'content/comment/{}.yml'.format(instance.id)
+
+
 class Contest(models.Model):
     """
     Model for Contest.
     """
 
     # Contest name [Char]
-    name = models.CharField(max_length=50, default='Unnamed Contest', unique=True)
+    name = models.CharField(
+        max_length=50, default='Unnamed Contest', unique=True)
 
     # Start Date and Time for Contest
     start_datetime = models.DateTimeField()
@@ -101,12 +113,14 @@ class Problem(models.Model):
 
     # Compilation script [File]
     compilation_script = models.FileField(
-        upload_to=partial(compilation_test_upload_location, is_compilation=True),
+        upload_to=partial(compilation_test_upload_location,
+                          is_compilation=True),
         default='./default/compilation_script.sh')
 
     # Test script [File]
     test_script = models.FileField(
-        upload_to=partial(compilation_test_upload_location, is_compilation=False),
+        upload_to=partial(compilation_test_upload_location,
+                          is_compilation=False),
         default='./default/test_script.sh')
 
     # Setter solution script [File, Nullable]
@@ -157,9 +171,7 @@ class Submission(models.Model):
         max_length=5, choices=PERMISSIBLE_FILE_TYPES, default='.none')
 
     # Submission file [File]
-    # TODO: fix this like TestCase
-    submission_file = models.FileField(upload_to='content/submissions/submission_{}{}'
-                                                 .format(id, file_type))
+    submission_file = models.FileField(upload_to=submission_upload_location)
 
     # Timestamp of submission [Time]
     timestamp = models.DateTimeField()
@@ -274,5 +286,5 @@ class Comment(models.Model):
     # Store a comment file for each Problem Student pair.
     # Sample path: ./content/comment/UUID.yml
     # TODO: Fix this like TestCase
-    comment = models.FileField(upload_to="/".join(['content', 'comment', _id + '.yml']),
+    comment = models.FileField(upload_to=comment_upload_location,
                                default='./default/comment.yml')
