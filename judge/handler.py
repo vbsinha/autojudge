@@ -29,9 +29,10 @@ def process_contest(name, start_datetime, end_datetime, penalty):
         return (False, e.__str__)
 
 
-def process_problem(code: str, contest: str, name: str, statement: str, input_format: str, output_format: str,
-                    difficulty: int, time_limit: int, memory_limit: int, file_format: str,
-                    start_code, max_score: int, compilation_script, test_script, setter_solution):
+def process_problem(code: str, contest: str, name: str, statement: str, input_format: str,
+                    output_format: str, difficulty: int, time_limit: int, memory_limit: int,
+                    file_format: str, start_code, max_score: int, compilation_script, test_script,
+                    setter_solution):
     """
     Process a new Problem
     Nullable [None-able] Fields: start_code, compilation_script, test_script, file_format
@@ -57,12 +58,13 @@ def process_problem(code: str, contest: str, name: str, statement: str, input_fo
 
     try:
         c = models.Problem(pk=contest)
-        p = models.Problem(code=code, contest=c, name=name, statement=statement, input_format=input_format,
-                           output_format=output_format, difficulty=difficulty,
-                           time_limit=time_limit, memory_limit=memory_limit,
-                           file_format=file_format, start_code=start_code, max_score=max_score,
-                           compilation_script=compilation_script,
-                           test_script=test_script, setter_solution=setter_solution)
+        p = models.Problem(code=code, contest=c, name=name, statement=statement,
+                           input_format=input_format, output_format=output_format,
+                           difficulty=difficulty, time_limit=time_limit,
+                           memory_limit=memory_limit, file_format=file_format,
+                           start_code=start_code, max_score=max_score,
+                           compilation_script=compilation_script, test_script=test_script,
+                           setter_solution=setter_solution)
         p.save()
 
         if not os.path.exists(os.path.join('content', 'problems', p.code)):
@@ -116,7 +118,7 @@ def process_person(email, rank):
         return (True, None)
     except models.Problem.DoesNotExist:
         pass
-    
+
     if rank is None:
         rank = 10
     try:
