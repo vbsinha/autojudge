@@ -14,7 +14,7 @@ def process_contest(name: str, start_datetime, end_datetime, penalty: float, pub
     """
     name = 'Unnamed Contest' if name is None else name
     penalty = 0. if penalty is None else penalty
-    public = False if public is None else public 
+    public = False if public is None else public
     
     try:
         c = models.Contest(name=name, start_datetime=start_datetime,

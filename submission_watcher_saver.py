@@ -8,8 +8,11 @@ django.setup()
 
 from judge import models  # noqa: E402
 
-MONITOR_DIRECTORY = os.path.join('content', 'tmp')
-DOCKER_IMAGE_NAME = 'pdp_docker'
+CONTENT_DIRECTORY = 'content'
+TMP_DIRECTORY = 'tmp'
+MONITOR_DIRECTORY = os.path.join(CONTENT_DIRECTORY, TMP_DIRECTORY)
+DOCKER_VERSION = '1'
+DOCKER_IMAGE_NAME = 'pdp_docker_{}'.format(DOCKER_VERSION)
 
 LS = []
 REFRESH_LS_TRIGGER = 10
@@ -60,7 +63,21 @@ def saver(sub_id):
     return True
 
 
-# Watcher loop
+# Move to ./content
+cur_path = os.getcwd()
+os.chdir(os.path.join(cur_path, CONTENT_DIRECTORY))
+
+out = 1
+while out != 0:
+    # Build docker image using docker run
+    out = call(['docker', 'build', '-q', '-t', DOCKER_IMAGE_NAME, './'])
+
+# Move back to old directory
+os.chdir(cur_path)
+
+print("Docker image: {} built successfully!".format(DOCKER_IMAGE_NAME))
+
+
 while True:
     if len(LS) < REFRESH_LS_TRIGGER:
         LS = [os.path.join(MONITOR_DIRECTORY, sub_file)
@@ -73,7 +90,7 @@ while True:
 
         # Move to content
         cur_dir = os.getcwd()
-        os.chdir(os.path.join(cur_dir, 'content'))
+        os.chdir(os.path.join(cur_dir, CONTENT_DIRECTORY))
 
         # Run docker image
         call(['docker', 'run', '--rm', '-v', '{}:/app'.format(os.getcwd()),
