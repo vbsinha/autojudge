@@ -9,12 +9,18 @@
     <div class="col-12 col-md-5">{{ contest_start }} - {{ contest_end }}</div>
 </div>
 
-
 <div class="row">
     <div class="col-12 col-md-7">
-
-        <!-- TODO List all the problems here -->
         <a class="btn btn-primary" href="{% url 'judge:new_problem' contest.pk %}">Add Problem</a>
+        {% for problem in problems %}
+        <div class="card m-3">
+            <div class="card-body">
+                <h4><code>[{{ problem.code }}]</code> {{ problem.name }}</h4>
+                <a href="{% url 'judge:problem_detail' problem.pk %}" class="card-link">Go to problem page</a>
+            </div>
+        </div>
+        {% endfor %}
+        <!-- TODO List all the problems here -->
     </div>
     <div class="col-12 col-md-5">
         <div class="col-12">

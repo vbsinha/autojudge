@@ -56,8 +56,10 @@ def add_participant(request, contest_id):
 
 def contest_detail(request, contest_id):
     contest = get_object_or_404(Contest, pk=contest_id)
+    problems = Problem.objects.filter(contest_id=contest_id)
     return render(request, 'judge/contest_detail.html', {
         'contest': contest,
+        'problems': problems,
         'contest_start': contest.start_datetime.strftime('%d-%m-%Y %H:%M'),
         'contest_end': contest.end_datetime.strftime('%d-%m-%Y %H:%M'),
     })
