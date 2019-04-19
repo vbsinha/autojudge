@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from datetime import timedelta, datetime
+from datetime import timedelta
+from django.utils import timezone
 
 from .models import Contest, Problem, TestCase
 from . import handler
@@ -150,8 +151,13 @@ def problem_submit(request, problem_id):
     if request.method == 'POST':
         # TODO What is file_type?
         # TODO Process return and display result
-        handler.process_solution(
-            problem_id, request.user.email, '', request.FILE['file'], datetime.now())
+        status, err = handler.process_solution(
+            problem_id, request.user.email, '.cpp', request.FILES.get('file'), timezone.now())
+        if status:
+            # TODO give status
+            return redirect('/judge/')
+        else:
+            print(err)
+            return redirect(request.META['HTTP_REFERER'])
     else:
-        redirect('/judge/')
-    pass
+        return redirect('/judge/')
