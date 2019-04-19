@@ -116,7 +116,7 @@ class Person(models.Model):
     email = models.EmailField(primary_key=True)
 
     # Rank of the Person
-    rank = models.PositiveIntegerField(default=10)
+    rank = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.email

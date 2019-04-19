@@ -22,7 +22,6 @@ def index(request):
 def new_contest(request):
     if request.method == 'POST':
         # TODO Sanitize input
-        print(request.POST)
         status, err = handler.process_contest(request.POST['name'],
                                               request.POST['start_date'] +
                                               '+0530',
