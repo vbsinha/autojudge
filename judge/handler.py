@@ -2,6 +2,7 @@ import subprocess
 import traceback
 import os
 from uuid import uuid4
+from datetime import timedelta
 
 from . import models
 
@@ -163,20 +164,20 @@ def process_solution(problem: str, participant: str, file_type, submission_file,
         traceback.print_exc()
         return (False, e.__str__)
 
-    testcases = models.TestCase.objects.get(problem=problem)
+    testcases = models.TestCase.objects.filter(problem=problem)
 
     id = uuid4().hex
     with open(os.path.join('content', 'tmp', 'sub_run_' + id + '.txt'), 'w') as f:
-        f.write(problem.pk)
-        f.write(s.pk)
-        f.write(file_type)
+        f.write(problem.pk+'\n')
+        f.write(str(s.pk)+'\n')
+        f.write(file_type+'\n')
         for testcase in testcases:
-            f.write(testcase.pk)
+            f.write(testcase.pk+'\n')
 
     try:
         for i in range(len(testcases)):
             st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict='R',
-                                           memory_taken=0, timetaken=0)
+                                           memory_taken=0, time_taken=timedelta(seconds=0))
             st.save()
     except Exception as e:
         traceback.print_exc()
