@@ -12,11 +12,10 @@ def process_contest(name: str, start_datetime, end_datetime, penalty: float, pub
     Only penalty can be None in which case Penalty will be set to 0
     Returns: (True, None) or (False, Exception string)
     """
-
-    # Set penalty to defualt value 0
-    if penalty is None:
-        penalty = 0.0
-
+    name = 'Unnamed Contest' if name is None else name
+    penalty = 0. if penalty is None else penalty
+    public = False if public is None else public 
+    
     try:
         c = models.Contest(name=name, start_datetime=start_datetime,
                            end_datetime=end_datetime, penalty=penalty, public=public)
@@ -54,7 +53,15 @@ def process_problem(code: str, contest: str, name: str, statement: str, input_fo
     if test_script is None:
         test_script = './default/test_script.sh'
         cp_test_script = True
+
+    name = 'Name not set' if name is None else name
+    statement = 'The problem statement is empty.' if statement is None else statement
+    input_format = 'No input format specified.' if input_format is None else input_format
+    output_format = 'No output format specified.' if output_format is None else output_format
+    difficulty = 0 if difficulty is None else difficulty
+    memory_limit = 200000 if memory_limit is None else memory_limit
     file_format = '.py,.cpp,.c' if file_format is None else file_format
+    max_score = 0 if max_score is None else max_score
 
     try:
         c = models.Contest.objects.get(pk=contest)
@@ -112,6 +119,8 @@ def process_person(email, rank=0):
     Process a new Person
     Nullable Fields: rank
     """
+    if email is None:
+        return (False, 'Email passed is None.')
     try:
         (p, status) = models.Person.objects.get_or_create(email=email)
         if status:
@@ -251,16 +260,16 @@ def get_posters(contest: str):
 
 def get_participants(contest: str):
     """
-    Return the posters for the contest.
+    Return the participants for the contest.
     contest is the pk of the Contest
-    Returns (True, List of the email of the posters)
+    Returns (True, List of the email of the participants)
     Returns (True, []) if contest is public
     """
     try:
         c = models.Contest.objects.get(pk=contest)
         if c.public is True:
             return (True, [])
-        cps = models.ContestPerson.objects.filter(contest=c, role=True)
+        cps = models.ContestPerson.objects.filter(contest=c, role=False)
         cps = [cp.email for cp in cps]
         return (True, cps)
     except Exception as e:

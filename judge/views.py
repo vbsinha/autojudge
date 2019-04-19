@@ -22,12 +22,12 @@ def index(request):
 def new_contest(request):
     if request.method == 'POST':
         # TODO Sanitize input
-        status, err = handler.process_contest(request.POST['name'],
+        status, err = handler.process_contest(request.POST.get('name'),
                                               request.POST['start_date'] +
                                               '+0530',
                                               request.POST['end_date'] +
                                               '+0530',
-                                              request.POST['penalty'],
+                                              request.POST.get('penalty'),
                                               True if request.POST.get('public') == 'on' else False)
         if status:
             return redirect('/judge/')
@@ -43,7 +43,7 @@ def add_poster(request, contest_id, permission=True):
     # TODO Error handling
     if request.method == 'POST':
         status, err = handler.add_person_to_contest(
-            request.POST['email'], contest_id, permission)
+            request.POST.get('email'), contest_id, permission)
         if status:
             return redirect(request.META['HTTP_REFERER'])
     return redirect(request.META['HTTP_REFERER'])
@@ -75,20 +75,20 @@ def new_problem(request, contest_id):
     contest = get_object_or_404(Contest, pk=contest_id)
     if request.method == 'POST':
         # TODO Sanitize input
-        status, err = handler.process_problem(request.POST['code'],
+        status, err = handler.process_problem(request.POST.get('code'),
                                               contest_id,
-                                              request.POST['name'],
-                                              request.POST['statement'],
-                                              request.POST['input_format'],
-                                              request.POST['output_format'],
-                                              request.POST['difficulty'],
+                                              request.POST.get('name'),
+                                              request.POST.get('statement'),
+                                              request.POST.get('input_format'),
+                                              request.POST.get('output_format'),
+                                              request.POST.get('difficulty'),
                                               timedelta(milliseconds=int(
-                                                  request.POST['time_limit'])),
-                                              request.POST['memory_limit'],
-                                              request.POST['file_format'],
+                                                  request.POST.get('time_limit'))),  # Ensure not null
+                                              request.POST.get('memory_limit'),
+                                              request.POST.get('file_format'),
                                               # Nullable field
                                               request.FILES.get('start_code'),
-                                              request.POST['max_score'],
+                                              request.POST.get('max_score'),
                                               # Nullable field
                                               request.FILES.get(
                                                   'compilation_script'),
