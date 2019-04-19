@@ -28,7 +28,7 @@ def new_contest(request):
                                               request.POST['end_date'] +
                                               '+0530',
                                               request.POST['penalty'],
-                                              True if request.POST['public'] == 'on' else False)
+                                              True if request.POST.get('public') == 'on' else False)
         if status:
             return redirect('/judge/')
         context = {'error_msg': 'Could not create new contest',
@@ -75,27 +75,40 @@ def new_problem(request, contest_id):
     contest = get_object_or_404(Contest, pk=contest_id)
     if request.method == 'POST':
         # TODO Sanitize input
-        if handler.process_problem(request.POST['code'],
-                                   contest_id,
-                                   request.POST['name'],
-                                   request.POST['statement'],
-                                   request.POST['input_format'],
-                                   request.POST['output_format'],
-                                   request.POST['difficulty'],
-                                   timedelta(milliseconds=int(
-                                       request.POST['time_limit'])),
-                                   request.POST['memory_limit'],
-                                   request.POST['file_format'],
-                                   # Nullable field
-                                   request.FILES.get('start_code'),
-                                   request.POST['max_score'],
-                                   # Nullable field
-                                   request.FILES.get('compilation_script'),
-                                   # Nullable field
-                                   request.FILES.get('test_script'),
-                                   request.FILES.get('setter_solution')):  # Nullable field
+        status, err = handler.process_problem(request.POST['code'],
+                                              contest_id,
+                                              request.POST['name'],
+                                              request.POST['statement'],
+                                              request.POST['input_format'],
+                                              request.POST['output_format'],
+                                              request.POST['difficulty'],
+                                              timedelta(milliseconds=int(
+                                                  request.POST['time_limit'])),
+                                              request.POST['memory_limit'],
+                                              request.POST['file_format'],
+                                              # Nullable field
+                                              request.FILES.get('start_code'),
+                                              request.POST['max_score'],
+                                              # Nullable field
+                                              request.FILES.get(
+                                                  'compilation_script'),
+                                              # Nullable field
+                                              request.FILES.get('test_script'),
+                                              request.FILES.get('setter_solution')
+                                              # Nullable field
+                                              )
+        print(request.POST)
+        if status:
+            no_test_cases = int(request.POST['no_test_cases'])
+            print(no_test_cases)
+            for i in range(no_test_cases):
+                status, err = handler.process_testcase(
+                    request.POST['code'], True if request.POST['test'+str(i)] == 'on' else False,
+                    request.FILES.get('input'+str(i)), request.FILES.get('output'+str(i)))
+                print(status, err)
             return redirect('/judge/contest/{}/'.format(contest_id))
         else:
+            print(err)
             context = {'error_msg': 'Could not create new problem',
                        'post_data': request.POST,
                        'contest': contest}
@@ -116,7 +129,8 @@ def problem_submit(request, problem_id):
     if request.method == 'POST':
         # TODO What is file_type?
         # TODO Process return and display result
-        handler.process_solution(problem_id, request.user.email, '', request.FILE['file'], datetime.now())
+        handler.process_solution(
+            problem_id, request.user.email, '', request.FILE['file'], datetime.now())
     else:
         redirect('/judge/')
     pass
