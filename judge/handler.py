@@ -251,16 +251,16 @@ def get_posters(contest: str):
 
 def get_participants(contest: str):
     """
-    Return the posters for the contest.
+    Return the participants for the contest.
     contest is the pk of the Contest
-    Returns (True, List of the email of the posters)
+    Returns (True, List of the email of the participants)
     Returns (True, []) if contest is public
     """
     try:
         c = models.Contest.objects.get(pk=contest)
         if c.public is True:
             return (True, [])
-        cps = models.ContestPerson.objects.filter(contest=c, role=True)
+        cps = models.ContestPerson.objects.filter(contest=c, role=False)
         cps = [cp.email for cp in cps]
         return (True, cps)
     except Exception as e:
