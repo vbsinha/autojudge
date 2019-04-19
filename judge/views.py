@@ -11,6 +11,11 @@ def index(request):
     context = {}
     if request.user.is_authenticated:
         handler.process_person(request.user.email)
+    # TODO
+    # Get all public contests if user not signed in
+    # Get contests for which the current user is poster/participant
+    contests = Contest.objects.all()
+    context['contests'] = contests
     return render(request, 'judge/index.html', context)
 
 
