@@ -39,7 +39,7 @@ def new_contest(request):
         return render(request, 'judge/new_contest.html', context)
 
 
-def add_poster(request, contest_id, permission=True):
+def _add_person(request, contest_id, permission):
     # TODO Error handling
     if request.method == 'POST':
         status, err = handler.add_person_to_contest(
@@ -49,8 +49,12 @@ def add_poster(request, contest_id, permission=True):
     return redirect(request.META['HTTP_REFERER'])
 
 
+def add_poster(request, contest_id):
+    return _add_person(request, contest_id, True)
+
+
 def add_participant(request, contest_id):
-    return add_poster(request, contest_id, False)
+    return _add_person(request, contest_id, False)
 
 
 def contest_detail(request, contest_id):
@@ -116,7 +120,8 @@ def problem_submit(request, problem_id):
     if request.method == 'POST':
         # TODO What is file_type?
         # TODO Process return and display result
-        handler.process_solution(problem_id, request.user.email, '', request.FILE['file'], datetime.now())
+        handler.process_solution(problem_id, request.user.email,
+                                 '', request.FILE['file'], datetime.now())
     else:
         redirect('/judge/')
     pass
