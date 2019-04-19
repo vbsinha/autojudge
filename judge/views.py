@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from datetime import timedelta, datetime
 
-from .models import Contest, Problem
+from .models import Contest, Problem, TestCase
 from . import handler
 
 # Create your views here.
@@ -68,6 +68,8 @@ def problem_detail(request, problem_id):
     problem = get_object_or_404(Problem, pk=problem_id)
     return render(request, 'judge/problem_detail.html', {
         'problem': problem,
+        'public_tests': TestCase.objects.filter(problem_id=problem_id, public=True),
+        'private_tests': TestCase.objects.filter(problem_id=problem_id, public=False),
     })
 
 

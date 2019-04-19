@@ -67,6 +67,24 @@
         <h4>Output Format</h4>
         <div id="outputFormatEditor"></div>
     </div>
+    <div class="col-12 my-4">
+        <h4>Public test cases</h4>
+        {% for test in public_tests %}
+        <h5>Test Case {{ forloop.counter }}</h5>
+        <!-- TODO Display input/output files -->
+        <!-- TODO Hide Private test cases for particpants -->
+        <div class="col-12 col-md-6"><h6>Input</h6><pre>{{ test }}</pre></div>
+        <div class="col-12 col-md-6"><h6>Output</h6><pre>{{ test }}</pre></div>
+        {% endfor %}
+    </div>
+    <div class="col-12 my-4">
+        <h4>Private test cases</h4>
+        {% for test in public_tests %}
+        <h5>Test Case {{ forloop.counter }}</h5>
+        <div class="col-12 col-md-6"><h6>Input</h6><pre>{{ test }}</pre></div>
+        <div class="col-12 col-md-6"><h6>Output</h6><pre>{{ test }}</pre></div>
+        {% endfor %}
+    </div>
 </div>
 
 <!-- TODO Restrict to participant only -->
