@@ -2,6 +2,7 @@ from django.db import models
 
 from uuid import uuid4
 from os.path import splitext
+from functools import partial
 from datetime import timedelta
 
 
@@ -13,12 +14,18 @@ def start_code_name(instance, filename):
     return 'content/problems/{}/start_code{}'.format(instance.code, splitext(filename)[1])
 
 
-def compilation_script_name(instance, filename):
-    return 'content/problems/{}/compilation_script.sh'.format(instance.code)
+def compilation_test_upload_location(instance, filename, is_compilation):
+    # We disregard the filename argument
+    file_prefix = 'compilation' if is_compilation else 'test'
+    file_name = '{}_script.sh'.format(file_prefix)
+    return 'content/problems/{}/{}'.format(instance.code, file_name)
 
 
-def test_script_name(instance, filename):
-    return 'content/problems/{}/test_script.sh'.format(instance.code)
+def testcase_upload_location(instance, filename, is_input):
+    # We disregard the filename argument
+    file_prefix = 'input' if is_input else 'output'
+    file_name = '{}file_{}.txt'.format(file_prefix, instance.id)
+    return 'content/testcase/{}'.format(file_name)
 
 
 class Contest(models.Model):
@@ -94,11 +101,13 @@ class Problem(models.Model):
 
     # Compilation script [File]
     compilation_script = models.FileField(
-        upload_to=compilation_script_name, default='./default/compilation_script.sh')
+        upload_to=partial(compilation_test_upload_location, is_compilation=True),
+        default='./default/compilation_script.sh')
 
     # Test script [File]
     test_script = models.FileField(
-        upload_to=test_script_name, default='./default/test_script.sh')
+        upload_to=partial(compilation_test_upload_location, is_compilation=False),
+        default='./default/test_script.sh')
 
     # Setter solution script [File, Nullable]
     setter_solution = models.FileField(upload_to=setter_sol_name, null=True)
@@ -126,8 +135,8 @@ class Submission(models.Model):
     """
     Model for a Submission.
     """
-    # ID of Submission [Char]
-    id = uuid4().hex
+    # Self Generated PrimaryKey
+    id = models.CharField(max_length=32, primary_key=True, default=uuid4)
 
     # ForeignKey to Problem
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
@@ -148,6 +157,7 @@ class Submission(models.Model):
         max_length=5, choices=PERMISSIBLE_FILE_TYPES, default='.none')
 
     # Submission file [File]
+    # TODO: fix this like TestCase
     submission_file = models.FileField(upload_to='content/submissions/submission_{}{}'
                                                  .format(id, file_type))
 
@@ -198,18 +208,16 @@ class TestCase(models.Model):
     public = models.BooleanField()
 
     # Self Generated PrimaryKey
-    id = uuid4().hex
+    id = models.CharField(max_length=32, primary_key=True, default=uuid4)
 
     # Store the inputfile for the testcase.
     # Sample: ./content/testcase/inputfile_UUID.txt
-    inputfile = models.FileField(upload_to="/".join(['content', 'testcase',
-                                                     'inputfile_' + id + '.txt']),
+    inputfile = models.FileField(upload_to=partial(testcase_upload_location, is_input=True),
                                  default='./default/inputfile.txt')
 
     # Store the outputfile for the testcase
     # ./content/testcase/outputfile_UUID.txt
-    outputfile = models.FileField(upload_to="/".join(['content', 'testcase',
-                                                      'outputfile_' + id + '.txt']),
+    outputfile = models.FileField(upload_to=partial(testcase_upload_location, is_input=False),
                                   default='./default/outputfile.txt')
 
 
@@ -261,10 +269,10 @@ class Comment(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
 
     # Self Generated PrimaryKey
-    _id = uuid4().hex
-    comment_id = models.CharField(max_length=32, primary_key=True, default=_id)
+    id = models.CharField(max_length=32, primary_key=True, default=uuid4)
 
     # Store a comment file for each Problem Student pair.
     # Sample path: ./content/comment/UUID.yml
+    # TODO: Fix this like TestCase
     comment = models.FileField(upload_to="/".join(['content', 'comment', _id + '.yml']),
                                default='./default/comment.yml')
