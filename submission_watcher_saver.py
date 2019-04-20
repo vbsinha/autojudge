@@ -61,10 +61,15 @@ def saver(sub_id):
 
     s.judge_score = score_received
     current_final_score = s.judge_score + s.ta_score + s.linter_score
+
+    # Compute remaining time
     remaining_time = problem.contest.end_datetime - s.timestamp
+    penalty_multiplier = 1.0
+
+    # If num_of_days * penalty > 1.0, then the score is clamped to zero
     if remaining_time.days < 0:
-        current_final_score = abs(remaining_time.days) * problem.contest.penalty
-    s.final_score = current_final_score
+        penalty_multiplier += remaining_time.days * problem.contest.penalty
+    s.final_score = max(0.0, current_final_score * penalty_multiplier)
     s.save()
 
     ppf = models.ProblemPersonFinalScore.get_or_create(person=submission.person, problem=problem)
