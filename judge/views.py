@@ -105,18 +105,13 @@ def new_problem(request, contest_id):
                                                   request.POST.get('time_limit'))),
                                               request.POST.get('memory_limit'),
                                               request.POST.get('file_format'),
-                                              # Nullable field
                                               request.FILES.get('start_code'),
                                               request.POST.get('max_score'),
-                                              # Nullable field
                                               request.FILES.get(
                                                   'compilation_script'),
-                                              # Nullable field
                                               request.FILES.get('test_script'),
                                               request.FILES.get(
-                                                  'setter_solution')
-                                              # Nullable field
-                                              )
+                                                  'setter_solution'))
         print(request.POST)
         if status:
             # no_test_cases = int(request.POST['no_test_cases'])

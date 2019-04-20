@@ -7,6 +7,8 @@ parser.add_argument('--submission_config', type=str,
                             PROBLEM_CODE
                             SUBMISSION_ID
                             SUBMISSION_FORMAT
+                            TIME_LIMIT
+                            MEMORY_LIMIT
                             TESTCASE_1_ID
                             TESTCASE_2_ID
                             TESTCASE_3_ID

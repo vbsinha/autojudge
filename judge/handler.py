@@ -1,6 +1,7 @@
 import subprocess
 import traceback
 import os
+
 from datetime import timedelta
 from typing import Tuple, Optional
 
@@ -16,7 +17,7 @@ def process_contest(name: str, start_datetime, end_datetime, penalty: float, pub
     name = 'Unnamed Contest' if name is None else name
     penalty = 0. if penalty is None else penalty
     public = False if public is None else public
-    
+
     try:
         c = models.Contest(name=name, start_datetime=start_datetime,
                            end_datetime=end_datetime, penalty=penalty, public=public)
@@ -173,15 +174,19 @@ def process_solution(problem_id: str, participant: str, file_type, submission_fi
     # PROBLEM_ID
     # SUBMISSION_ID
     # FILE_FORMAT
+    # TIME_LIMIT
+    # MEMORY_LIMIT
     # TESTCASE_1
     # TESTCASE_2
     # ....
     with open(os.path.join('content', 'tmp', 'sub_run_' + str(s.pk) + '.txt'), 'w') as f:
-        f.write(problem.pk + '\n')
-        f.write(str(s.pk) + '\n')
-        f.write(file_type + '\n')
+        f.write('{}\n'.format(problem.pk))
+        f.write('{}\n'.format(s.pk))
+        f.write('{}\n'.format(file_type))
+        f.write('{}\n'.format(problem.time_limit.seconds()))
+        f.write('{}\n'.format(problem.memory_limit))
         for testcase in testcases:
-            f.write(testcase.pk + '\n')
+            f.write('{}\n'.format(testcase.pk))
 
     try:
         for i in range(len(testcases)):
@@ -282,6 +287,24 @@ def get_participants(contest: str):
         cps = models.ContestPerson.objects.filter(contest=c, role=False)
         cps = [cp.email for cp in cps]
         return (True, cps)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
+
+
+def get_personcontest_score(person: str, contest: int):
+    """
+    Get the final score which is the sum of individual final scores of all problems in the contest.
+    Pass email in person and contest's pk
+    """
+    try:
+        p = models.Person.get(person=person)
+        c = models.Contest.get(contest=contest)
+        problems = models.Problem.filter(contest=c)
+        score = 0
+        for problem in problems:
+            score += models.PersonProblemFinalScore.objects.get(person=p, problem=problem).score
+        return (True, score)
     except Exception as e:
         traceback.print_exc()
         return (False, e.__str__)

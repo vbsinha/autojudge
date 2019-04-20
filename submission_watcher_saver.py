@@ -60,8 +60,23 @@ def saver(sub_id):
         st.save()
 
     s.judge_score = score_received
-    s.final_score = s.judge_score + s.ta_score + s.linter_score
+    current_final_score = s.judge_score + s.ta_score + s.linter_score
+
+    # Compute remaining time
+    remaining_time = problem.contest.end_datetime - s.timestamp
+    penalty_multiplier = 1.0
+
+    # If num_of_days * penalty > 1.0, then the score is clamped to zero
+    if remaining_time.days < 0:
+        penalty_multiplier += remaining_time.days * problem.contest.penalty
+    s.final_score = max(0.0, current_final_score * penalty_multiplier)
     s.save()
+
+    ppf = models.ProblemPersonFinalScore.get_or_create(person=submission.person, problem=problem)
+    if ppf.score < s.final_score:
+        ppf.score = s.final_score
+    ppf.save()
+
     return True
 
 
@@ -88,7 +103,6 @@ while True:
 
     if len(LS) > 0:
         sub_file = LS[0]  # The first file submission-wise
-        print(sub_file)
         sub_id = os.path.basename(sub_file)[8:-4]  # This is the submission ID
 
         # Move to content
