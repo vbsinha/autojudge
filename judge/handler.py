@@ -173,15 +173,19 @@ def process_solution(problem: str, participant: str, file_type, submission_file,
     # PROBLEM_ID
     # SUBMISSION_ID
     # FILE_FORMAT
+    # TIME_LIMIT
+    # MEMORY_LIMIT
     # TESTCASE_1
     # TESTCASE_2
     # ....
     with open(os.path.join('content', 'tmp', 'sub_run_' + str(s.pk) + '.txt'), 'w') as f:
-        f.write(problem.pk + '\n')
-        f.write(str(s.pk) + '\n')
-        f.write(file_type + '\n')
+        f.write('{}\n'.format(problem.pk))
+        f.write('{}\n'.format(s.pk))
+        f.write('{}\n'.format(file_type))
+        f.write('{}\n'.format(problem.time_limit.seconds()))
+        f.write('{}\n'.format(problem.memory_limit))
         for testcase in testcases:
-            f.write(testcase.pk + '\n')
+            f.write('{}\n'.format(testcase.pk))
 
     try:
         for i in range(len(testcases)):
