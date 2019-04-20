@@ -58,8 +58,18 @@ def saver(sub_id):
         st.save()
 
     s.judge_score = score_received
-    s.final_score = s.judge_score + s.ta_score + s.linter_score
+    current_final_score = s.judge_score + s.ta_score + s.linter_score
+    remaining_time = problem.contest.end_datetime - s.timestamp
+    if remaining_time.days < 0:
+        current_final_score = abs(remaining_time.days) * problem.contest.penalty
+    s.final_score = current_final_score
     s.save()
+
+    ppf = models.ProblemPersonFinalScore.get_or_create(person=submission.person, problem=problem)
+    if ppf.score < s.final_score:
+        ppf.score = s.final_score
+    ppf.save()
+
     return True
 
 
