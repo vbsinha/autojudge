@@ -5,15 +5,24 @@
         <h1>Contests</h1>
     </div>
     <div class="col-12">
-        {% for contest in contests %}
+        {% for contest, permission in contests %}
+        {% if permission != None %}
+        <!-- TODO Handle when all are None -->
         <div class="card">
             <div class="card-body">
                 <diV>
                     <h4 class="d-inline-block">{{ contest.name }}</h4>
                     {% if contest.public %}<span class="badge badge-success">Public</span>{% endif %}
+                    {% if permission %}<span class="badge badge-warning">Poster</span>
+                    {% else %}<span class="badge badge-warning">Participant</span>{% endif %}
                 </diV>
                 <a href="{% url 'judge:contest_detail' contest.pk %}" class="card-link">Go to contest page</a>
             </div>
+        </div>
+        {% endif %}
+        {% empty %}
+        <div class="col-12">
+            There are no contests at present.
         </div>
         {% endfor %}
     </div>
