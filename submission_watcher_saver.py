@@ -1,6 +1,7 @@
 import os
 import django
 
+from datetime import timedelta
 from subprocess import call
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pdpjudge.settings")
@@ -26,16 +27,17 @@ def saver(sub_id):
         # SUBMISSION_ID
         # TESTCASEID VERDICT TIME MEMORY MESSAGE
         # Read the output into verdict, memory and time.
-        problem = f.readline()
-        submission = f.readline()
+        lines = [line[:-1] for line in f.readlines()]
+        problem = lines[0]
+        submission = lines[1]
         testcase_id, verdict, time, memory, msg = [], [], [], [], []
-        for line in f:
+        for line in lines[2:]:
             sep = line.split(' ', maxsplit=4)
             testcase_id.append(sep[0])
             verdict.append(sep[1])
-            memory.append(sep[2])
-            time.append(sep[3])
-            msg.append(sep[4])
+            time.append(sep[2])
+            memory.append(sep[3])
+            msg.append(sep[4] if len(sep) == 5 else '')
 
     # Delete the file after reading
     os.remove(os.path.join(MONITOR_DIRECTORY, 'sub_run_' + sub_id + '.txt'))
@@ -51,8 +53,8 @@ def saver(sub_id):
         st = models.SubmissionTestCase.objects.get(submission=submission,
                                                    testcase=testcase_id[i])
         st.verdict = verdict[i]
-        st.memory_taken = memory[i]
-        st.time_taken = time[i]
+        st.memory_taken = int(memory[i])
+        st.time_taken = timedelta(seconds=float(time[i]))
         if models.TestCase.objects.get(pk=testcase_id[i]).public:
             st.message = msg[i] if len(msg[i]) < 1000 else msg[i][:1000] + '\\nMessage Truncated'
         st.save()
@@ -86,6 +88,7 @@ while True:
 
     if len(LS) > 0:
         sub_file = LS[0]  # The first file submission-wise
+        print(sub_file)
         sub_id = os.path.basename(sub_file)[8:-4]  # This is the submission ID
 
         # Move to content
