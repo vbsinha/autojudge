@@ -13,8 +13,8 @@
                 <diV>
                     <h4 class="d-inline-block">{{ contest.name }}</h4>
                     {% if contest.public %}<span class="badge badge-success">Public</span>{% endif %}
-                    {% if permission %}<span class="badge badge-success">Poster</span>
-                    {% else %}<span class="badge badge-success">Participant</span>{% endif %}
+                    {% if permission %}<span class="badge badge-warning">Poster</span>
+                    {% else %}<span class="badge badge-warning">Participant</span>{% endif %}
                 </diV>
                 <a href="{% url 'judge:contest_detail' contest.pk %}" class="card-link">Go to contest page</a>
             </div>
