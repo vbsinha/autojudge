@@ -7,7 +7,7 @@ from subprocess import call
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pdpjudge.settings")
 django.setup()
 
-from judge import models  # noqa: E402
+from judge import models, leaderboard  # noqa: E402
 
 CONTENT_DIRECTORY = 'content'
 TMP_DIRECTORY = 'tmp'
@@ -75,6 +75,10 @@ def saver(sub_id):
     ppf = models.ProblemPersonFinalScore.get_or_create(person=submission.person, problem=problem)
     if ppf.score < s.final_score:
         ppf.score = s.final_score
+        if remaining_time >= 0:
+            # Update the leaderboard only if not a late submission
+            # and the submission imporved the final score
+            leaderboard.update_leaderboard(problem.contest.pk, submission.person.email)
     ppf.save()
 
     return True

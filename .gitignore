@@ -139,6 +139,7 @@ dmypy.json
 content/problems/
 content/submissions/
 content/testcase/
+content/contests/
 content/tmp/*
 
 # End of https://www.gitignore.io/api/django
