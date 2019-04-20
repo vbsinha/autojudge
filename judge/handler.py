@@ -155,6 +155,7 @@ def process_solution(problem: str, participant: str, file_type, submission_file,
     problem is the 'code' (pk) of the problem. participant is email(pk) of the participant
     """
     try:
+        file_type = '.py' # TODO file_type
         problem = models.Problem.objects.get(pk=problem)
         participant = models.Person.objects.get(email=participant)
         s = problem.submission_set.create(participant=participant, file_type=file_type,
@@ -166,8 +167,8 @@ def process_solution(problem: str, participant: str, file_type, submission_file,
 
     testcases = models.TestCase.objects.filter(problem=problem)
 
-    id = uuid4().hex
-    with open(os.path.join('content', 'tmp', 'sub_run_' + id + '.txt'), 'w') as f:
+    # id = uuid4().hex
+    with open(os.path.join('content', 'tmp', 'sub_run_' + str(s.pk) + '.txt'), 'w') as f:
         f.write(problem.pk+'\n')
         f.write(str(s.pk)+'\n')
         f.write(file_type+'\n')

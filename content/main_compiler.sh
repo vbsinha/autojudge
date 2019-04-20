@@ -30,6 +30,7 @@ case "$SUBPATH" in
         EXECPATH=${SUBPATH%.*}
         EXTENSION=".py"
         compile_py $SUBPATH $EXECPATH
+        chmod +x $EXECPATH
         ;;
     *.cpp)
         EXECPATH=${SUBPATH%.*}
