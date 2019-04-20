@@ -98,7 +98,6 @@ while True:
 
     if len(LS) > 0:
         sub_file = LS[0]  # The first file submission-wise
-        print(sub_file)
         sub_id = os.path.basename(sub_file)[8:-4]  # This is the submission ID
 
         # Move to content

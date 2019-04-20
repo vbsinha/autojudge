@@ -1,7 +1,7 @@
 import subprocess
 import traceback
 import os
-from uuid import uuid4
+
 from datetime import timedelta
 
 from . import models
@@ -16,7 +16,7 @@ def process_contest(name: str, start_datetime, end_datetime, penalty: float, pub
     name = 'Unnamed Contest' if name is None else name
     penalty = 0. if penalty is None else penalty
     public = False if public is None else public
-    
+
     try:
         c = models.Contest(name=name, start_datetime=start_datetime,
                            end_datetime=end_datetime, penalty=penalty, public=public)
@@ -155,7 +155,7 @@ def process_solution(problem: str, participant: str, file_type, submission_file,
     problem is the 'code' (pk) of the problem. participant is email(pk) of the participant
     """
     try:
-        file_type = '.py' # TODO file_type
+        file_type = '.py'  # TODO file_type
         problem = models.Problem.objects.get(pk=problem)
         participant = models.Person.objects.get(email=participant)
         s = problem.submission_set.create(participant=participant, file_type=file_type,
