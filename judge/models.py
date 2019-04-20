@@ -98,7 +98,7 @@ class Problem(models.Model):
     time_limit = models.DurationField(default=timedelta(seconds=10))
 
     # Memory Limit [Int]
-    # Currently this is specified in bytes
+    # Currently this is specified in mega-bytes
     memory_limit = models.PositiveIntegerField(default=200000)
 
     # File format [Char]

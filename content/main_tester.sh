@@ -1,13 +1,15 @@
 #!/bin/sh
 
-########################################################
+#############################################################################
 # Using this script
-#    ./main_tester.sh $PROB_CODE $SUB_ID [$TESTCASE_ID]+
+#    ./main_tester.sh $PROB_CODE $SUB_ID $TIMELIMIT $MEMLIMIT [$TESTCASE_ID]+
 # where
 # - $PROB_CODE is the problem code
 # - $SUB_ID is the submission ID
+# - $TIMELIMIT is the time limit
+# - $MEMLIMIT is the memory limit
 # - $TESTCASE_ID is the testcase ID (pass atleast 1)
-########################################################
+#############################################################################
 
 # All Error Codes pertaining to Testing
 PASS=0
@@ -39,6 +41,14 @@ shift
 
 # Submission ID
 SUB_ID=$1
+shift
+
+# Time Limit
+TIMELIMIT=$1
+shift
+
+# Memory Limit
+MEMLIMIT=$1
 shift
 
 # Effectively importing the testing function : validate_submission_output()
@@ -138,12 +148,6 @@ error_code_to_string() {
 
   echo "$TESTCASE_ID $STRCODE"
 }
-
-# To be set from the env, in seconds
-TIMELIMIT=1
-
-# To be set from the env, in MB
-MEMLIMIT=26
 
 # Iterate over all testcase IDs passed as command line arguments
 for TESTCASE_ID in "$@";
