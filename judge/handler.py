@@ -1,5 +1,6 @@
 import subprocess
 import traceback
+import logging
 import os
 from datetime import timedelta
 from typing import Tuple, Optional
@@ -13,20 +14,21 @@ def process_contest(name: str, start_datetime, end_datetime, penalty: float, pub
     Only penalty can be None in which case Penalty will be set to 0
     Returns: (True, None) or (False, Exception string)
     """
-    name = 'Unnamed Contest' if name is None else name
+    name = 'Unnamed Contest' if name is None or name.strip() == '' else name
     penalty = 0. if penalty is None else penalty
     public = False if public is None else public
-    
+
     try:
         c = models.Contest(name=name, start_datetime=start_datetime,
                            end_datetime=end_datetime, penalty=penalty, public=public)
         c.save()
         # Successfully added to Database
-        return (True, None)
+        return (True, str(c.pk))
     except Exception as e:
         # Exception Case
         traceback.print_exc()
-        return (False, e.__str__)
+        logging.error(e.__str__)
+        return (False, 'Contest could not be created')
 
 
 def process_problem(code: str, contest: int, name: str, statement: str, input_format: str,
