@@ -287,6 +287,24 @@ def get_participants(contest: str):
         return (False, e.__str__)
 
 
+def get_personcontest_score(person: str, contest: int):
+    """
+    Get the final score which is the sum of individual final scores of all problems in the contest.
+    Pass email in person and contest's pk
+    """
+    try:
+        p = models.Person.get(person=person)
+        c = models.Contest.get(contest=contest)
+        problems = models.Problem.filter(contest=c)
+        score = 0
+        for problem in problems:
+            score += models.PersonProblemFinalScore.objects.get(person=p, problem=problem).score
+        return (True, score)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
+
+
 def get_submission_status(person: str, problem: str, submission: str):
     """
     Get the current status of the submission.
