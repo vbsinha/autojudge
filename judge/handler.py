@@ -77,7 +77,7 @@ def process_problem(code: str, contest: str, name: str, statement: str, input_fo
         if not os.path.exists(os.path.join('content', 'problems', p.code)):
             # Create the problem directory explictly if not yet created
             # This will happen when both compilation_script and test_script were None
-            os.mkdir(os.path.join('content', 'problems', p.code))
+            os.makedirs(os.path.join('content', 'problems', p.code))
 
         if cp_comp_script is True:
             # Copy the default comp_script if the user did not upload custom
