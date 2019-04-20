@@ -1,8 +1,8 @@
 import subprocess
 import traceback
 import os
-from uuid import uuid4
 from datetime import timedelta
+from typing import Tuple, Optional
 
 from . import models
 
@@ -29,7 +29,7 @@ def process_contest(name: str, start_datetime, end_datetime, penalty: float, pub
         return (False, e.__str__)
 
 
-def process_problem(code: str, contest: str, name: str, statement: str, input_format: str,
+def process_problem(code: str, contest: int, name: str, statement: str, input_format: str,
                     output_format: str, difficulty: int, time_limit: int, memory_limit: int,
                     file_format: str, start_code, max_score: int, compilation_script, test_script,
                     setter_solution):
@@ -115,7 +115,7 @@ def update_problem(code, name=None, statement=None, input_format=None,
         raise Exception('{} code does not exist.'.format(code))
 
 
-def process_person(email, rank=0):
+def process_person(email, rank=0) -> Tuple[bool, Optional[str]]:
     """
     Process a new Person
     Nullable Fields: rank
@@ -130,16 +130,16 @@ def process_person(email, rank=0):
         return (True, None)
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
 
-def process_testcase(problem: str, ispublic: bool, inputfile, outputfile):
+def process_testcase(problem_id: str, ispublic: bool, inputfile, outputfile):
     """
     Process a new Testcase
     problem is the 'code' (pk) of the problem.
     """
     try:
-        problem = models.Problem.objects.get(pk=problem)
+        problem = models.Problem.objects.get(pk=problem_id)
         t = problem.testcase_set.create(
             public=ispublic, inputfile=inputfile, outputfile=outputfile)
         t.save()
@@ -149,14 +149,14 @@ def process_testcase(problem: str, ispublic: bool, inputfile, outputfile):
         return (False, e.__str__)
 
 
-def process_solution(problem: str, participant: str, file_type, submission_file, timestamp: str):
+def process_solution(problem_id: str, participant: str, file_type, submission_file, timestamp: str):
     """
     Process a new Solution
     problem is the 'code' (pk) of the problem. participant is email(pk) of the participant
     """
     try:
-        file_type = '.py' # TODO file_type
-        problem = models.Problem.objects.get(pk=problem)
+        file_type = '.py'  # TODO file_type
+        problem = models.Problem.objects.get(pk=problem_id)
         participant = models.Person.objects.get(email=participant)
         s = problem.submission_set.create(participant=participant, file_type=file_type,
                                           submission_file=submission_file, timestamp=timestamp)
@@ -222,7 +222,7 @@ def add_person_to_contest(person: str, contest: str, permission: bool):
         return (False, e.__str__)
 
 
-def get_personcontest_permission(person: str, contest: str):
+def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
     """
     Determine the relation between Person and Contest
     person is the email of the person
@@ -235,7 +235,7 @@ def get_personcontest_permission(person: str, contest: str):
         cp = models.ContestPerson.objects.get(person=p, contest=c)
         return cp.role
     except models.ContestPerson.DoesNotExist:
-        q_set = models.ContestPerson.filter(name=contest, role=False)
+        q_set = models.ContestPerson.objects.filter(contest=contest, role=False)
         return (False if len(q_set) == 0 else None)
 
 

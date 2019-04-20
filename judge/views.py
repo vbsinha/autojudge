@@ -1,22 +1,36 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from datetime import timedelta
 from django.utils import timezone
+from django.contrib.auth.models import User
+import logging
 
 from .models import Contest, Problem, TestCase
 from . import handler
 
-# Create your views here.
+
+def _get_user(request) -> User:
+    if request.user.is_authenticated:
+        return request.user
+    else:
+        return None
 
 
 def index(request):
     context = {}
-    if request.user.is_authenticated:
-        handler.process_person(request.user.email)
-    # TODO
-    # Get all public contests if user not signed in
-    # Get contests for which the current user is poster/participant
-    contests = Contest.objects.all()
-    context['contests'] = contests
+    user = _get_user(request)
+    if user is not None:
+        status, err = handler.process_person(request.user.email)
+        if status:
+            # TODO Filter the private contests only foe which he is poster/participant
+            contests = Contest.objects.all()
+            permissions = [handler.get_personcontest_permission(
+                user.email, contest.pk) for contest in contests]
+            context['contests'] = zip(contests, permissions)
+            return render(request, 'judge/index.html', context)
+        else:
+            logging.debug(
+                'Although user is not none, it could not be processed. More info: {}'.format(err))
+    context['contests'] = Contest.objects.filter(public=True)
     return render(request, 'judge/index.html', context)
 
 
@@ -78,15 +92,17 @@ def new_problem(request, contest_id):
     contest = get_object_or_404(Contest, pk=contest_id)
     if request.method == 'POST':
         # TODO Sanitize input
+        # Ensure that time_limit is not null (For int conversion)
         status, err = handler.process_problem(request.POST.get('code'),
                                               contest_id,
                                               request.POST.get('name'),
                                               request.POST.get('statement'),
                                               request.POST.get('input_format'),
-                                              request.POST.get('output_format'),
+                                              request.POST.get(
+                                                  'output_format'),
                                               request.POST.get('difficulty'),
                                               timedelta(milliseconds=int(
-                                                  request.POST.get('time_limit'))),  # Ensure not null
+                                                  request.POST.get('time_limit'))),
                                               request.POST.get('memory_limit'),
                                               request.POST.get('file_format'),
                                               # Nullable field
