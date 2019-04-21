@@ -79,21 +79,28 @@ def get_posters(request, contest_id, permission=True):
     contest = get_object_or_404(Contest, pk=contest_id)
     if user is None or (not permission and contest.public):
         return handler404(request)
+    context = {'contest_id': contest_id,
+               'type': 'Poster' if permission else 'Participant'}
     if request.method == 'POST':
-        # handle delete persons
-        pass
+        form = DeletePersonFromContest(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            status, err = handler.delete_personcontest(email, contest_id)
+            if not status:
+                logging.debug(err)
+                form.add_error(None, 'Could not delete {}.'.format(email))
     else:
-        if permission:
-            status, value = handler.get_posters(contest_id)
-        else:
-            status, value = handler.get_participants(contest_id)
-        if status:
-            context = {'contest_id': contest_id, 'persons': value,
-                       'type': 'Poster' if permission else 'Participant'}
-            return render(request, 'judge/contest_persons.html', context)
-        else:
-            logging.debug(value)
-            return handler404(request)
+        form = DeletePersonFromContest()
+    context['form'] = form
+    if permission:
+        status, value = handler.get_posters(contest_id)
+    else:
+        status, value = handler.get_participants(contest_id)
+    if status:
+        context['persons'] = value
+    else:
+        return handler404(request)
+    return render(request, 'judge/contest_persons.html', context)
 
 
 def get_participants(request, contest_id):
@@ -114,7 +121,7 @@ def add_poster(request, contest_id, permission=True):
             status, err = handler.add_person_to_contest(
                 request.POST.get('email'), contest_id, permission)
             if status:
-                return redirect(request.META['HTTP_REFERER'])
+                return redirect('/judge/contest/{}/{}s/'.format(contest_id, context['type'].lower()))
             else:
                 form.non_field_errors = err
     else:

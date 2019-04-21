@@ -7,6 +7,15 @@
 <li class="breadcrumb-item active" aria-current="page">{{ type }}s</li>
 {% endblock %}
 
+{% block scripts %}
+<script>
+    $('.pdp-delete-person').click(function (){
+        $('#id_email').val($(this).attr('data-email'))
+        $('#pdp-delete-form').submit();
+    })
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-12">
@@ -18,10 +27,11 @@
         {% endif %}
     </div>
     <div class="col-12">
+        <form method="POST" id="pdp-delete-form">{% csrf_token %}{{ form }}</form>
         <div class="list-group">
             {% for person in persons %}
             <div class="list-group-item">
-                <span>{{ person }}</span><button class="btn btn-danger float-right"><i class="fa fa-trash"></i></button>
+                <span>{{ person }}</span><button class="btn btn-danger float-right pdp-delete-person" data-email="{{ person }}"><i class="fa fa-trash"></i></button>
             </div>
             {% empty %}
             <p>There are no {{ type|lower }}s for this contest.</p>

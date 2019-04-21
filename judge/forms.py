@@ -37,4 +37,4 @@ class AddPersonToContestForm(forms.Form):
 
 
 class DeletePersonFromContest(forms.Form):
-    email = forms.EmailField(label='Email')
+    email = forms.EmailField(label='Email', widget=forms.HiddenInput())
