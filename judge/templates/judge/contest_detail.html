@@ -6,14 +6,14 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-12 col-md-7">
-        <h2>{{ contest.name }}</h2>
+    <div class="col-12">
+        <h2 class="d-inline">{{ contest.name }}</h2>
+        <div class="float-right"><i class="fa fa-calendar"></i> {{ contest_start }} - {{ contest_end }}</div>
     </div>
-    <div class="col-12 col-md-5">{{ contest_start }} - {{ contest_end }}</div>
 </div>
 
 <div class="row">
-    <div class="col-12 col-md-7">
+    <div class="col-12">
         <a class="btn btn-primary" href="{% url 'judge:new_problem' contest.pk %}">Add Problem</a>
         <a class="btn btn-primary" href="{% url 'judge:get_posters' contest.pk %}">See posters</a>
         {% if not contest.public %}<a class="btn btn-primary" href="{% url 'judge:get_participants' contest.pk %}">See
@@ -26,21 +26,6 @@
             </div>
         </div>
         {% endfor %}
-    </div>
-    <div class="col-12 col-md-4">
-
-        <hr>
-        <div class="col-12">
-            <h4>Participants</h4>
-            <form action="{% url 'judge:contest_add_participant' contest.pk %}" method="POST" class="form-inline">
-                {% csrf_token %}
-                <div class="form-group">
-                    <input type="text" class="form-control m-2" name="email">
-                    <input type="submit" class="btn btn-primary" value="Add Participant">
-                </div>
-            </form>
-            <!-- TODO List all participants -->
-        </div>
     </div>
 </div>
 
