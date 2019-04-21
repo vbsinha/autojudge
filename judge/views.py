@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 import logging
 
 from .models import Contest, Problem, TestCase
-from .forms import NewContestForm
+from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
 from . import handler
 
 
@@ -55,31 +55,79 @@ def new_contest(request):
             contest_name = form.cleaned_data['contest_name']
             contest_start = form.cleaned_data['contest_start']
             contest_end = form.cleaned_data['contest_end']
-            # TODO validate penalty b/w 0 and 1
             penalty = form.cleaned_data['penalty']
             is_public = form.cleaned_data['is_public']
-
-            status, msg = handler.process_contest(
-                contest_name, contest_start, contest_end, penalty, is_public)
-            if status:
-                return redirect('/judge/')
+            if penalty < 0 or penalty > 1:
+                form.add_error('penalty', 'Penalty should be between 0 and 1.')
             else:
-                logging.debug(msg)
-                form.add_error(None, 'Contest could not be created.')
+                status, msg = handler.process_contest(
+                    contest_name, contest_start, contest_end, penalty, is_public)
+                if status:
+                    handler.add_person_to_contest(user.email, msg, True)
+                    return redirect('/judge/')
+                else:
+                    logging.debug(msg)
+                    form.add_error(None, 'Contest could not be created.')
     else:
         form = NewContestForm()
     context = {'form': form}
     return render(request, 'judge/new_contest.html', context)
 
 
-def add_poster(request, contest_id, permission=True):
-    # TODO Error handling
+def get_posters(request, contest_id, permission=True):
+    user = _get_user(request)
+    contest = get_object_or_404(Contest, pk=contest_id)
+    if user is None or (not permission and contest.public):
+        return handler404(request)
+    context = {'contest_id': contest_id,
+               'type': 'Poster' if permission else 'Participant'}
     if request.method == 'POST':
-        status, err = handler.add_person_to_contest(
-            request.POST.get('email'), contest_id, permission)
-        if status:
-            return redirect(request.META['HTTP_REFERER'])
-    return redirect(request.META['HTTP_REFERER'])
+        form = DeletePersonFromContest(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            status, err = handler.delete_personcontest(email, contest_id)
+            if not status:
+                logging.debug(err)
+                form.add_error(None, 'Could not delete {}.'.format(email))
+    else:
+        form = DeletePersonFromContest()
+    context['form'] = form
+    if permission:
+        status, value = handler.get_posters(contest_id)
+    else:
+        status, value = handler.get_participants(contest_id)
+    if status:
+        context['persons'] = value
+    else:
+        return handler404(request)
+    return render(request, 'judge/contest_persons.html', context)
+
+
+def get_participants(request, contest_id):
+    return get_posters(request, contest_id, False)
+
+
+def add_poster(request, contest_id, permission=True):
+    # TODO Have comma seperated values
+    user = _get_user(request)
+    contest = get_object_or_404(Contest, pk=contest_id)
+    if user is None or (not permission and contest.public):
+        return handler404(request)
+    context = {'contest_id': contest_id,
+               'type': 'Poster' if permission else 'Participant'}
+    if request.method == 'POST':
+        form = AddPersonToContestForm(request.POST)
+        if form.is_valid():
+            status, err = handler.add_person_to_contest(
+                request.POST.get('email'), contest_id, permission)
+            if status:
+                return redirect('/judge/contest/{}/{}s/'.format(contest_id, context['type'].lower()))
+            else:
+                form.non_field_errors = err
+    else:
+        form = AddPersonToContestForm()
+    context['form'] = form
+    return render(request, 'judge/contest_add_person.html', context)
 
 
 def add_participant(request, contest_id):

@@ -221,7 +221,7 @@ def add_person_to_contest(person: str, contest: str, permission: bool):
         try:
             # Check that the person is not already registered in the contest with other permission
             cp = models.ContestPerson.objects.get(
-                person=p, contest=c, permission=(not permission))
+                person=p, contest=c, role=(not permission))
             return (False, '{} Already exists with other permission'.format(p.email))
         except models.ContestPerson.DoesNotExist:
             cp = p.contestperson_set.create(contest=c, role=permission)
@@ -250,6 +250,22 @@ def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
         return (False if len(q_set) == 0 else None)
 
 
+def delete_personcontest(person: str, contest: str):
+    """
+    Delete the record of person and contest in ContestPerson table
+    Passed person is email and contest is the pk
+    Returns (True, None)
+    """
+    try:
+        p = models.Person.objects.get(email=person)
+        c = models.Contest.objects.get(pk=contest)
+        models.ContestPerson.objects.filter(person=p, contest=c).delete()
+        return (True, None)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
+
+
 def get_personproblem_permission(person: str, problem: str):
     """
     Determine the relation between Person and Problem
@@ -263,7 +279,7 @@ def get_personproblem_permission(person: str, problem: str):
     return get_personcontest_permission(person, p.contest)
 
 
-def get_posters(contest: str):
+def get_posters(contest):
     """
     Return the posters for the contest.
     contest is the pk of the Contest
@@ -272,14 +288,14 @@ def get_posters(contest: str):
     try:
         c = models.Contest.objects.get(pk=contest)
         cps = models.ContestPerson.objects.filter(contest=c, role=True)
-        cps = [cp.email for cp in cps]
+        cps = [cp.person.email for cp in cps]
         return (True, cps)
     except Exception as e:
         traceback.print_exc()
         return (False, e.__str__)
 
 
-def get_participants(contest: str):
+def get_participants(contest):
     """
     Return the participants for the contest.
     contest is the pk of the Contest
@@ -291,7 +307,7 @@ def get_participants(contest: str):
         if c.public is True:
             return (True, [])
         cps = models.ContestPerson.objects.filter(contest=c, role=False)
-        cps = [cp.email for cp in cps]
+        cps = [cp.person.email for cp in cps]
         return (True, cps)
     except Exception as e:
         traceback.print_exc()
@@ -317,7 +333,7 @@ def get_personcontest_score(person: str, contest: int):
         return (False, e.__str__)
 
 
-def get_submission_status(person: str, problem: str, submission: str):
+def get_submission_status(person: str, problem: str, submission):
     """
     Get the current status of the submission.
     Pass email as person and problem code as problem to get a tuple
@@ -434,7 +450,7 @@ def get_csv(contest: str):
     """
     c = models.Contest.objects.get(pk=contest)
     problems = models.Problem.objects.filter(contest=c)
-    
+
     csvstring = io.StringIO()
     writer = csv.writer(csvstring)
 

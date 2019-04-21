@@ -1,24 +1,19 @@
-{% extends "judge/base.html" %}
+{% extends 'judge/base.html' %}
 
-{% block title %}New Contest{% endblock %}
-
-{% block styles %}
-<link href="https://unpkg.com/gijgo@1.9.13/css/gijgo.min.css" rel="stylesheet" type="text/css">
-{% endblock %}
+{% block title %}Add {{ type }} | Contest {{ contest_id }}{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">New Contest</li>
+<li class="breadcrumb-item"><a href="{% url 'judge:contest_detail' contest_id %}">Contest {{ contest_id }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">Add {{ type }}</li>
 {% endblock %}
 
 {% block content %}
-<div class="row my-2">
-    <div class="col-12">
-        <h2>New Contest</h2>
-    </div>
-</div>
 <div class="row">
-    <div class="col-12 col-md-8">
-        <form action="{% url 'judge:new_contest' %}" method="POST">
+    <div class="col-12">
+        <h2>Add {{ type }}</h2>
+    </div>
+    <div class="col-12">
+        <form method="POST">
             {% if form.non_field_errors %}
             <div class="alert alert-danger alter-dismissible fade show" role="alert">
                 {{ form.non_field_errors }}
@@ -41,7 +36,7 @@
                 {% endif %}
             </div>
             {% endfor %}
-            <button type="submit" class="btn btn-primary">Create</button>
+            <button type="submit" class="btn btn-primary">Add {{ type }}</button>
         </form>
     </div>
 </div>

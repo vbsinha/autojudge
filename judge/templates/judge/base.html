@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>PDP - Home</title>
+    <title>{% block title %}Home{% endblock %} | PDP</title>
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet">
@@ -51,11 +51,8 @@
                     </div>
                 </div>
                 <ul class="navbar-nav mr-lg-auto">
-                    {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'judge:new_contest' %}">Create new contest</a>
-                    </li>
-                    {% endif %}
+                    {% block navlink %}
+                    {% endblock %}
                 </ul>
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
@@ -64,16 +61,16 @@
                             title="{{ user.email }}">Hi, {{ user.first_name }} {{ user.last_name }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn btn-neutral btn-icon"
-                            href="{% url 'judge:logout' %}"><span class="btn-inner--icon">
+                        <a class="btn btn-neutral btn-icon" href="{% url 'judge:logout' %}"><span
+                                class="btn-inner--icon">
                                 <i class="fa fa-sign-out mr-2"></i>
                             </span>
                             <span class="nav-link-inner--text">Log out</span></a>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="btn btn-neutral btn-icon"
-                            href="{% url 'judge:social:begin' 'google-oauth2' %}"><span class="btn-inner--icon">
+                        <a class="btn btn-neutral btn-icon" href="{% url 'judge:social:begin' 'google-oauth2' %}"><span
+                                class="btn-inner--icon">
                                 <i class="fa fa-sign-in mr-2"></i>
                             </span>
                             <span class="nav-link-inner--text">Log in</span></a>
@@ -85,6 +82,15 @@
         </div>
     </nav>
     <div class="container">
+        {% if request.path != homepage %}
+        <nav aria-label="breadcrumb" class="my-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ homepage }}">Home</a></li>
+                {% block breadcrumb %}
+                {% endblock %}
+            </ol>
+        </nav>
+        {% endif %}
         <div class="row my-4">
             <div class="col-12">
                 {% block content %}

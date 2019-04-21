@@ -1,0 +1,43 @@
+{% extends 'judge/base.html' %}
+
+{% block title %}{{ type }}s | Contest {{ contest_id }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'judge:contest_detail' contest_id %}">Contest {{ contest_id }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ type }}s</li>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $('.pdp-delete-person').click(function (){
+        $('#id_email').val($(this).attr('data-email'))
+        $('#pdp-delete-form').submit();
+    })
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="d-inline">{{ type }}s</h2>
+        {% if type == 'Poster' %}
+        <a class="btn btn-primary float-right" href="{% url 'judge:contest_add_poster' contest_id %}">Add Poster</a>
+        {% else %}
+        <a class="btn btn-primary float-right" href="{% url 'judge:contest_add_participant' contest_id %}">Add Participant</a>
+        {% endif %}
+    </div>
+    <div class="col-12">
+        <form method="POST" id="pdp-delete-form">{% csrf_token %}{{ form }}</form>
+        <div class="list-group">
+            {% for person in persons %}
+            <div class="list-group-item">
+                <span>{{ person }}</span><button class="btn btn-danger float-right pdp-delete-person" data-email="{{ person }}"><i class="fa fa-trash"></i></button>
+            </div>
+            {% empty %}
+            <p>There are no {{ type|lower }}s for this contest.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

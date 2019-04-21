@@ -6,4 +6,5 @@
   ],
   "python.linting.pylintEnabled": false,
   "python.linting.mypyEnabled": true,
+  "editor.fontFamily": "'Ubuntu Mono', monospace",
 }

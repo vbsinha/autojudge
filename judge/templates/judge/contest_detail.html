@@ -1,17 +1,28 @@
 {% extends 'judge/base.html' %}
 
-{% block content %}
+{% block title %}{{ contest.name }}{% endblock %}
 
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Contest {{ contest.pk }}</li>
+{% endblock %}
+
+{% block content %}
 <div class="row">
-    <div class="col-12 col-md-7">
-        <h2>{{ contest.name }}</h2>
+    <div class="col-12">
+        <h2 class="d-inline">{{ contest.name }}</h2>
+        <div class="float-right">
+            <i class="fa fa-calendar"></i> Starts at {{ contest_start }}<br>
+            <i class="fa fa-calendar"></i> Ends at {{ contest_end }}
+        </div>
     </div>
-    <div class="col-12 col-md-5">{{ contest_start }} - {{ contest_end }}</div>
 </div>
 
 <div class="row">
-    <div class="col-12 col-md-7">
+    <div class="col-12">
         <a class="btn btn-primary" href="{% url 'judge:new_problem' contest.pk %}">Add Problem</a>
+        <a class="btn btn-primary" href="{% url 'judge:get_posters' contest.pk %}">See posters</a>
+        {% if not contest.public %}<a class="btn btn-primary" href="{% url 'judge:get_participants' contest.pk %}">See
+            participants</a>{% endif %}
         {% for problem in problems %}
         <div class="card m-3">
             <div class="card-body">
@@ -20,32 +31,6 @@
             </div>
         </div>
         {% endfor %}
-        <!-- TODO List all the problems here -->
-    </div>
-    <div class="col-12 col-md-4">
-        <div class="col-12">
-            <h4>Posters</h4>
-            <form action="{% url 'judge:contest_add_poster' contest.pk %}" method="POST" class="form-inline">
-                {% csrf_token %}
-                <div class="form-group">
-                    <input type="text" class="form-control m-2" name="email">
-                    <input type="submit" class="btn btn-primary" value="Add Poster">
-                </div>
-            </form>
-            <!-- TODO List all posters -->
-        </div>
-        <hr>
-        <div class="col-12">
-            <h4>Participants</h4>
-            <form action="{% url 'judge:contest_add_participant' contest.pk %}" method="POST" class="form-inline">
-                {% csrf_token %}
-                <div class="form-group">
-                    <input type="text" class="form-control m-2" name="email">
-                    <input type="submit" class="btn btn-primary" value="Add Participant">
-                </div>
-            </form>
-            <!-- TODO List all participants -->
-        </div>
     </div>
 </div>
 
