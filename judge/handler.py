@@ -94,31 +94,34 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
             subprocess.run(['cp', os.path.join('judge', test_script),
                             os.path.join('content', 'problems', p.code, 'test_script.sh')])
 
+        # TODO: Process setter solution
         return (True, None)
     except Exception as e:
         traceback.print_exc()
         return (False, e.__str__)
 
 
-def update_problem(code, name=None, statement=None, input_format=None,
-                   output_format=None, difficulty=None):
-
+def update_problem(code: str, name: str, statement: str, input_format: str,
+                   output_format: str, difficulty: str):
+    """
+    Update the fields in problem
+    Pass the code as pk of problem
+    Returns (True, None)
+    """
     try:
         p = models.Problem.objects.get(pk=code)
-        if name is not None:
-            p.name = name
-        if statement is not None:
-            p.statement = statement
-        if input_format is not None:
-            p.input_format = input_format
-        if output_format is not None:
-            p.output_format = output_format
-        if difficulty is not None:
-            p.difficulty = difficulty
+        p.name = name
+        p.statement = statement
+        p.input_format = input_format
+        p.output_format = output_format
+        p.difficulty = difficulty
         p.save()
-        return True
+        return (True, None)
     except models.Problem.DoesNotExist:
-        raise Exception('{} code does not exist.'.format(code))
+        return (False, '{} code does not exist.'.format(code))
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
 
 
 def process_person(email, rank=0) -> Tuple[bool, Optional[str]]:
@@ -239,6 +242,15 @@ def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
     contest is the pk of the contest
     returns False if participant and True is poster None if neither
     """
+    if person is None:
+        try:
+            c = models.Contest.objects.get(pk=contest)
+            if c.public:
+                return False
+            else:
+                return None
+        except Exception as _:
+            return None
     try:
         p = models.Person.objects.get(email=person)
         c = models.Contest.objects.get(pk=contest)
@@ -248,6 +260,8 @@ def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
         q_set = models.ContestPerson.objects.filter(
             contest=contest, role=False)
         return (False if len(q_set) == 0 else None)
+    except Exception as _:
+        return None
 
 
 def delete_personcontest(person: str, contest: str):

@@ -2,6 +2,11 @@
 
 {% block title %}{{ problem.code }} | Contest {{ problem.contest }}{% endblock %}
 
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'judge:contest_detail' problem.contest.pk %}">Contest {{ problem.contest.pk }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">Problem {{ problem.code }}</li>
+{% endblock %}
+
 {% block styles %}
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 {% endblock %}
@@ -15,25 +20,26 @@
 
     let statementQuill = new Quill('#statementEditor', {
         modules: quillModules,
-        placeholder: 'Add problem statement',
         theme: 'bubble',
     })
 
     let inputFormatQuill = new Quill('#inputFormatEditor', {
         modules: quillModules,
-        placeholder: 'Input format',
         theme: 'bubble',
     })
 
     let outputFormatQuill = new Quill('#outputFormatEditor', {
         modules: quillModules,
-        placeholder: 'Output format',
         theme: 'bubble',
     })
 
     {% if problem.statement != None %}
     statementQuill.setContents(JSON.parse('{{ problem.statement | safe }}'.replace('\n', '\\n')))
+    {% endif %}
+    {% if problem.input_format != None %}
     inputFormatQuill.setContents(JSON.parse('{{ problem.input_format | safe }}'.replace('\n', '\\n')))
+    {% endif %}
+    {% if problem.output_format != None %}
     outputFormatQuill.setContents(JSON.parse('{{ problem.output_format | safe }}'.replace('\n', '\\n')))
     {% endif %}
 
@@ -55,7 +61,7 @@
         <h4 class="d-inline mx-2">{{ problem.name }}</h4>
     </div>
     <div class="col-12 col-md-3 mb-3">
-        <a href="{% url 'judge:edit_problem' problem.pk %}" class="btn btn-primary">Edit Problem</a>
+        {% if type == 'Poster' %}<a href="{% url 'judge:edit_problem' problem.pk %}" class="btn btn-primary">Edit Problem</a>{% endif %}
     </div>
     <div class="col-12 my-4">
         <h4>Statement</h4>
@@ -89,7 +95,8 @@
     </div>
 </div>
 
-<!-- TODO Restrict to participant only -->
+<!-- TODO Check if form is restricted -->
+{% if type == 'Participant' %}
 <div class="row">
     <div class="col-12 my-4">
         <h3>Submit Solution</h3>
@@ -105,8 +112,10 @@
         </form>
     </div>
 </div>
+{% endif %}
 
-<!-- TODO Restrict to poster only -->
+<!-- TODO Restrict to poster only (check views) -->
+{% if type == 'Poster' %}
 <div class="row">
     <form method="POST" action="{% url 'judge:new_problem_test' problem.pk %}" enctype="multipart/form-data">
         <div class="col-12">
@@ -132,4 +141,5 @@
         </div>
     </form>
 </div>
+{% endif %}
 {% endblock %}

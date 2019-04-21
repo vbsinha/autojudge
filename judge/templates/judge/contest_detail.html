@@ -19,7 +19,8 @@
 
 <div class="row">
     <div class="col-12">
-        <a class="btn btn-primary" href="{% url 'judge:new_problem' contest.pk %}">Add Problem</a>
+        {% if type == 'Poster' %}<a class="btn btn-primary" href="{% url 'judge:new_problem' contest.pk %}">Add
+            Problem</a>{% endif %}
         <a class="btn btn-primary" href="{% url 'judge:get_posters' contest.pk %}">See posters</a>
         {% if not contest.public %}<a class="btn btn-primary" href="{% url 'judge:get_participants' contest.pk %}">See
             participants</a>{% endif %}
