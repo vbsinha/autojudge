@@ -4,19 +4,6 @@
 <link href="https://unpkg.com/gijgo@1.9.13/css/gijgo.min.css" rel="stylesheet" type="text/css">
 {% endblock %}
 
-{% block scripts %}
-<script src="https://unpkg.com/gijgo@1.9.13/js/gijgo.min.js" type="text/javascript"></script>
-<script>
-    let picker_options = {
-        uiLibrary: 'bootstrap4',
-        format: 'yyyy-mm-dd HH:MM',
-        footer: true,
-    }
-    $('#startDateField').datetimepicker(picker_options)
-    $('#endDateField').datetimepicker(picker_options)
-</script>
-{% endblock %}
-
 {% block content %}
 <div class="row my-2">
     <div class="col-12">
@@ -26,46 +13,28 @@
 <div class="row">
     <div class="col-12 col-md-8">
         <form action="{% url 'judge:new_contest' %}" method="POST">
-            {% if error_msg %}
+            {% if form.non_field_errors %}
             <div class="alert alert-danger alter-dismissible fade show" role="alert">
-                <strong>Error: </strong>{{ error_msg }}
+                {{ form.non_field_errors }}
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             {% endif %}
             {% csrf_token %}
+            {% for field in form %}
             <div class="form-group">
-                <label for="contestNameField">Contest name</label>
-                <input type="text" class="form-control" id="contestNameField" aria-describedby="contestNameHelp"
-                    placeholder="Enter name of the contest" name="name" value="{{ post_data.name }}">
-                <small id="contestNameHelp" class="form-text text-muted"></small>
+                {{ field.label_tag }} {{ field }}
+                {% if field.help_text %}
+                <small class="form-text text-muted">{{ field.help_text|safe }}</small>
+                {% endif %}
+                {% if field.errors %}
+                <div class="alert alert-danger mt-2" role="alert">
+                    {{ field.errors|striptags }}
+                </div>
+                {% endif %}
             </div>
-            <div class="form-group">
-                <label for="startDateField">Start Date</label>
-                <input type="text" class="form-control" id="startDateField" aria-describedby="startDateHelp"
-                    placeholder="Start date" name="start_date" value="{{ post_data.start_date }}">
-                <small id="startDateHelp" class="form-text text-muted"></small>
-            </div>
-            <div class="form-group">
-                <label for="endDateField">End Date</label>
-                <input type="text" class="form-control" id="endDateField" aria-describedby="endDateHelp"
-                    placeholder="End date" name="end_date" value="{{ post_data.end_date }}">
-                <small id="endDateHelp" class="form-text text-muted"></small>
-            </div>
-            <div class="form-group">
-                <label for="penaltyField">Penalty</label>
-                <input type="number" step="any" class="form-control" id="penaltyField" aria-describedby="penaltyHelp"
-                    placeholder="Penalty" name="penalty" value="{{ post_data.penalty }}">
-                <small id="penaltyHelp" class="form-text text-muted">
-                    A decimal between 0.000 and 1.000 TODO
-                    <!-- TODO -->
-                </small>
-            </div>
-            <div class="form-group custom-control custom-checkbox">
-                <input type="checkbox" name="public" class="custom-control-input" id="publicField">
-                <label class="custom-control-label" for="publicField">Is this contest public?</label>
-            </div>
+            {% endfor %}
             <button type="submit" class="btn btn-primary">Create</button>
         </form>
     </div>

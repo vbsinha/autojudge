@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 import logging
 
 from .models import Contest, Problem, TestCase
+from .forms import NewContestForm
 from . import handler
 
 
@@ -13,6 +14,14 @@ def _get_user(request) -> User:
         return request.user
     else:
         return None
+
+
+def handler404(request):
+    return render(request, '404.html', status=404)
+
+
+def handler500(request):
+    return render(request, '500.html', status=500)
 
 
 def index(request):
@@ -30,28 +39,37 @@ def index(request):
         else:
             logging.debug(
                 'Although user is not none, it could not be processed. More info: {}'.format(err))
-    context['contests'] = Contest.objects.filter(public=True)
+    contests = Contest.objects.filter(public=True)
+    context['contests'] = zip(contests, [False] * len(contests))
     return render(request, 'judge/index.html', context)
 
 
 def new_contest(request):
+    user = _get_user(request)
+    if user is None:
+        return handler404(request)
     if request.method == 'POST':
-        # TODO Sanitize input
-        status, err = handler.process_contest(request.POST.get('name'),
-                                              request.POST['start_date'] +
-                                              '+0530',
-                                              request.POST['end_date'] +
-                                              '+0530',
-                                              request.POST.get('penalty'),
-                                              True if request.POST.get('public') == 'on' else False)
-        if status:
-            return redirect('/judge/')
-        context = {'error_msg': 'Could not create new contest',
-                   'post_data': request.POST}
-        return render(request, 'judge/new_contest.html', context)
+        form = NewContestForm(request.POST)
+        if form.is_valid():
+            print('Form is valid')
+            contest_name = form.cleaned_data['contest_name']
+            contest_start = form.cleaned_data['contest_start']
+            contest_end = form.cleaned_data['contest_end']
+            # TODO validate penalty b/w 0 and 1
+            penalty = form.cleaned_data['penalty']
+            is_public = form.cleaned_data['is_public']
+
+            status, msg = handler.process_contest(
+                contest_name, contest_start, contest_end, penalty, is_public)
+            if status:
+                return redirect('/judge/')
+            else:
+                logging.debug(msg)
+                form.add_error(None, 'Contest could not be created.')
     else:
-        context = {}
-        return render(request, 'judge/new_contest.html', context)
+        form = NewContestForm()
+    context = {'form': form}
+    return render(request, 'judge/new_contest.html', context)
 
 
 def add_poster(request, contest_id, permission=True):
