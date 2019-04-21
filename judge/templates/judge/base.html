@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 
@@ -6,9 +7,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>PDP - Home</title>
 
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet">
 
+    <!-- Icons -->
+    <link href="/static/assets/vendor/nucleo/css/nucleo.css" rel="stylesheet">
+    <link href="/static/assets/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- Theme CSS -->
+    <link type="text/css" href="/static/assets/css/argon.min.css" rel="stylesheet">
 
     {% block styles %}
     {% endblock %}
@@ -16,53 +23,65 @@
 
 <body>
     {% url 'judge:index' as homepage %}
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="{{ homepage }}">PDP</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-default">
+        <div class="container">
+            <a class="navbar-brand" href="{{ homepage }}">PDP</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-default"
+                aria-controls="navbar-default" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav mr-auto">
-                {% if user.is_authenticated %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'judge:new_contest' %}">Create new contest</a>
-                </li>
-                {% endif %}
-                <!-- <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Dropdown
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="#">Action</a>
-                        <a class="dropdown-item" href="#">Another action</a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">Something else here</a>
+            <div class="collapse navbar-collapse" id="navbar-default">
+                <div class="navbar-collapse-header">
+                    <div class="row">
+                        <div class="col-6 collapse-brand">
+                            <a href="{{ homepage }}">
+                                LOGO
+                                <!-- TODO -->
+                            </a>
+                        </div>
+                        <div class="col-6 collapse-close">
+                            <button type="button" class="navbar-toggler" data-toggle="collapse"
+                                data-target="#navbar-default" aria-controls="navbar-default" aria-expanded="false"
+                                aria-label="Toggle navigation">
+                                <span></span>
+                                <span></span>
+                            </button>
+                        </div>
                     </div>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link disabled" href="#">Disabled</a>
-                </li> -->
-            </ul>
-            <ul class="navbar-nav">
-                {% if user.is_authenticated %}
-                <li class="nav-item">
-                    <a class="nav-link" href="#" data-toggle="tooltip" data-placement="bottom"
-                        title="{{ user.email }}">Hi, {{ user.first_name }} {{ user.last_name }}</a>
+                </div>
+                <ul class="navbar-nav mr-lg-auto">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'judge:new_contest' %}">Create new contest</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-toggle="tooltip" data-placement="bottom"
+                            title="{{ user.email }}">Hi, {{ user.first_name }} {{ user.last_name }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-neutral btn-icon"
+                            href="{% url 'judge:logout' %}"><span class="btn-inner--icon">
+                                <i class="fa fa-sign-out mr-2"></i>
+                            </span>
+                            <span class="nav-link-inner--text">Log out</span></a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="btn btn-neutral btn-icon"
+                            href="{% url 'judge:social:begin' 'google-oauth2' %}"><span class="btn-inner--icon">
+                                <i class="fa fa-sign-in mr-2"></i>
+                            </span>
+                            <span class="nav-link-inner--text">Log in</span></a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
 
-                </li>
-                <li class="nav-item">
-                    <a class="btn btn-outline-primary nav-link" href="{% url 'judge:logout' %}">Log out</a>
-                </li>
-                {% else %}
-                <li class="nav-item">
-                    <a class="btn btn-outline-primary nav-link"
-                        href="{% url 'judge:social:begin' 'google-oauth2' %}">Log in</a>
-                </li>
-                {% endif %}
-            </ul>
         </div>
     </nav>
     <div class="container">
@@ -74,15 +93,13 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-        crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-        crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-        crossorigin="anonymous"></script>
+    <!-- Core -->
+    <script src="/static/assets/vendor/jquery/jquery.min.js"></script>
+    <script src="/static/assets/vendor/popper/popper.min.js"></script>
+    <script src="/static/assets/vendor/bootstrap/bootstrap.min.js"></script>
+
+    <!-- Theme JS -->
+    <script src="/static/assets/js/argon.min.js"></script>
     <script>
         $(document).ready(() => {
             $(function () {
