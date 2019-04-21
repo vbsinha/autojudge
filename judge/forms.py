@@ -38,3 +38,33 @@ class AddPersonToContestForm(forms.Form):
 
 class DeletePersonFromContest(forms.Form):
     email = forms.EmailField(label='Email', widget=forms.HiddenInput())
+
+
+class NewProblemForm(forms.Form):
+    code = forms.CharField(label='Code', max_length=10, widget=forms.TextInput(
+        attrs={'class': 'form-control'}))
+    name = forms.CharField(label='Title', max_length=50, widget=forms.TextInput(
+        attrs={'class': 'form-control'}))
+    statement = forms.CharField(label='Statement', widget=forms.HiddenInput())
+    input_format = forms.CharField(
+        label='Input Format', widget=forms.HiddenInput())
+    output_format = forms.CharField(
+        label='Output Format', widget=forms.HiddenInput())
+    difficulty = forms.IntegerField(
+        label='Difficulty', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    time_limit = forms.DurationField(
+        label='Time Limit', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    memory_limit = forms.IntegerField(
+        label='Memory Limit', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    file_exts = forms.CharField(label='File extensions', max_length=100,
+                                widget=forms.TextInput(attrs={'class': 'form-control'}))
+    starting_code = forms.FileField(label='Starting code', widget=forms.FileInput(
+        attrs={'class': 'form-control-file'}), required=False)
+    max_score = forms.IntegerField(
+        label='Maximum score', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    compilation_script = forms.FileField(
+        label='Compilation script', widget=forms.FileInput(attrs={'class': 'form-control-file'}))
+    testing_script = forms.FileField(label='Testing script', widget=forms.FileInput(
+        attrs={'class': 'form-control-file'}))
+    setter_soln = forms.FileField(label='Setter solution', widget=forms.FileInput(
+        attrs={'class': 'form-control-file'}), required=False)

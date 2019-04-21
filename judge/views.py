@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 import logging
 
 from .models import Contest, Problem, TestCase
-from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
+from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest, NewProblemForm
 from . import handler
 
 
@@ -30,7 +30,6 @@ def index(request):
     if user is not None:
         status, err = handler.process_person(request.user.email)
         if status:
-            # TODO Filter the private contests only foe which he is poster/participant
             contests = Contest.objects.all()
             permissions = [handler.get_personcontest_permission(
                 user.email, contest.pk) for contest in contests]
@@ -51,7 +50,6 @@ def new_contest(request):
     if request.method == 'POST':
         form = NewContestForm(request.POST)
         if form.is_valid():
-            print('Form is valid')
             contest_name = form.cleaned_data['contest_name']
             contest_start = form.cleaned_data['contest_start']
             contest_end = form.cleaned_data['contest_end']
@@ -74,13 +72,20 @@ def new_contest(request):
     return render(request, 'judge/new_contest.html', context)
 
 
-def get_posters(request, contest_id, permission=True):
-    user = _get_user(request)
+def get_posters(request, contest_id, role=True):
     contest = get_object_or_404(Contest, pk=contest_id)
-    if user is None or (not permission and contest.public):
+    user = _get_user(request)
+    perm = handler.get_personcontest_permission(
+        None if user is None else user.email, contest_id)
+    if perm is None:
+        return handler404(request)
+    if role is None:
+        return handler404(request)
+    contest = get_object_or_404(Contest, pk=contest_id)
+    if user is None or (not role and contest.public):
         return handler404(request)
     context = {'contest_id': contest_id,
-               'type': 'Poster' if permission else 'Participant'}
+               'type': 'Poster' if role else 'Participant'}
     if request.method == 'POST':
         form = DeletePersonFromContest(request.POST)
         if form.is_valid():
@@ -92,7 +97,7 @@ def get_posters(request, contest_id, permission=True):
     else:
         form = DeletePersonFromContest()
     context['form'] = form
-    if permission:
+    if role:
         status, value = handler.get_posters(contest_id)
     else:
         status, value = handler.get_participants(contest_id)
@@ -107,21 +112,23 @@ def get_participants(request, contest_id):
     return get_posters(request, contest_id, False)
 
 
-def add_poster(request, contest_id, permission=True):
+def add_poster(request, contest_id, role=True):
     # TODO Have comma seperated values
     user = _get_user(request)
-    contest = get_object_or_404(Contest, pk=contest_id)
-    if user is None or (not permission and contest.public):
+    perm = handler.get_personcontest_permission(
+        None if user is None else user.email, contest_id)
+    if not (perm is True):
         return handler404(request)
     context = {'contest_id': contest_id,
-               'type': 'Poster' if permission else 'Participant'}
+               'type': 'Poster' if role else 'Participant'}
     if request.method == 'POST':
         form = AddPersonToContestForm(request.POST)
         if form.is_valid():
             status, err = handler.add_person_to_contest(
-                request.POST.get('email'), contest_id, permission)
+                request.POST.get('email'), contest_id, role)
             if status:
-                return redirect('/judge/contest/{}/{}s/'.format(contest_id, context['type'].lower()))
+                return redirect('/judge/contest/{}/{}s/'.format(
+                    contest_id, context['type'].lower()))
             else:
                 form.non_field_errors = err
     else:
@@ -136,9 +143,15 @@ def add_participant(request, contest_id):
 
 def contest_detail(request, contest_id):
     contest = get_object_or_404(Contest, pk=contest_id)
+    user = _get_user(request)
+    perm = handler.get_personcontest_permission(
+        None if user is None else user.email, contest_id)
+    if perm is None:
+        return handler404(request)
     problems = Problem.objects.filter(contest_id=contest_id)
     return render(request, 'judge/contest_detail.html', {
         'contest': contest,
+        'type': 'Poster' if perm else 'Participant',
         'problems': problems,
         'contest_start': contest.start_datetime.strftime('%d-%m-%Y %H:%M'),
         'contest_end': contest.end_datetime.strftime('%d-%m-%Y %H:%M'),
@@ -147,8 +160,14 @@ def contest_detail(request, contest_id):
 
 def problem_detail(request, problem_id):
     problem = get_object_or_404(Problem, pk=problem_id)
+    user = _get_user(request)
+    perm = handler.get_personcontest_permission(
+        None if user is None else user.email, problem.contest.pk)
+    if perm is None:
+        return handler404(request)
     return render(request, 'judge/problem_detail.html', {
         'problem': problem,
+        'type': 'Poster' if perm else 'Participant',
         'public_tests': TestCase.objects.filter(problem_id=problem_id, public=True),
         'private_tests': TestCase.objects.filter(problem_id=problem_id, public=False),
     })
@@ -156,47 +175,32 @@ def problem_detail(request, problem_id):
 
 def new_problem(request, contest_id):
     contest = get_object_or_404(Contest, pk=contest_id)
+    user = _get_user(request)
+    perm = handler.get_personcontest_permission(
+        None if user is None else user.email, contest_id)
+    if not (perm is True):
+        return handler404(request)
+    context = {'contest': contest}
     if request.method == 'POST':
-        # TODO Sanitize input
-        # Ensure that time_limit is not null (For int conversion)
-        status, err = handler.process_problem(request.POST.get('code'),
-                                              contest_id,
-                                              request.POST.get('name'),
-                                              request.POST.get('statement'),
-                                              request.POST.get('input_format'),
-                                              request.POST.get(
-                                                  'output_format'),
-                                              request.POST.get('difficulty'),
-                                              timedelta(milliseconds=int(
-                                                  request.POST.get('time_limit'))),
-                                              request.POST.get('memory_limit'),
-                                              request.POST.get('file_format'),
-                                              request.FILES.get('start_code'),
-                                              request.POST.get('max_score'),
-                                              request.FILES.get(
-                                                  'compilation_script'),
-                                              request.FILES.get('test_script'),
-                                              request.FILES.get(
-                                                  'setter_solution'))
-        print(request.POST)
-        if status:
-            # no_test_cases = int(request.POST['no_test_cases'])
-            # print(no_test_cases)
-            # for i in range(no_test_cases):
-            #     status, err = handler.process_testcase(
-            #         request.POST['code'], True if request.POST['test'+str(i)] == 'on' else False,
-            #         request.FILES.get('input'+str(i)), request.FILES.get('output'+str(i)))
-            #     print(status, err)
-            return redirect('/judge/contest/{}/'.format(contest_id))
-        else:
-            print(err)
-            context = {'error_msg': 'Could not create new problem',
-                       'post_data': request.POST,
-                       'contest': contest}
-            return render(request, 'judge/new_problem.html', context)
+        form = NewProblemForm(request.POST, request.FILES)
+        if form.is_valid():
+            code = form.cleaned_data['code']
+            status, err = handler.process_problem(
+                code, contest_id, form.cleaned_data['name'], form.cleaned_data['statement'],
+                form.cleaned_data['input_format'],
+                form.cleaned_data['output_format'], form.cleaned_data['difficulty'],
+                form.cleaned_data['time_limit'], form.cleaned_data['memory_limit'],
+                form.cleaned_data['file_exts'], form.cleaned_data['starting_code'],
+                form.cleaned_data['max_score'], form.cleaned_data['compilation_script'],
+                form.cleaned_data['testing_script'], form.cleaned_data['setter_soln'])
+            if status:
+                return redirect('/judge/problem/{}/'.format(code))
+            else:
+                form.add_error(None, err)
     else:
-        context = {'contest': contest}
-        return render(request, 'judge/new_problem.html', context)
+        form = NewProblemForm()
+    context['form'] = form
+    return render(request, 'judge/new_problem.html', context)
 
 
 def add_test_case_problem(request, problem_id):

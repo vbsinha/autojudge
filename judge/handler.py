@@ -239,6 +239,15 @@ def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
     contest is the pk of the contest
     returns False if participant and True is poster None if neither
     """
+    if person is None:
+        try:
+            c = models.Contest.objects.get(pk=contest)
+            if c.public:
+                return False
+            else:
+                return None
+        except Exception as _:
+            return None
     try:
         p = models.Person.objects.get(email=person)
         c = models.Contest.objects.get(pk=contest)
@@ -248,6 +257,8 @@ def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
         q_set = models.ContestPerson.objects.filter(
             contest=contest, role=False)
         return (False if len(q_set) == 0 else None)
+    except Exception as _:
+        return None
 
 
 def delete_personcontest(person: str, contest: str):
