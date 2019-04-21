@@ -16,6 +16,14 @@ def _get_user(request) -> User:
         return None
 
 
+def handler404(request):
+    return render(request, '404.html', status=404)
+
+
+def handler500(request):
+    return render(request, '500.html', status=500)
+
+
 def index(request):
     context = {}
     user = _get_user(request)
@@ -37,6 +45,9 @@ def index(request):
 
 
 def new_contest(request):
+    user = _get_user(request)
+    if user is None:
+        return handler404(request)
     if request.method == 'POST':
         form = NewContestForm(request.POST)
         if form.is_valid():
