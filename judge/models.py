@@ -80,16 +80,13 @@ class Problem(models.Model):
     name = models.CharField(max_length=50, default='Name not set')
 
     # Problem statement [Char]
-    statement = models.TextField(max_length=2500,
-                                 default='The problem statement is empty.')
+    statement = models.TextField(default='The problem statement is empty.')
 
     # Input format [Char]
-    input_format = models.TextField(max_length=1000,
-                                    default='No input format specified.')
+    input_format = models.TextField(default='No input format specified.')
 
     # Output format [Char]
-    output_format = models.TextField(max_length=500,
-                                     default='No output format specified.')
+    output_format = models.TextField(default='No output format specified.')
 
     # Difficulty [PositiveInt]
     difficulty = models.PositiveSmallIntegerField(default=0)

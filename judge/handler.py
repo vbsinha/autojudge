@@ -1,3 +1,5 @@
+import csv
+import io
 import subprocess
 import traceback
 import os
@@ -420,3 +422,18 @@ def get_comments(problem: str, person: str):
     except Exception as e:
         traceback.print_exc()
         return (False, e.__str__)
+
+
+def get_csv(contest: str):
+    """
+    Get the csv (in string form) of the current scores of all participants in the contest.
+    Pass pk of the contest
+    Returns (True, csvstring)
+    """
+    c = models.Contest.objects.get(pk=contest)
+    problems = models.Problem.objects.filter(contest=c)
+    
+    csvstring = io.StringIO()
+    writer = csv.writer(csvstring)
+
+    # TODO : Complete this
