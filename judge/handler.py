@@ -2,6 +2,8 @@ import subprocess
 import traceback
 import logging
 import os
+import pickle
+
 from datetime import timedelta
 from typing import Tuple, Optional
 
@@ -175,15 +177,19 @@ def process_solution(problem_id: str, participant: str, file_type, submission_fi
     # PROBLEM_ID
     # SUBMISSION_ID
     # FILE_FORMAT
+    # TIME_LIMIT
+    # MEMORY_LIMIT
     # TESTCASE_1
     # TESTCASE_2
     # ....
     with open(os.path.join('content', 'tmp', 'sub_run_' + str(s.pk) + '.txt'), 'w') as f:
-        f.write(problem.pk + '\n')
-        f.write(str(s.pk) + '\n')
-        f.write(file_type + '\n')
+        f.write('{}\n'.format(problem.pk))
+        f.write('{}\n'.format(s.pk))
+        f.write('{}\n'.format(file_type))
+        f.write('{}\n'.format(problem.time_limit.seconds()))
+        f.write('{}\n'.format(problem.memory_limit))
         for testcase in testcases:
-            f.write(testcase.pk + '\n')
+            f.write('{}\n'.format(testcase.pk))
 
     try:
         for i in range(len(testcases)):
@@ -215,7 +221,7 @@ def add_person_to_contest(person: str, contest: str, permission: bool):
             cp = models.ContestPerson.objects.get(
                 person=p, contest=c, permission=(not permission))
             return (False, '{} Already exists with other permission'.format(p.email))
-        except models.ContestProblem.DoesNotExist:
+        except models.ContestPerson.DoesNotExist:
             cp = p.contestperson_set.create(contest=c, role=permission)
             cp.save()
             return (True, None)
@@ -237,7 +243,8 @@ def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
         cp = models.ContestPerson.objects.get(person=p, contest=c)
         return cp.role
     except models.ContestPerson.DoesNotExist:
-        q_set = models.ContestPerson.objects.filter(contest=contest, role=False)
+        q_set = models.ContestPerson.objects.filter(
+            contest=contest, role=False)
         return (False if len(q_set) == 0 else None)
 
 
@@ -284,6 +291,25 @@ def get_participants(contest: str):
         cps = models.ContestPerson.objects.filter(contest=c, role=False)
         cps = [cp.email for cp in cps]
         return (True, cps)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
+
+
+def get_personcontest_score(person: str, contest: int):
+    """
+    Get the final score which is the sum of individual final scores of all problems in the contest.
+    Pass email in person and contest's pk
+    """
+    try:
+        p = models.Person.get(person=person)
+        c = models.Contest.get(contest=contest)
+        problems = models.Problem.filter(contest=c)
+        score = 0
+        for problem in problems:
+            score += models.PersonProblemFinalScore.objects.get(
+                person=p, problem=problem).score
+        return (True, score)
     except Exception as e:
         traceback.print_exc()
         return (False, e.__str__)
@@ -342,3 +368,21 @@ def get_submission_status(person: str, problem: str, submission: str):
             # This is done to allow the other submissions to give output.
             traceback.print_exc()
     return (True, (verdict_dict, score_dict))
+
+
+def get_leaderboard(contest: int):
+    """
+    Returns the current leaderboard for the passed contest
+    Pass contest's pk
+    Returns (True, [[Rank1Email, ScoreofRank1], [Rank2Email, ScoreofRank2] ... ])
+    """
+    leaderboard_path = os.path.join('content', 'contests', str(contest)+'.lb')
+    if not os.path.exists(leaderboard_path):
+        return (False, 'Leaderboard not yet initialized for this contest.')
+    try:
+        with open(leaderboard_path, 'rb') as f:
+            data = pickle.load(f)
+        return (True, data)
+    except Exception as e:
+        traceback.print_exc()
+        return(False, e.__str__)

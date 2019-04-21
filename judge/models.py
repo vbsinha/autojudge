@@ -98,7 +98,7 @@ class Problem(models.Model):
     time_limit = models.DurationField(default=timedelta(seconds=10))
 
     # Memory Limit [Int]
-    # Currently this is specified in bytes
+    # Currently this is specified in mega-bytes
     memory_limit = models.PositiveIntegerField(default=200000)
 
     # File format [Char]
@@ -285,6 +285,19 @@ class Comment(models.Model):
 
     # Store a comment file for each Problem Student pair.
     # Sample path: ./content/comment/UUID.yml
-    # TODO: Fix this like TestCase
     comment = models.FileField(upload_to=comment_upload_location,
                                default='./default/comment.yml')
+
+
+class PersonProblemFinalScore(models.Model):
+    """
+    Model to store the final score assigned to a person for a problem.
+    """
+    # (FK) Problem ID of the Problem.
+    problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
+
+    # (FK) Person ID of the Person.
+    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+
+    # Final Score [Int]
+    score = models.FloatField(default=0.0)
