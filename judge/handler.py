@@ -453,5 +453,27 @@ def get_csv(contest: str):
 
     csvstring = io.StringIO()
     writer = csv.writer(csvstring)
+    writer.writerow(['Email', 'Score'])
+
+    if len(problems) > 0:
+        submissions = models.PersonProblemFinalScore.objects.filter(problems[0])
+        for problem in problems[1:]:
+            submissions |= models.PersonProblemFinalScore.objects.filter(problem)
+
+        submissions.order_by('person', 'problem')
+        scores = [(submission.person, submission.problem) for submission in submissions]
+
+        curr_person = scores[0][0]
+        i, sum_scores = 0, 0
+        for i in range(len(scores)):
+            if curr_person == scores[i][0]:
+                sum_scores += scores[i][1]
+            else:
+                writer.writerow([curr_person, sum_scores])
+                curr_person = scores[i][0]
+                sum_scores = scores[i][1]
+        writer.writerow([curr_person, sum_scores])
+
+        return (True, csvstring)
 
     # TODO : Complete this
