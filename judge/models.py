@@ -4,6 +4,7 @@ from uuid import uuid4
 from os.path import splitext
 from functools import partial
 from datetime import timedelta
+from django.utils import timezone
 
 
 def setter_sol_name(instance, filename):
@@ -202,6 +203,9 @@ class ContestPerson(models.Model):
     # true for Poster and false for Participant
     role = models.BooleanField()
 
+    class Meta:
+        unique_together = (('contest', 'person'),)
+
 
 class TestCase(models.Model):
     """
@@ -286,7 +290,7 @@ class Comment(models.Model):
         Person, on_delete=models.CASCADE, related_name='commenter')
 
     # Timestamp of the comment
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(default=timezone.now)
 
     # Content of the Comment
     comment = models.TextField()

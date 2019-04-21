@@ -223,9 +223,12 @@ def add_person_to_contest(person: str, contest: str, permission: bool):
             return (True, None)
         try:
             # Check that the person is not already registered in the contest with other permission
-            cp = models.ContestPerson.objects.get(
-                person=p, contest=c, role=(not permission))
-            return (False, '{} Already exists with other permission'.format(p.email))
+            cp = models.ContestPerson.objects.get(person=p, contest=c)
+            if cp.role == permission:
+                return (False, '{} is already a {}'.format(
+                    p.email, 'Poster' if permission else 'Participant'))
+            else:
+                return (False, '{} already exists with other permission'.format(p.email))
         except models.ContestPerson.DoesNotExist:
             cp = p.contestperson_set.create(contest=c, role=permission)
             cp.save()
@@ -480,7 +483,7 @@ def get_csv(contest: str):
 
             # Now sort all the person-problem-scores by 'person' and 'problem'
             # This will create scores like:
-            # [('p1', 3(Say score corresponding to problem2)), 
+            # [('p1', 3(Say score corresponding to problem2)),
             #  ('p1', 2(score corresponding to problem4)),
             #  ('p2', 5(score corresponding to problem3)),
             #  ('p2', 0(score corresponding to problem1)) ... ]
@@ -494,7 +497,7 @@ def get_csv(contest: str):
             # We simply iterate over scores and for each participant,
             # we sum up how much has he scored in all the problems.
             # To do this we exploit the fact that list is already sorted.
-            # In the above case after aggregating we'll write 
+            # In the above case after aggregating we'll write
             # 'p1', 5
             # 'p2', 5 etc. in csvstring
             curr_person = scores[0][0]
