@@ -80,16 +80,13 @@ class Problem(models.Model):
     name = models.CharField(max_length=50, default='Name not set')
 
     # Problem statement [Char]
-    statement = models.TextField(max_length=2500,
-                                 default='The problem statement is empty.')
+    statement = models.TextField(default='The problem statement is empty.')
 
     # Input format [Char]
-    input_format = models.CharField(max_length=1000,
-                                    default='No input format specified.')
+    input_format = models.TextField(default='No input format specified.')
 
     # Output format [Char]
-    output_format = models.CharField(max_length=500,
-                                     default='No output format specified.')
+    output_format = models.TextField(default='No output format specified.')
 
     # Difficulty [PositiveInt]
     difficulty = models.PositiveSmallIntegerField(default=0)
@@ -278,15 +275,21 @@ class Comment(models.Model):
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
 
     # (FK) Person ID of the Person.
-    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    person = models.ForeignKey(
+        Person, on_delete=models.CASCADE, related_name='person')
 
     # Self Generated PrimaryKey
     id = models.CharField(max_length=32, primary_key=True, default=uuid4)
 
-    # Store a comment file for each Problem Student pair.
-    # Sample path: ./content/comment/UUID.yml
-    comment = models.FileField(upload_to=comment_upload_location,
-                               default='./default/comment.yml')
+    # (FK) Person ID for the commenter
+    commenter = models.ForeignKey(
+        Person, on_delete=models.CASCADE, related_name='commenter')
+
+    # Timestamp of the comment
+    timestamp = models.DateTimeField()
+
+    # Content of the Comment
+    comment = models.TextField()
 
 
 class PersonProblemFinalScore(models.Model):
