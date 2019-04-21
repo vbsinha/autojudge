@@ -221,7 +221,7 @@ def add_person_to_contest(person: str, contest: str, permission: bool):
         try:
             # Check that the person is not already registered in the contest with other permission
             cp = models.ContestPerson.objects.get(
-                person=p, contest=c, permission=(not permission))
+                person=p, contest=c, role=(not permission))
             return (False, '{} Already exists with other permission'.format(p.email))
         except models.ContestPerson.DoesNotExist:
             cp = p.contestperson_set.create(contest=c, role=permission)
@@ -263,7 +263,7 @@ def get_personproblem_permission(person: str, problem: str):
     return get_personcontest_permission(person, p.contest)
 
 
-def get_posters(contest: str):
+def get_posters(contest):
     """
     Return the posters for the contest.
     contest is the pk of the Contest
@@ -272,14 +272,14 @@ def get_posters(contest: str):
     try:
         c = models.Contest.objects.get(pk=contest)
         cps = models.ContestPerson.objects.filter(contest=c, role=True)
-        cps = [cp.email for cp in cps]
+        cps = [cp.person.email for cp in cps]
         return (True, cps)
     except Exception as e:
         traceback.print_exc()
         return (False, e.__str__)
 
 
-def get_participants(contest: str):
+def get_participants(contest):
     """
     Return the participants for the contest.
     contest is the pk of the Contest
@@ -291,7 +291,7 @@ def get_participants(contest: str):
         if c.public is True:
             return (True, [])
         cps = models.ContestPerson.objects.filter(contest=c, role=False)
-        cps = [cp.email for cp in cps]
+        cps = [cp.person.email for cp in cps]
         return (True, cps)
     except Exception as e:
         traceback.print_exc()

@@ -23,3 +23,14 @@ class NewContestForm(forms.Form):
     }), help_text='Value should be between 0 and 1.')
     is_public = forms.BooleanField(
         label='Is this contest public?', required=False)
+
+
+class AddPersonToContestForm(forms.Form):
+    email = forms.EmailField(label='Email', widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter email'
+        }))
+
+
+class DeletePersonFromContest(forms.Form):
+    email = forms.EmailField(label='Email')
