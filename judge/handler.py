@@ -317,7 +317,7 @@ def get_personcontest_score(person: str, contest: int):
         return (False, e.__str__)
 
 
-def get_submission_status(person: str, problem: str, submission: str):
+def get_submission_status(person: str, problem: str, submission):
     """
     Get the current status of the submission.
     Pass email as person and problem code as problem to get a tuple
@@ -434,7 +434,7 @@ def get_csv(contest: str):
     """
     c = models.Contest.objects.get(pk=contest)
     problems = models.Problem.objects.filter(contest=c)
-    
+
     csvstring = io.StringIO()
     writer = csv.writer(csvstring)
 

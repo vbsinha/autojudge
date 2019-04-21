@@ -51,11 +51,8 @@
                     </div>
                 </div>
                 <ul class="navbar-nav mr-lg-auto">
-                    {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'judge:new_contest' %}">Create new contest</a>
-                    </li>
-                    {% endif %}
+                    {% block navlink %}
+                    {% endblock %}
                 </ul>
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}

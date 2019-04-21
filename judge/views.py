@@ -55,17 +55,19 @@ def new_contest(request):
             contest_name = form.cleaned_data['contest_name']
             contest_start = form.cleaned_data['contest_start']
             contest_end = form.cleaned_data['contest_end']
-            # TODO validate penalty b/w 0 and 1
             penalty = form.cleaned_data['penalty']
             is_public = form.cleaned_data['is_public']
-
-            status, msg = handler.process_contest(
-                contest_name, contest_start, contest_end, penalty, is_public)
-            if status:
-                return redirect('/judge/')
+            if penalty < 0 or penalty > 1:
+                form.add_error('penalty', 'Penalty should be between 0 and 1.')
             else:
-                logging.debug(msg)
-                form.add_error(None, 'Contest could not be created.')
+                status, msg = handler.process_contest(
+                    contest_name, contest_start, contest_end, penalty, is_public)
+                if status:
+                    handler.add_person_to_contest(user.email, msg, True)
+                    return redirect('/judge/')
+                else:
+                    logging.debug(msg)
+                    form.add_error(None, 'Contest could not be created.')
     else:
         form = NewContestForm()
     context = {'form': form}
