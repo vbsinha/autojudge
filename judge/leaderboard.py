@@ -21,31 +21,28 @@ def update_leaderboard(contest: int, person: str):
 
     if status:
         if not os.path.exists(pickle_path):
-            f = open(pickle_path, 'wb')
-            data = [[person, score]]
-            pickle.dump(data, f)
-            f.close()
+            with open(pickle_path, 'wb') as f:
+                data = [[person, score]]
+                pickle.dump(data, f)
             return True
         else:
-            f = open(pickle_path, 'rb')
-            data = pickle.load(f)
-            f.close()
-            f = open(pickle_path, 'wb')
-            for i in range(len(data)):
-                if data[i][0] == person:
-                    data[i][1] = score
-                    pos = i
-                    break
-            else:
-                data.append([person, score])
-                pos = len(data) - 1
-            for i in range(pos, 0, -1):
-                if data[i][1] > data[i-1][1]:
-                    data[i], data[i-1] = data[i-1], data[i]
+            with open(pickle_path, 'rb') as f:
+                data = pickle.load(f)
+            with open(pickle_path, 'wb') as f:
+                for i in range(len(data)):
+                    if data[i][0] == person:
+                        data[i][1] = score
+                        pos = i
+                        break
                 else:
-                    break
-            pickle.dump(data, f)
-            f.close()
+                    data.append([person, score])
+                    pos = len(data) - 1
+                for i in range(pos, 0, -1):
+                    if data[i][1] > data[i-1][1]:
+                        data[i], data[i-1] = data[i-1], data[i]
+                    else:
+                        break
+                pickle.dump(data, f)
             return True
     else:
         return False

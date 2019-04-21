@@ -20,6 +20,7 @@ REFRESH_LS_TRIGGER = 10
 
 
 def saver(sub_id):
+    update_lb = False
     # Based on the result populate SubmsissionTestCase table and return the result
     with open(os.path.join(MONITOR_DIRECTORY, 'sub_run_' + sub_id + '.txt'), 'r') as f:
         # Assumed format to sub_run_ID.txt file
@@ -75,11 +76,13 @@ def saver(sub_id):
     ppf = models.ProblemPersonFinalScore.get_or_create(person=submission.person, problem=problem)
     if ppf.score < s.final_score:
         ppf.score = s.final_score
-        if remaining_time >= 0:
-            # Update the leaderboard only if not a late submission
-            # and the submission imporved the final score
-            leaderboard.update_leaderboard(problem.contest.pk, submission.person.email)
+        update_lb = True
     ppf.save()
+
+    if update_lb and remaining_time >= 0:
+        # Update the leaderboard only if not a late submission
+        # and the submission imporved the final score
+        leaderboard.update_leaderboard(problem.contest.pk, submission.person.email)
 
     return True
 

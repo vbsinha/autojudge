@@ -241,7 +241,8 @@ def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
         cp = models.ContestPerson.objects.get(person=p, contest=c)
         return cp.role
     except models.ContestPerson.DoesNotExist:
-        q_set = models.ContestPerson.objects.filter(contest=contest, role=False)
+        q_set = models.ContestPerson.objects.filter(
+            contest=contest, role=False)
         return (False if len(q_set) == 0 else None)
 
 
@@ -304,7 +305,8 @@ def get_personcontest_score(person: str, contest: int):
         problems = models.Problem.filter(contest=c)
         score = 0
         for problem in problems:
-            score += models.PersonProblemFinalScore.objects.get(person=p, problem=problem).score
+            score += models.PersonProblemFinalScore.objects.get(
+                person=p, problem=problem).score
         return (True, score)
     except Exception as e:
         traceback.print_exc()
@@ -366,14 +368,13 @@ def get_submission_status(person: str, problem: str, submission: str):
     return (True, (verdict_dict, score_dict))
 
 
-
 def get_leaderboard(contest: int):
     """
     Returns the current leaderboard for the passed contest
     Pass contest's pk
     Returns (True, [[Rank1Email, ScoreofRank1], [Rank2Email, ScoreofRank2] ... ])
     """
-    leaderboard_path = os.path.join('content', 'contests', contest+'.lb')
+    leaderboard_path = os.path.join('content', 'contests', str(contest)+'.lb')
     if not os.path.exists(leaderboard_path):
         return (False, 'Leaderboard not yet initialized for this contest.')
     try:
