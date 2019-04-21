@@ -383,4 +383,40 @@ def get_leaderboard(contest: int):
         return (True, data)
     except Exception as e:
         traceback.print_exc()
-        return(False, e.__str__)
+        return (False, e.__str__)
+
+
+def process_comment(problem: str, person: str, commenter: str, timestamp, comment: str):
+    """
+    Privately comment 'comment' on the problem for person by commenter.
+    problem is the pk of the Problem.
+    person and commenter are emails of Person.
+    Returns (True, None)
+    """
+    try:
+        problem = models.Problem.objects.get(pk=problem)
+        person = models.Person.objects.get(email=person)
+        commenter = models.Person.objects.get(email=commenter)
+        c = models.Comment(problem=problem, person=person,
+                           commenter=commenter, timestamp=timestamp, comment=comment)
+        c.save()
+        return (True, None)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
+
+
+def get_comments(problem: str, person: str):
+    """
+    Get the private comments on the problem for the person.
+    Returns (True, [(Commeter, Timestamp, Comment) ... (Sorted in ascending order of time)])
+    """
+    try:
+        comments = models.Comment.object.filter(
+            problem=problem, person=person).order_by('timestamp')
+        result = [(comment.commenter, comment.timestamp, comment.comment)
+                  for comment in comments]
+        return (True, result)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
