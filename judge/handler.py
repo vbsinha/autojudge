@@ -494,9 +494,7 @@ def get_csv(contest: str):
                     sum_scores = scores[i][1]
             writer.writerow([curr_person, sum_scores])
 
-            return (True, csvstring)
-        else:
-            return (True, csvstring)
+        return (True, csvstring)
     except Exception as e:
         traceback.print_exc()
         return (False, e.__str__)
