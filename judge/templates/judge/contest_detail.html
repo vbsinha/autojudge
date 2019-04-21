@@ -1,5 +1,7 @@
 {% extends 'judge/base.html' %}
 
+{% block title %}{{ contest.name }}{% endblock %}
+
 {% block breadcrumb %}
 <li class="breadcrumb-item active" aria-current="page">Contest {{ contest.pk }}</li>
 {% endblock %}

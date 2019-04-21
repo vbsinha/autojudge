@@ -1,5 +1,7 @@
 {% extends "judge/base.html" %}
 
+{% block title %}New Problem | Contest {{ contest.pk }}{% endblock %}
+
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'judge:contest_detail' contest.pk %}">Contest {{ contest.pk }}</a></li>
 <li class="breadcrumb-item active" aria-current="page">New Problem</li>
