@@ -448,10 +448,53 @@ def get_csv(contest: str):
     Pass pk of the contest
     Returns (True, csvstring)
     """
-    c = models.Contest.objects.get(pk=contest)
-    problems = models.Problem.objects.filter(contest=c)
+    try:
+        c = models.Contest.objects.get(pk=contest)
+        problems = models.Problem.objects.filter(contest=c)
 
-    csvstring = io.StringIO()
-    writer = csv.writer(csvstring)
+        csvstring = io.StringIO()
+        writer = csv.writer(csvstring)
+        writer.writerow(['Email', 'Score'])
 
-    # TODO : Complete this
+        if len(problems) > 0:
+            # Get the final scores for each problem for any participant who has attempted.
+            submissions = models.PersonProblemFinalScore.objects.filter(
+                problems[0])
+            for problem in problems[1:]:
+                submissions |= models.PersonProblemFinalScore.objects.filter(
+                    problem)
+
+            # Now sort all the person-problem-scores by 'person' and 'problem'
+            # This will create scores like:
+            # [('p1', 3(Say score corresponding to problem2)), 
+            #  ('p1', 2(score corresponding to problem4)),
+            #  ('p2', 5(score corresponding to problem3)),
+            #  ('p2', 0(score corresponding to problem1)) ... ]
+            # We do not need to save exactly which problem the score correspondes to
+            # we only need to know scores on all problems by a participant
+            submissions.order_by('person', 'problem')
+            scores = [(submission.person, submission.score)
+                      for submission in submissions]
+
+            # Here we aggregate the previous list.
+            # We simply iterate over scores and for each participant,
+            # we sum up how much has he scored in all the problems.
+            # To do this we exploit the fact that list is already sorted.
+            # In the above case after aggregating we'll write 
+            # 'p1', 5
+            # 'p2', 5 etc. in csvstring
+            curr_person = scores[0][0]
+            i, sum_scores = 0, 0
+            for i in range(len(scores)):
+                if curr_person == scores[i][0]:
+                    sum_scores += scores[i][1]
+                else:
+                    writer.writerow([curr_person, sum_scores])
+                    curr_person = scores[i][0]
+                    sum_scores = scores[i][1]
+            writer.writerow([curr_person, sum_scores])
+
+        return (True, csvstring)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
