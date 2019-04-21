@@ -250,6 +250,22 @@ def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
         return (False if len(q_set) == 0 else None)
 
 
+def delete_personcontest(person: str, contest: str):
+    """
+    Delete the record of person and contest in ContestPerson table
+    Passed person is email and contest is the pk
+    Returns (True, None)
+    """
+    try:
+        p = models.Person.objects.get(email=person)
+        c = models.Contest.objects.get(pk=contest)
+        models.ContestPerson.objects.filter(person=p, contest=c).delete()
+        return (True, None)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__)
+
+
 def get_personproblem_permission(person: str, problem: str):
     """
     Determine the relation between Person and Problem
