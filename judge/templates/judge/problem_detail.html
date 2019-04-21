@@ -35,7 +35,11 @@
 
     {% if problem.statement != None %}
     statementQuill.setContents(JSON.parse('{{ problem.statement | safe }}'.replace('\n', '\\n')))
+    {% endif %}
+    {% if problem.input_format != None %}
     inputFormatQuill.setContents(JSON.parse('{{ problem.input_format | safe }}'.replace('\n', '\\n')))
+    {% endif %}
+    {% if problem.output_format != None %}
     outputFormatQuill.setContents(JSON.parse('{{ problem.output_format | safe }}'.replace('\n', '\\n')))
     {% endif %}
 
@@ -57,7 +61,7 @@
         <h4 class="d-inline mx-2">{{ problem.name }}</h4>
     </div>
     <div class="col-12 col-md-3 mb-3">
-        <a href="{% url 'judge:edit_problem' problem.pk %}" class="btn btn-primary">Edit Problem</a>
+        {% if type == 'Poster' %}<a href="{% url 'judge:edit_problem' problem.pk %}" class="btn btn-primary">Edit Problem</a>{% endif %}
     </div>
     <div class="col-12 my-4">
         <h4>Statement</h4>

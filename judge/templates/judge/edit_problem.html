@@ -1,0 +1,107 @@
+{% extends "judge/base.html" %}
+
+{% block title %}Edit Problem {{ problem.code }} | Contest {{ contest.pk }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'judge:contest_detail' contest.pk %}">Contest {{ contest.pk }}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'judge:problem_detail' problem.code %}">Problem {{ problem.code }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">Edit</li>
+{% endblock %}
+
+{% block styles %}
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script>
+    let quillModules = {
+        toolbar: [
+            ['bold', 'italic'],
+            ['link', 'blockquote', 'code-block'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+        ]
+    }
+
+    let statementQuill = new Quill('#statementEditor', {
+        modules: quillModules,
+        theme: 'snow',
+    })
+
+    let inputFormatQuill = new Quill('#inputFormatEditor', {
+        modules: quillModules,
+        theme: 'snow',
+    })
+
+    let outputFormatQuill = new Quill('#outputFormatEditor', {
+        modules: quillModules,
+        theme: 'snow',
+    })
+
+    {% if post_data.statement %}
+    statementQuill.setContents(JSON.parse('{{ post_data.statement }}'))
+    {% endif %}
+
+    {% if problem.statement != None %}
+    statementQuill.setContents(JSON.parse('{{ problem.statement | safe }}'.replace('\n', '\\n')))
+    {% endif %}
+    {% if problem.input_format != None %}
+    inputFormatQuill.setContents(JSON.parse('{{ problem.input_format | safe }}'.replace('\n', '\\n')))
+    {% endif %}
+    {% if problem.output_format != None %}
+    outputFormatQuill.setContents(JSON.parse('{{ problem.output_format | safe }}'.replace('\n', '\\n')))
+    {% endif %}
+
+    $('form').submit(function (e) {
+        $('#id_statement').val(JSON.stringify(statementQuill.getContents()))
+        $('#id_input_format').val(JSON.stringify(inputFormatQuill.getContents()))
+        $('#id_output_format').val(JSON.stringify(outputFormatQuill.getContents()))
+    })
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row my-2">
+    <div class="col-12">
+        <h2>Edit Problem</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-md-8">
+        <form action="{% url 'judge:edit_problem' problem.code %}" method="POST">
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger alter-dismissible fade show" role="alert">
+                {{ form.non_field_errors }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endif %}
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }} {{ field }}
+                {% if field.name == 'statement' %}
+                <div id="statementEditor"></div>
+                {% endif %}
+                {% if field.name == 'input_format' %}
+                <div id="inputFormatEditor"></div>
+                {% endif %}
+                {% if field.name == 'output_format' %}
+                <div id="outputFormatEditor"></div>
+                {% endif %}
+                {% if field.help_text %}
+                <small class="form-text text-muted">{{ field.help_text|safe }}</small>
+                {% endif %}
+                {% if field.errors %}
+                <div class="alert alert-danger mt-2" role="alert">
+                    {{ field.errors|striptags }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Update</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

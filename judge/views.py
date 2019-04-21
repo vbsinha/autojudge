@@ -5,7 +5,8 @@ from django.contrib.auth.models import User
 import logging
 
 from .models import Contest, Problem, TestCase
-from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest, NewProblemForm
+from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
+from .forms import NewProblemForm, EditProblemForm
 from . import handler
 
 
@@ -203,6 +204,39 @@ def new_problem(request, contest_id):
     return render(request, 'judge/new_problem.html', context)
 
 
+def edit_problem(request, problem_id):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    contest = get_object_or_404(Contest, pk=problem.contest_id)
+    user = _get_user(request)
+    perm = handler.get_personcontest_permission(
+        None if user is None else user.email, contest.pk)
+    if not (perm is True):
+        return handler404(request)
+    context = {'contest': contest}
+    if request.method == 'POST':
+        form = EditProblemForm(request.POST)
+        if form.is_valid():
+            status, err = handler.update_problem(
+                problem.code, form.cleaned_data['name'], form.cleaned_data['statement'],
+                form.cleaned_data['input_format'], form.cleaned_data['output_format'],
+                form.cleaned_data['difficulty'])
+            if status:
+                return redirect('/judge/problem/{}/'.format(problem.code))
+            else:
+                form.add_error(None, err)
+    else:
+        form = EditProblemForm({
+            'name': problem.name,
+            'statement': problem.statement,
+            'input_format': problem.input_format,
+            'output_format': problem.output_format,
+            'difficulty': problem.difficulty
+        })
+    context['form'] = form
+    context['problem'] = problem
+    return render(request, 'judge/edit_problem.html', context)
+
+
 def add_test_case_problem(request, problem_id):
     if request.method == 'POST':
         status, err = handler.process_testcase(problem_id,
@@ -219,14 +253,6 @@ def add_test_case_problem(request, problem_id):
     else:
         print('Not POST')
         return redirect(request.META['HTTP_REFERER'])
-
-
-def edit_problem(request, problem_id):
-    problem = get_object_or_404(Problem, pk=problem_id)
-    contest = get_object_or_404(Contest, pk=problem.contest_id)
-    # TODO
-    pass
-
 
 def problem_submit(request, problem_id):
     if request.method == 'POST':

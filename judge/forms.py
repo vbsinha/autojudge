@@ -68,3 +68,14 @@ class NewProblemForm(forms.Form):
         attrs={'class': 'form-control-file'}))
     setter_soln = forms.FileField(label='Setter solution', widget=forms.FileInput(
         attrs={'class': 'form-control-file'}), required=False)
+
+class EditProblemForm(forms.Form):
+    name = forms.CharField(label='Title', max_length=50, widget=forms.TextInput(
+        attrs={'class': 'form-control'}))
+    statement = forms.CharField(label='Statement', widget=forms.HiddenInput())
+    input_format = forms.CharField(
+        label='Input Format', widget=forms.HiddenInput())
+    output_format = forms.CharField(
+        label='Output Format', widget=forms.HiddenInput())
+    difficulty = forms.IntegerField(
+        label='Difficulty', widget=forms.NumberInput(attrs={'class': 'form-control'}))
