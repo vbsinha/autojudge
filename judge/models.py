@@ -269,6 +269,9 @@ class SubmissionTestCase(models.Model):
     # Message placeholder, used for erroneous submissions
     message = models.TextField(default='')
 
+    class Meta:
+        unique_together = (('submission', 'testcase'),)
+
 
 class Comment(models.Model):
     """
@@ -308,3 +311,6 @@ class PersonProblemFinalScore(models.Model):
 
     # Final Score [Int]
     score = models.FloatField(default=0.0)
+
+    class Meta:
+        unique_together = (('problem', 'person'),)
