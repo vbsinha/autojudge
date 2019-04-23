@@ -5,6 +5,8 @@ from django.contrib.auth.views import LoginView, LogoutView
 from . import views
 
 app_name = 'judge'
+handler404 = views.handler404
+handler500 = views.handler500
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -16,6 +18,8 @@ urlpatterns = [
     path('contest/<int:contest_id>/problem/new/',
          views.new_problem, name='new_problem'),
     path('problem/<str:problem_id>/', views.problem_detail, name='problem_detail'),
+    path('problem/<str:problem_id>/starting-code/',
+         views.problem_starting_code, name='problem_starting_code'),
     path('contest/<int:contest_id>/poster/new/',
          views.add_poster, name='contest_add_poster'),
     path('contest/<int:contest_id>/participant/new/',
@@ -26,8 +30,8 @@ urlpatterns = [
          views.get_participants, name='get_participants'),
     path('problem/<str:problem_id>/edit/',
          views.edit_problem, name='edit_problem'),
-    path('problem/<str:problem_id>/submit/',
-         views.problem_submit, name='problem_submit'),
-    path('problem/<str:problem_id>/tests/add/',
-         views.add_test_case_problem, name='new_problem_test'),
+    path('problem/<str:problem_id>/submissions/',
+         views.problem_submissions, name='problem_submissions'),
+    path('submission/<str:submission_id>/',
+         views.submission_detail, name='submission_detail'),
 ]

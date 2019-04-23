@@ -81,6 +81,15 @@
                             <span class="nav-link-inner--text">Log in</span></a>
                     </li>
                     {% endif %}
+                    {% if user.is_staff %}
+                    <li class="nav-item">
+                        <a class="btn btn-neutral btn-icon" href="/admin/" target="_blank"><span
+                                class="btn-inner--icon">
+                                <i class="fa fa-sign-in mr-2"></i>
+                            </span>
+                            <span class="nav-link-inner--text">Admin</span></a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
 

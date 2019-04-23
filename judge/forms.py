@@ -58,21 +58,28 @@ class NewProblemForm(forms.Form):
     output_format = forms.CharField(
         label='Output Format', widget=forms.HiddenInput())
     difficulty = forms.IntegerField(
-        label='Difficulty', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+        label='Difficulty', widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        help_text='0 - Unknown, 1 - Least, ..., 5 - Highest', initial=0)
     time_limit = forms.DurationField(
-        label='Time Limit', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+        label='Time Limit', widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        initial=0)
     memory_limit = forms.IntegerField(
-        label='Memory Limit', widget=forms.NumberInput(attrs={'class': 'form-control'}))
-    file_exts = forms.CharField(label='File extensions', max_length=100,
-                                widget=forms.TextInput(attrs={'class': 'form-control'}))
+        label='Memory Limit', widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        initial=0)
+    file_exts = forms.CharField(
+        label='File extensions', max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        required=False, help_text='Comma separated extensions')
     starting_code = forms.FileField(label='Starting code', widget=forms.FileInput(
         attrs={'class': 'form-control-file'}), required=False)
     max_score = forms.IntegerField(
-        label='Maximum score', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+        label='Maximum score', widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        initial=100)
     compilation_script = forms.FileField(
-        label='Compilation script', widget=forms.FileInput(attrs={'class': 'form-control-file'}))
+        label='Compilation script', widget=forms.FileInput(attrs={'class': 'form-control-file'}),
+        required=False)
     testing_script = forms.FileField(label='Testing script', widget=forms.FileInput(
-        attrs={'class': 'form-control-file'}))
+        attrs={'class': 'form-control-file'}), required=False)
     setter_soln = forms.FileField(label='Setter solution', widget=forms.FileInput(
         attrs={'class': 'form-control-file'}), required=False)
 
@@ -87,3 +94,18 @@ class EditProblemForm(forms.Form):
         label='Output Format', widget=forms.HiddenInput())
     difficulty = forms.IntegerField(
         label='Difficulty', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+
+
+class NewSubmissionForm(forms.Form):
+    submission_file = forms.FileField(label='Choose file', widget=forms.FileInput(
+        attrs={'class': 'form-control-file'}
+    ))
+
+
+class AddTestCaseForm(forms.Form):
+    test_type = forms.ChoiceField(label='Test type', choices=[
+        ('public', 'Public'),
+        ('private', 'Private')
+    ])
+    input_file = forms.FileField(label='Input file')
+    output_file = forms.FileField(label='Output file')

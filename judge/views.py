@@ -2,11 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.core.files import File
+from django.http import HttpResponse
 import logging
+import os
 
-from .models import Contest, Problem, TestCase
+from .models import Contest, Problem, TestCase, Submission
 from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
-from .forms import NewProblemForm, EditProblemForm
+from .forms import NewProblemForm, EditProblemForm, NewSubmissionForm, AddTestCaseForm
 from . import handler
 
 
@@ -17,11 +20,11 @@ def _get_user(request) -> User:
         return None
 
 
-def handler404(request):
+def handler404(request, exception=None):
     return render(request, '404.html', status=404)
 
 
-def handler500(request):
+def handler500(request, exception=None):
     return render(request, '500.html', status=500)
 
 
@@ -162,16 +165,68 @@ def contest_detail(request, contest_id):
 def problem_detail(request, problem_id):
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
-    perm = handler.get_personcontest_permission(
-        None if user is None else user.email, problem.contest.pk)
+    perm = handler.get_personproblem_permission(
+        None if user is None else user.email, problem_id)
     if perm is None:
         return handler404(request)
-    return render(request, 'judge/problem_detail.html', {
+    public_tests = TestCase.objects.filter(problem_id=problem_id, public=True)
+    private_tests = TestCase.objects.filter(problem_id=problem_id, public=False)
+    context = {
         'problem': problem,
         'type': 'Poster' if perm else 'Participant',
-        'public_tests': TestCase.objects.filter(problem_id=problem_id, public=True),
-        'private_tests': TestCase.objects.filter(problem_id=problem_id, public=False),
-    })
+        'public_tests': public_tests,
+        'private_tests': private_tests,
+    }
+    if perm is False and user.is_authenticated:
+        if request.method == 'POST':
+            form = NewSubmissionForm(request.POST, request.FILES)
+            if form.is_valid():
+                # TODO check extension
+                status, err = handler.process_solution(
+                    problem_id, user.email, '.cpp', form.cleaned_data['submission_file'],
+                    timezone.now())
+                if status:
+                    return redirect(reverse('judge:problem_submissions', args=(problem_id,)))
+                if not status:
+                    form.add_error(None, err)
+        else:
+            form = NewSubmissionForm()
+        context['form'] = form
+    if perm is True:
+        if request.method == 'POST':
+            form = AddTestCaseForm(request.POST, request.FILES)
+            if form.is_valid():
+                status, err = handler.process_testcase(
+                    problem_id, True if request.POST.get(
+                        'test-type') == 'public' else False,
+                    request.FILES.get('input'),
+                    request.FILES.get('output'))
+                if status:
+                    redirect(reverse('judge:problem_submissions'))
+                else:
+                    form.add_error(None, err)
+        else:
+            form = AddTestCaseForm()
+        context['form'] = form
+    return render(request, 'judge/problem_detail.html', context)
+
+
+def problem_starting_code(request, problem_id: str):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    user = _get_user(request)
+    perm = handler.get_personproblem_permission(
+        None if user is None else user.email, problem_id)
+    if perm is None:
+        return handler404(request)
+    elif problem.start_code:
+        f = File(open(problem.start_code.path, 'rb'))
+        response = HttpResponse(f, content_type='application/octet-stream')
+        f.close()
+        f_name = os.path.basename(problem.start_code.path)
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(f_name)
+        return response
+    else:
+        return handler404(request)
 
 
 def new_problem(request, contest_id):
@@ -237,35 +292,56 @@ def edit_problem(request, problem_id):
     return render(request, 'judge/edit_problem.html', context)
 
 
-def add_test_case_problem(request, problem_id):
-    if request.method == 'POST':
-        status, err = handler.process_testcase(problem_id,
-                                               True if request.POST.get(
-                                                   'test-type') == 'public' else False,
-                                               request.FILES.get('input'),
-                                               request.FILES.get('output'))
-        print(status, err)
+def problem_submissions(request, problem_id: str):
+    user = _get_user(request)
+    perm = handler.get_personproblem_permission(
+        None if user is None else user.email, problem_id)
+    if perm is None:
+        return handler404(request)
+    problem = get_object_or_404(Problem, pk=problem_id)
+    context = {'problem': problem, 'perm': perm}
+    if perm:
+        status, msg = handler.get_submissions(problem_id, None)
         if status:
-            return redirect(request.META['HTTP_REFERER'])
+            context['submissions'] = msg
         else:
-            print(err)
-            return redirect(request.META['HTTP_REFERER'])
+            logging.debug(msg)
+            return handler404(request)
+    elif user is not None:
+        status, msg = handler.get_submissions(problem_id, user.email)
+        if status:
+            context['participant'] = True
+            context['submissions'] = msg
+        else:
+            logging.debug(msg)
+            return handler404(request)
     else:
-        print('Not POST')
-        return redirect(request.META['HTTP_REFERER'])
+        return handler404(request)
+    return render(request, 'judge/problem_submissions.html', context)
 
 
-def problem_submit(request, problem_id):
-    if request.method == 'POST':
-        # TODO What is file_type?
-        # TODO Process return and display result
-        status, err = handler.process_solution(
-            problem_id, request.user.email, '.cpp', request.FILES.get('file'), timezone.now())
+def submission_detail(request, submission_id: str):
+    user = _get_user(request)
+    submission = get_object_or_404(Submission, pk=submission_id)
+    perm = handler.get_personproblem_permission(
+        None if user is None else user.email, submission.problem.pk)
+    context = {'submission': submission, 'problem': submission.problem}
+    if user is None:
+        return handler404(request)
+    if perm or user.email == submission.participant.pk:
+        status, msg = handler.get_submission_status_mini(submission_id)
         if status:
-            # TODO give status
-            return redirect(reverse('judge:index'))
+            # TODO Fix this
+            context['test_results'] = msg[0]
+            context['judge_score'] = msg[1][0]
+            context['ta_score'] = msg[1][1]
+            context['linter_score'] = msg[1][2]
+            context['final_score'] = msg[1][3]
+            context['timestamp'] = msg[1][4]
+            context['file_type'] = msg[1][5]
         else:
-            print(err)
-            return redirect(request.META['HTTP_REFERER'])
+            logging.debug(msg)
+            return handler404(request)
+        return render(request, 'judge/submission_detail.html', context)
     else:
-        return redirect(reverse('judge:index'))
+        return handler404(request)

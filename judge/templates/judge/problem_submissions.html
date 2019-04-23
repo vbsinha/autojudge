@@ -1,0 +1,40 @@
+{% extends 'judge/base.html' %}
+
+{% block title %} Submissions | Problem {{ problem.code }} | Contest {{ problem.contest }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'judge:contest_detail' problem.contest.pk %}">Contest
+        {{ problem.contest.pk }}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'judge:problem_detail' problem.pk %}">Problem {{ problem.code }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">Submissions</li>
+{% endblock %}
+
+{% block content %}
+
+{% for email, subs in submissions.items %}
+<div class="row">
+    <div class="col-12">
+        {% if participant %}<h4>User: {{ email }}</h4>{% endif %}
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Submission</th>
+                    <th>Timestamp</th>
+                    <th>Final score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in subs %}
+                <tr>
+                    <td><a href="{% url 'judge:submission_detail' sub.pk %}">{{ sub.pk }}</a></td>
+                    <td>{{ sub.timestamp }}</td>
+                    <td>{{ sub.final_score }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
