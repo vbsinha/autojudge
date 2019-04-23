@@ -1,6 +1,6 @@
 {% extends 'judge/base.html' %}
 
-{% block title %}{{ problem.code }} | Contest {{ problem.contest }}{% endblock %}
+{% block title %}Problem {{ problem.code }} | Contest {{ problem.contest }}{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'judge:contest_detail' problem.contest.pk %}">Contest

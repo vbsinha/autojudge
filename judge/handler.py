@@ -242,7 +242,7 @@ def add_person_to_contest(person: str, contest: str, permission: bool):
         return (False, e.__str__)
 
 
-def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
+def get_personcontest_permission(person: Optional[str], contest: int) -> Optional[bool]:
     """
     Determine the relation between Person and Contest
     person is the email of the person
@@ -288,7 +288,7 @@ def delete_personcontest(person: str, contest: str):
         return (False, e.__str__)
 
 
-def get_personproblem_permission(person: str, problem: str):
+def get_personproblem_permission(person: Optional[str], problem: str):
     """
     Determine the relation between Person and Problem
     person is the email of the person
@@ -298,7 +298,7 @@ def get_personproblem_permission(person: str, problem: str):
     p = models.Problem.objects.get(pk=problem)
     if p.contest is None:
         return False
-    return get_personcontest_permission(person, p.contest)
+    return get_personcontest_permission(person, p.contest.pk)
 
 
 def get_posters(contest):

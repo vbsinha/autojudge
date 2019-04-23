@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 import logging
 
-from .models import Contest, Problem, TestCase
+from .models import Contest, Problem, TestCase, Submission
 from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
 from .forms import NewProblemForm, EditProblemForm, NewSubmissionForm, AddTestCaseForm
 from . import handler
@@ -162,8 +162,8 @@ def contest_detail(request, contest_id):
 def problem_detail(request, problem_id):
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
-    perm = handler.get_personcontest_permission(
-        None if user is None else user.email, problem.contest.pk)
+    perm = handler.get_personproblem_permission(
+        None if user is None else user.email, problem_id)
     if perm is None:
         return handler404(request)
     context = {
@@ -268,4 +268,27 @@ def edit_problem(request, problem_id):
 
 
 def problem_submissions(request, problem_id: str):
-    return handler404(request)
+    user = _get_user(request)
+    perm = handler.get_personproblem_permission(
+        None if user is None else user.email, problem_id)
+    if perm is None:
+        return handler404(request)
+    problem = get_object_or_404(Problem, pk=problem_id)
+    context = {'problem': problem, 'perm': perm}
+    # TODO
+    return render(request, 'judge/problem_submissions.html', context)
+
+
+def submission_detail(request, submission_id: str):
+    user = _get_user(request)
+    submission = get_object_or_404(Submission, pk=submission_id)
+    perm = handler.get_personproblem_permission(
+        None if user is None else user.email, submission.problem.pk)
+    context = {'submission': submission}
+    if user is None:
+        return handler404(request)
+    if perm or user.email == submission.participant.pk:
+        # TODO
+        return render(request, 'judge/submission_detail.html', context)
+    else:
+        return handler404(request)

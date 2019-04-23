@@ -28,4 +28,6 @@ urlpatterns = [
          views.edit_problem, name='edit_problem'),
     path('problem/<str:problem_id>/submissions/',
          views.problem_submissions, name='problem_submissions'),
+    path('submissions/<str:submission_id>/',
+         views.submission_detail, name='submission_detail'),
 ]
