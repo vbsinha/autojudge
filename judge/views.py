@@ -2,7 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.core.files import File
+from django.http import HttpResponse
 import logging
+import os
 
 from .models import Contest, Problem, TestCase, Submission
 from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
@@ -166,11 +169,13 @@ def problem_detail(request, problem_id):
         None if user is None else user.email, problem_id)
     if perm is None:
         return handler404(request)
+    public_tests = TestCase.objects.filter(problem_id=problem_id, public=True)
+    private_tests = TestCase.objects.filter(problem_id=problem_id, public=False)
     context = {
         'problem': problem,
         'type': 'Poster' if perm else 'Participant',
-        'public_tests': TestCase.objects.filter(problem_id=problem_id, public=True),
-        'private_tests': TestCase.objects.filter(problem_id=problem_id, public=False),
+        'public_tests': public_tests,
+        'private_tests': private_tests,
     }
     if perm is False and user.is_authenticated:
         if request.method == 'POST':
@@ -202,6 +207,22 @@ def problem_detail(request, problem_id):
             form = AddTestCaseForm()
         context['form'] = form
     return render(request, 'judge/problem_detail.html', context)
+
+
+def problem_starting_code(request, problem_id: str):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    user = _get_user(request)
+    perm = handler.get_personproblem_permission(
+        None if user is None else user.email, problem_id)
+    if perm is None:
+        return handler404(request)
+    else:
+        f = File(open(problem.start_code.path, 'rb'))
+        response = HttpResponse(f, content_type='application/octet-stream')
+        f.close()
+        f_name = os.path.basename(problem.start_code.path)
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(f_name)
+        return response
 
 
 def new_problem(request, contest_id):

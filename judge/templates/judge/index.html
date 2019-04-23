@@ -2,7 +2,7 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h1 class="d-inline">Contests</h1>
+        <h1 class="d-inline-block">Contests</h1>
         {% if user.is_authenticated %}
         <a class="btn btn-primary float-right" href="{% url 'judge:new_contest' %}">New Contest</a>
         {% endif %}
@@ -15,10 +15,12 @@
             <div class="card-body">
                 <div>
                     <h4 class="d-inline-block">{{ contest.name }}</h4>
-                    {% if contest.public %}<span class="badge badge-success">Public</span>{% else %}
-                    <span class="badge badge-default">Private</span>{% endif %}
-                    {% if permission %}<span class="badge badge-warning">Poster</span>
-                    {% else %}<span class="badge badge-warning">Participant</span>{% endif %}
+                    <div class="float-right">
+                        {% if contest.public %}<span class="badge badge-success">Public</span>{% else %}
+                        <span class="badge badge-default">Private</span>{% endif %}
+                        {% if permission %}<span class="badge badge-warning">Poster</span>
+                        {% else %}<span class="badge badge-warning">Participant</span>{% endif %}
+                    </div>
                 </div>
                 <a href="{% url 'judge:contest_detail' contest.pk %}" class="card-link">Go to contest page</a>
             </div>
