@@ -14,12 +14,19 @@ class NewContestForm(forms.Form):
             'class': 'form-control',
             'placeholder': 'Enter start date of the contest'
         }))
-    contest_end = forms.DateTimeField(
-        label='End Date', input_formats=['%Y-%m-%dT%H:%M'],
+    contest_soft_end = forms.DateTimeField(
+        label='Soft End Date for contest', input_formats=['%Y-%m-%dT%H:%M'],
         widget=forms.DateTimeInput(attrs={
             'type': 'datetime-local',
             'class': 'form-control',
-            'placeholder': 'Enter end date of the contest'
+            'placeholder': 'Enter soft end date of the contest'
+        }))
+    contest_hard_end = forms.DateTimeField(
+        label='Hard End Date for contest', input_formats=['%Y-%m-%dT%H:%M'],
+        widget=forms.DateTimeInput(attrs={
+            'type': 'datetime-local',
+            'class': 'form-control',
+            'placeholder': 'Enter hard end date of the contest'
         }))
     penalty = forms.DecimalField(label='Penalty', widget=forms.NumberInput(attrs={
         'class': 'form-control',

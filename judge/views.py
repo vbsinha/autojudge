@@ -53,14 +53,16 @@ def new_contest(request):
         if form.is_valid():
             contest_name = form.cleaned_data['contest_name']
             contest_start = form.cleaned_data['contest_start']
-            contest_end = form.cleaned_data['contest_end']
+            contest_soft_end = form.cleaned_data['contest_soft_end']
+            contest_hard_end = form.cleaned_data['contest_hard_end']
             penalty = form.cleaned_data['penalty']
             is_public = form.cleaned_data['is_public']
             if penalty < 0 or penalty > 1:
                 form.add_error('penalty', 'Penalty should be between 0 and 1.')
             else:
                 status, msg = handler.process_contest(
-                    contest_name, contest_start, contest_end, penalty, is_public)
+                    contest_name, contest_start, contest_soft_end, contest_hard_end,
+                    penalty, is_public)
                 if status:
                     handler.add_person_to_contest(user.email, msg, True)
                     return redirect(reverse('judge:index'))
@@ -156,7 +158,8 @@ def contest_detail(request, contest_id):
         'type': 'Poster' if perm else 'Participant',
         'problems': problems,
         'contest_start': contest.start_datetime.strftime('%d-%m-%Y %H:%M'),
-        'contest_end': contest.end_datetime.strftime('%d-%m-%Y %H:%M'),
+        'contest_soft_end': contest.soft_end_datetime.strftime('%d-%m-%Y %H:%M'),
+        'contest_hard_end': contest.hard_end_datetime.strftime('%d-%m-%Y %H:%M'),
     })
 
 

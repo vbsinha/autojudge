@@ -12,7 +12,10 @@
         <h2 class="d-inline">{{ contest.name }}</h2>
         <div class="float-right">
             <i class="fa fa-calendar"></i> Starts at {{ contest_start }}<br>
-            <i class="fa fa-calendar"></i> Ends at {{ contest_end }}
+            {% if contest_soft_end != contest_hard_end %}
+            <i class="fa fa-calendar"></i> Submissions penalized after {{ contest_soft_end }}<br>
+            {% endif %}
+            <i class="fa fa-calendar"></i> Ends at {{ contest_hard_end }}
         </div>
     </div>
 </div>

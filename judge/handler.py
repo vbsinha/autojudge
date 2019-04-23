@@ -12,7 +12,8 @@ from typing import Tuple, Optional
 from . import models
 
 
-def process_contest(name: str, start_datetime, end_datetime, penalty: float, public: bool):
+def process_contest(name: str, start_datetime, soft_end_datetime, hard_end_datetime,
+                    penalty: float, public: bool):
     """
     Process a New Contest
     Only penalty can be None in which case Penalty will be set to 0
@@ -24,7 +25,9 @@ def process_contest(name: str, start_datetime, end_datetime, penalty: float, pub
 
     try:
         c = models.Contest(name=name, start_datetime=start_datetime,
-                           end_datetime=end_datetime, penalty=penalty, public=public)
+                           soft_end_datetime=soft_end_datetime,
+                           hard_end_datetime=hard_end_datetime,
+                           penalty=penalty, public=public)
         c.save()
         # Successfully added to Database
         return (True, str(c.pk))

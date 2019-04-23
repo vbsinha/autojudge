@@ -15,7 +15,7 @@ def update_leaderboard(contest: int, person: str):
     """
 
     os.makedirs(os.path.join('content', 'contests'), exist_ok=True)
-    pickle_path = os.path.join('content', 'contests', str(contest)+'.lb')
+    pickle_path = os.path.join('content', 'contests', str(contest) + '.lb')
 
     status, score = get_personcontest_score(person)
 
