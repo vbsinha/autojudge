@@ -6,4 +6,5 @@
   ],
   "python.linting.pylintEnabled": false,
   "python.linting.mypyEnabled": true,
+  "files.insertFinalNewline": true,
 }

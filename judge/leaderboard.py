@@ -1,7 +1,7 @@
 import os
 import pickle
 
-from handler import get_personcontest_score
+from .handler import get_personcontest_score
 
 
 def update_leaderboard(contest: int, person: str):
@@ -11,13 +11,13 @@ def update_leaderboard(contest: int, person: str):
     Only call this function when some submission for some problem of the contest
      has scored more than its previous submission.
     Remember to call this function whenever PersonProblemFinalScore is updated.
-    Returns True if update was successfull else returns False 
+    Returns True if update was successfull else returns False
     """
 
     os.makedirs(os.path.join('content', 'contests'), exist_ok=True)
     pickle_path = os.path.join('content', 'contests', str(contest) + '.lb')
 
-    status, score = get_personcontest_score(person)
+    status, score = get_personcontest_score(person, contest)
 
     if status:
         if not os.path.exists(pickle_path):

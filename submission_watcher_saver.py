@@ -3,6 +3,7 @@ import django
 
 from datetime import timedelta
 from subprocess import call
+from typing import List, Any
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pdpjudge.settings")
 django.setup()
@@ -15,7 +16,7 @@ MONITOR_DIRECTORY = os.path.join(CONTENT_DIRECTORY, TMP_DIRECTORY)
 DOCKER_VERSION = '1'
 DOCKER_IMAGE_NAME = 'pdp_docker_{}'.format(DOCKER_VERSION)
 
-LS = []
+LS: List[Any] = []
 REFRESH_LS_TRIGGER = 10
 
 

@@ -76,6 +76,7 @@ class NewProblemForm(forms.Form):
     setter_soln = forms.FileField(label='Setter solution', widget=forms.FileInput(
         attrs={'class': 'form-control-file'}), required=False)
 
+
 class EditProblemForm(forms.Form):
     name = forms.CharField(label='Title', max_length=50, widget=forms.TextInput(
         attrs={'class': 'form-control'}))
