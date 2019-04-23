@@ -114,10 +114,11 @@
         </div>
         {% endfor %}
     </div>
+    {% if problem.start_code %}
     <div class="col-12 mb-4">
-        <!-- TODO Fix the below link -->
         <a href="{% url 'judge:problem_starting_code' problem.pk %}" class="btn btn-default">Download starting code</a>
     </div>
+    {% endif %}
 </div>
 
 <!-- TODO Check if form is restricted -->

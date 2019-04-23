@@ -216,13 +216,15 @@ def problem_starting_code(request, problem_id: str):
         None if user is None else user.email, problem_id)
     if perm is None:
         return handler404(request)
-    else:
+    elif problem.start_code:
         f = File(open(problem.start_code.path, 'rb'))
         response = HttpResponse(f, content_type='application/octet-stream')
         f.close()
         f_name = os.path.basename(problem.start_code.path)
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(f_name)
         return response
+    else:
+        return handler404(request)
 
 
 def new_problem(request, contest_id):
