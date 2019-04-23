@@ -26,8 +26,6 @@ urlpatterns = [
          views.get_participants, name='get_participants'),
     path('problem/<str:problem_id>/edit/',
          views.edit_problem, name='edit_problem'),
-    path('problem/<str:problem_id>/submit/',
-         views.problem_submit, name='problem_submit'),
-    path('problem/<str:problem_id>/tests/add/',
-         views.add_test_case_problem, name='new_problem_test'),
+    path('problem/<str:problem_id>/submissions/',
+         views.problem_submissions, name='problem_submissions'),
 ]

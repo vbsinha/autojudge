@@ -194,7 +194,8 @@ def process_solution(problem_id: str, participant: str, file_type, submission_fi
         f.write('{}\n'.format(problem.pk))
         f.write('{}\n'.format(s.pk))
         f.write('{}\n'.format(file_type))
-        f.write('{}\n'.format(problem.time_limit.seconds()))
+        print(problem.time_limit, type(problem.time_limit))
+        f.write('{}\n'.format(int(problem.time_limit.total_seconds())))
         f.write('{}\n'.format(problem.memory_limit))
         for testcase in testcases:
             f.write('{}\n'.format(testcase.pk))

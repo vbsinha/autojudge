@@ -6,7 +6,7 @@ import logging
 
 from .models import Contest, Problem, TestCase
 from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
-from .forms import NewProblemForm, EditProblemForm
+from .forms import NewProblemForm, EditProblemForm, NewSubmissionForm, AddTestCaseForm
 from . import handler
 
 
@@ -166,12 +166,42 @@ def problem_detail(request, problem_id):
         None if user is None else user.email, problem.contest.pk)
     if perm is None:
         return handler404(request)
-    return render(request, 'judge/problem_detail.html', {
+    context = {
         'problem': problem,
         'type': 'Poster' if perm else 'Participant',
         'public_tests': TestCase.objects.filter(problem_id=problem_id, public=True),
         'private_tests': TestCase.objects.filter(problem_id=problem_id, public=False),
-    })
+    }
+    if perm is False and user.is_authenticated:
+        if request.method == 'POST':
+            form = NewSubmissionForm(request.POST, request.FILES)
+            if form.is_valid():
+                # TODO check extension
+                status, err = handler.process_solution(
+                    problem_id, user.email, '.cpp', form.cleaned_data['submission_file'],
+                    timezone.now())
+                if not status:
+                    form.add_error(None, err)
+        else:
+            form = NewSubmissionForm()
+        context['form'] = form
+    if perm is True:
+        if request.method == 'POST':
+            form = AddTestCaseForm(request.POST, request.FILES)
+            if form.is_valid():
+                status, err = handler.process_testcase(
+                    problem_id, True if request.POST.get(
+                        'test-type') == 'public' else False,
+                    request.FILES.get('input'),
+                    request.FILES.get('output'))
+                if status:
+                    redirect(reverse('judge:problem_submissions'))
+                else:
+                    form.add_error(None, err)
+        else:
+            form = AddTestCaseForm()
+        context['form'] = form
+    return render(request, 'judge/problem_detail.html', context)
 
 
 def new_problem(request, contest_id):
@@ -237,35 +267,5 @@ def edit_problem(request, problem_id):
     return render(request, 'judge/edit_problem.html', context)
 
 
-def add_test_case_problem(request, problem_id):
-    if request.method == 'POST':
-        status, err = handler.process_testcase(problem_id,
-                                               True if request.POST.get(
-                                                   'test-type') == 'public' else False,
-                                               request.FILES.get('input'),
-                                               request.FILES.get('output'))
-        print(status, err)
-        if status:
-            return redirect(request.META['HTTP_REFERER'])
-        else:
-            print(err)
-            return redirect(request.META['HTTP_REFERER'])
-    else:
-        print('Not POST')
-        return redirect(request.META['HTTP_REFERER'])
-
-
-def problem_submit(request, problem_id):
-    if request.method == 'POST':
-        # TODO What is file_type?
-        # TODO Process return and display result
-        status, err = handler.process_solution(
-            problem_id, request.user.email, '.cpp', request.FILES.get('file'), timezone.now())
-        if status:
-            # TODO give status
-            return redirect(reverse('judge:index'))
-        else:
-            print(err)
-            return redirect(request.META['HTTP_REFERER'])
-    else:
-        return redirect(reverse('judge:index'))
+def problem_submissions(request, problem_id: str):
+    return handler404(request)
