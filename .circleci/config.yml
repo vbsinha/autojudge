@@ -1,0 +1,22 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/pdp-judge
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - checkout
+      - run:
+          command: |
+            sudo pip install Django
+            sudo pip install social-auth-app-django
+      - run:
+          command: |
+            export GOOGLE_OAUTH2_KEY=''
+            export GOOGLE_OAUTH2_SECRET=''
+            python manage.py test
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+          destination: tr1
