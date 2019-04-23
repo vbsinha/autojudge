@@ -263,11 +263,12 @@ def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
         cp = models.ContestPerson.objects.get(person=p, contest=c)
         return cp.role
     except models.ContestPerson.DoesNotExist:
-        q_set = models.ContestPerson.objects.filter(
-            contest=contest, role=False)
-        return (False if len(q_set) == 0 else None)
+        c = models.Contest.objects.get(pk=contest)
+        if c.public:
+            return False
     except Exception:
         return None
+    return None
 
 
 def delete_personcontest(person: str, contest: str):
