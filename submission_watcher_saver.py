@@ -1,6 +1,7 @@
 import os
 import django
 
+from pylint.lint import Run
 from datetime import timedelta
 from subprocess import call
 from typing import List, Any
@@ -62,6 +63,10 @@ def saver(sub_id):
         st.save()
 
     s.judge_score = score_received
+    if s.file_format == '.py':
+        penalty = Run([os.path.join(CONTENT_DIRECTORY, 'submissions',
+                                    'submission_{}.py'.format(submission))], do_exit=False)
+        s.linter_score = penalty.linter.stats['global_note']
     current_final_score = s.judge_score + s.ta_score + s.linter_score
 
     penalty_multiplier = 1.0
