@@ -34,8 +34,23 @@ def process_contest(name: str, start_datetime, soft_end_datetime, hard_end_datet
     except Exception as e:
         # Exception Case
         traceback.print_exc()
-        logging.error(e.__str__)
+        logging.error(e.__str__())
         return (False, 'Contest could not be created')
+
+
+def delete_contest(contest: int):
+    """
+    Delete the contest.
+    This will cascade delete in all the tables that have contest as FK.
+    Retuns (True, None)
+    """
+    try:
+        models.Contest.objects.filter(pk=contest).delete()
+        return (True, None)
+    except Exception as e:
+        traceback.print_exc()
+        logging.error(e.__str__())
+        return (False, 'Contest could not be deleted')
 
 
 def process_problem(code: str, contest: int, name: str, statement: str, input_format: str,
@@ -101,7 +116,7 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
         return (True, None)
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
 
 def update_problem(code: str, name: str, statement: str, input_format: str,
@@ -124,7 +139,22 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
         return (False, '{} code does not exist.'.format(code))
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
+
+
+def delete_problem(problem: str):
+    """
+    Delete the problem.
+    This will cascade delete in all the tables that have problem as FK.
+    Retuns (True, None)
+    """
+    try:
+        models.Problem.objects.filter(pk=problem).delete()
+        return (True, None)
+    except Exception as e:
+        traceback.print_exc()
+        logging.error(e.__str__())
+        return (False, 'Contest could not be deleted')
 
 
 def process_person(email, rank=0) -> Tuple[bool, Optional[str]]:
@@ -158,7 +188,7 @@ def process_testcase(problem_id: str, ispublic: bool, inputfile, outputfile):
         return (True, None)
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
 
 def process_solution(problem_id: str, participant: str, file_type, submission_file, timestamp: str):
@@ -175,7 +205,7 @@ def process_solution(problem_id: str, participant: str, file_type, submission_fi
         s.save()
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
     testcases = models.TestCase.objects.filter(problem=problem)
 
@@ -206,7 +236,7 @@ def process_solution(problem_id: str, participant: str, file_type, submission_fi
             st.save()
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
     return (True, None)
 
@@ -238,7 +268,7 @@ def add_person_to_contest(person: str, contest: str, permission: bool):
             return (True, None)
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
 
 def get_personcontest_permission(person: Optional[str], contest: int) -> Optional[bool]:
@@ -284,7 +314,7 @@ def delete_personcontest(person: str, contest: str):
         return (True, None)
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
 
 def get_personproblem_permission(person: Optional[str], problem: str):
@@ -313,7 +343,7 @@ def get_posters(contest):
         return (True, cps)
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
 
 def get_participants(contest):
@@ -332,7 +362,7 @@ def get_participants(contest):
         return (True, cps)
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
 
 def get_personcontest_score(person: str, contest: int):
@@ -351,7 +381,7 @@ def get_personcontest_score(person: str, contest: int):
         return (True, score)
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
 
 def get_submission_status(person: str, problem: str, submission):
@@ -385,7 +415,7 @@ def get_submission_status(person: str, problem: str, submission):
             s = [submission]
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
     verdict_dict: Dict[Any, Any] = dict()
     score_dict = dict()
@@ -409,6 +439,76 @@ def get_submission_status(person: str, problem: str, submission):
     return (True, (verdict_dict, score_dict))
 
 
+def get_submissions(problem: str, person: str):
+    """
+    Get all the submissions for this problem by this (or all) persons who attempted.
+    problem is the pk of the Problem.
+    person is the email of the Person or None if you want to retrieve solutions by all participants
+    Returns (True, {emailofperson: [SubmissionObject1, SubmissionObject2, ...],
+                    emailofperson: [SubmissionObjecti, SubmissionObjectj, ...],
+                                    ... ) when person is None
+    When person is not None returns (True, {emailofperson: [SubmissionObject1, SubmissionObject2, ...]})
+    """
+    try:
+        p = models.Problem.objects.get(code=problem)
+        if person is None:
+            submission_set = models.Submission.objects.filter(
+                problem=p).order_by('participant')
+        else:
+            person = models.Person.objects.get(person=person)
+            submission_set = models.Submission.objects.filter(
+                problem=p, participant=person).order_by('participant')
+        result = {}
+        if len(submission_set) == 0:
+            if person is None:
+                return (True, {})
+            else:
+                return (True, {person.pk: []})
+        curr_person = submission_set[0].participant.pk
+        result[curr_person] = [submission_set[0]]
+        for i in range(1, len(submission_set)):
+            if submission_set[i].participant.pk == curr_person:
+                result[curr_person].append(submission_set[i])
+            else:
+                curr_person = submission_set[i].participant.pk
+                result[curr_person] = [submission_set[i]]
+        return (True, result)
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__())
+
+
+def get_submission_status_mini(submission: str):
+    """
+    Get the current status of the submission.
+    Returns: (True, ({TestcaseID: (Verdict, Time_taken, Memory_taken, ispublic, message), ...},
+                     (judge_score, ta_score, linter_score, final_score, timestamp, file_type)))
+    The tuple consists of a dictionary and a tuple:
+        Dictionary: Key: TestcaseID
+                    Value: (Verdict, Time_taken,
+                            Memory_taken, ispublic, message)
+        Tuple: (judge_score, ta_score, linter_score,
+                                          final_score, timestamp, file_type)
+    """
+    try:
+        s = models.Submission.objects.get(pk=submission)
+        testcases = models.TestCase.objects.filter(problem=s.problem)
+
+        verdict_dict: Dict[Any, Any] = dict()
+
+        for testcase in testcases:
+            st = models.SubmissionTestCase.objects.get(
+                submission=s, testcase=testcase)
+            verdict_dict[testcase.pk] = (st.verdict, st.time_taken,
+                                         st.memory_taken, testcase.public, st.message)
+        score_tuple = (s.judge_score, s.ta_score, s.linter_score, s.final_score,
+                       s.timestamp, s.file_type)
+        return (True, (verdict_dict, score_tuple))
+    except Exception as e:
+        traceback.print_exc()
+        return (False, e.__str__())
+
+
 def get_leaderboard(contest: int):
     """
     Returns the current leaderboard for the passed contest
@@ -424,7 +524,7 @@ def get_leaderboard(contest: int):
         return (True, data)
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
 
 def process_comment(problem: str, person: str, commenter: str, timestamp, comment: str):
@@ -444,7 +544,7 @@ def process_comment(problem: str, person: str, commenter: str, timestamp, commen
         return (True, None)
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
 
 def get_comments(problem: str, person: str):
@@ -460,7 +560,7 @@ def get_comments(problem: str, person: str):
         return (True, result)
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
 
 
 def get_csv(contest: str):
@@ -518,4 +618,4 @@ def get_csv(contest: str):
         return (True, csvstring)
     except Exception as e:
         traceback.print_exc()
-        return (False, e.__str__)
+        return (False, e.__str__())
