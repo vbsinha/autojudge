@@ -5,6 +5,8 @@ from django.contrib.auth.views import LoginView, LogoutView
 from . import views
 
 app_name = 'judge'
+handler404 = views.handler404
+handler500 = views.handler500
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -30,6 +32,6 @@ urlpatterns = [
          views.edit_problem, name='edit_problem'),
     path('problem/<str:problem_id>/submissions/',
          views.problem_submissions, name='problem_submissions'),
-    path('submissions/<str:submission_id>/',
+    path('submission/<str:submission_id>/',
          views.submission_detail, name='submission_detail'),
 ]

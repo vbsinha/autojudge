@@ -439,7 +439,7 @@ def get_submission_status(person: str, problem: str, submission):
     return (True, (verdict_dict, score_dict))
 
 
-def get_submissions(problem: str, person: str):
+def get_submissions(problem: str, person: Optional[str]):
     """
     Get all the submissions for this problem by this (or all) persons who attempted.
     problem is the pk of the Problem.
@@ -455,7 +455,7 @@ def get_submissions(problem: str, person: str):
             submission_set = models.Submission.objects.filter(
                 problem=p).order_by('participant')
         else:
-            person = models.Person.objects.get(person=person)
+            person = models.Person.objects.get(email=person)
             submission_set = models.Submission.objects.filter(
                 problem=p, participant=person).order_by('participant')
         result = {}
@@ -499,7 +499,7 @@ def get_submission_status_mini(submission: str):
         for testcase in testcases:
             st = models.SubmissionTestCase.objects.get(
                 submission=s, testcase=testcase)
-            verdict_dict[testcase.pk] = (st.verdict, st.time_taken,
+            verdict_dict[testcase.pk] = (st.get_verdict_display, st.time_taken,
                                          st.memory_taken, testcase.public, st.message)
         score_tuple = (s.judge_score, s.ta_score, s.linter_score, s.final_score,
                        s.timestamp, s.file_type)

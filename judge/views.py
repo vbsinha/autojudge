@@ -20,11 +20,11 @@ def _get_user(request) -> User:
         return None
 
 
-def handler404(request):
+def handler404(request, exception=None):
     return render(request, '404.html', status=404)
 
 
-def handler500(request):
+def handler500(request, exception=None):
     return render(request, '500.html', status=500)
 
 
@@ -185,6 +185,8 @@ def problem_detail(request, problem_id):
                 status, err = handler.process_solution(
                     problem_id, user.email, '.cpp', form.cleaned_data['submission_file'],
                     timezone.now())
+                if status:
+                    return redirect(reverse('judge:problem_submissions', args=(problem_id,)))
                 if not status:
                     form.add_error(None, err)
         else:
@@ -298,7 +300,23 @@ def problem_submissions(request, problem_id: str):
         return handler404(request)
     problem = get_object_or_404(Problem, pk=problem_id)
     context = {'problem': problem, 'perm': perm}
-    # TODO
+    if perm:
+        status, msg = handler.get_submissions(problem_id, None)
+        if status:
+            context['submissions'] = msg
+        else:
+            logging.debug(msg)
+            return handler404(request)
+    elif user is not None:
+        status, msg = handler.get_submissions(problem_id, user.email)
+        if status:
+            context['participant'] = True
+            context['submissions'] = msg
+        else:
+            logging.debug(msg)
+            return handler404(request)
+    else:
+        return handler404(request)
     return render(request, 'judge/problem_submissions.html', context)
 
 
@@ -307,11 +325,23 @@ def submission_detail(request, submission_id: str):
     submission = get_object_or_404(Submission, pk=submission_id)
     perm = handler.get_personproblem_permission(
         None if user is None else user.email, submission.problem.pk)
-    context = {'submission': submission}
+    context = {'submission': submission, 'problem': submission.problem}
     if user is None:
         return handler404(request)
     if perm or user.email == submission.participant.pk:
-        # TODO
+        status, msg = handler.get_submission_status_mini(submission_id)
+        if status:
+            # TODO Fix this
+            context['test_results'] = msg[0]
+            context['judge_score'] = msg[1][0]
+            context['ta_score'] = msg[1][1]
+            context['linter_score'] = msg[1][2]
+            context['final_score'] = msg[1][3]
+            context['timestamp'] = msg[1][4]
+            context['file_type'] = msg[1][5]
+        else:
+            logging.debug(msg)
+            return handler404(request)
         return render(request, 'judge/submission_detail.html', context)
     else:
         return handler404(request)
