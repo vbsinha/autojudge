@@ -7,7 +7,7 @@ import os
 import pickle
 
 from datetime import timedelta
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict, Any
 
 from . import models
 
@@ -255,7 +255,7 @@ def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
                 return False
             else:
                 return None
-        except Exception as _:
+        except Exception:
             return None
     try:
         p = models.Person.objects.get(email=person)
@@ -263,11 +263,12 @@ def get_personcontest_permission(person: str, contest: int) -> Optional[bool]:
         cp = models.ContestPerson.objects.get(person=p, contest=c)
         return cp.role
     except models.ContestPerson.DoesNotExist:
-        q_set = models.ContestPerson.objects.filter(
-            contest=contest, role=False)
-        return (False if len(q_set) == 0 else None)
-    except Exception as _:
+        c = models.Contest.objects.get(pk=contest)
+        if c.public:
+            return False
+    except Exception:
         return None
+    return None
 
 
 def delete_personcontest(person: str, contest: str):
@@ -386,7 +387,7 @@ def get_submission_status(person: str, problem: str, submission):
         traceback.print_exc()
         return (False, e.__str__)
 
-    verdict_dict = dict()
+    verdict_dict: Dict[Any, Any] = dict()
     score_dict = dict()
 
     for submission in s:
@@ -400,7 +401,7 @@ def get_submission_status(person: str, problem: str, submission):
                     submission=submission, testcase=testcase)
                 verdict_dict[submission.pk].append((testcase.pk, st.verdict, st.time_taken,
                                                     st.memory_taken, testcase.public, st.message))
-        except Exception as _:
+        except Exception:
             # In case Exception occurs for any submission, then
             # that submission's verdict_dict is left empty.
             # This is done to allow the other submissions to give output.

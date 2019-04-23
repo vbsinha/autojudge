@@ -76,7 +76,6 @@ def new_contest(request):
 
 
 def get_posters(request, contest_id, role=True):
-    contest = get_object_or_404(Contest, pk=contest_id)
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
         None if user is None else user.email, contest_id)
@@ -84,12 +83,9 @@ def get_posters(request, contest_id, role=True):
         return handler404(request)
     if role is None:
         return handler404(request)
-    contest = get_object_or_404(Contest, pk=contest_id)
-    if user is None or (not role and contest.public):
-        return handler404(request)
     context = {'contest_id': contest_id,
                'type': 'Poster' if role else 'Participant'}
-    if request.method == 'POST':
+    if request.method == 'POST' and perm is True:
         form = DeletePersonFromContest(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
