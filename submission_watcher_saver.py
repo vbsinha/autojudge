@@ -63,13 +63,19 @@ def saver(sub_id):
     s.judge_score = score_received
     current_final_score = s.judge_score + s.ta_score + s.linter_score
 
-    # Compute remaining time
-    remaining_time = problem.contest.end_datetime - s.timestamp
     penalty_multiplier = 1.0
+    # If the submission crosses soft deadline
+    # Check if the submission has crossed the hard deadline
+    # If yes, penalty_multiplier = 0
+    # Else, penality_multiplier = 1 - num_of_days * penalty
+    if s.timestamp > problem.contest.soft_end_datetime:
+        if s.timestamp > problem.contest.hard_end_datetime:
+            penalty_multiplier = 0.0
+        else:
+            remaining_time = problem.contest.soft_end_datetime - s.timestamp
+            penalty_multiplier += remaining_time.days * problem.contest.penalty
 
     # If num_of_days * penalty > 1.0, then the score is clamped to zero
-    if remaining_time.days < 0:
-        penalty_multiplier += remaining_time.days * problem.contest.penalty
     s.final_score = max(0.0, current_final_score * penalty_multiplier)
     s.save()
 

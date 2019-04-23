@@ -52,8 +52,11 @@ class Contest(models.Model):
     # Start Date and Time for Contest
     start_datetime = models.DateTimeField()
 
-    # End Date and Time for Contest
-    end_datetime = models.DateTimeField()
+    # "Soft" End Date and Time for Contest
+    soft_end_datetime = models.DateTimeField()
+
+    # "Hard" End Date and Time for Contest
+    hard_end_datetime = models.DateTimeField()
 
     # Penalty for late-submission
     penalty = models.DecimalField(max_digits=4, decimal_places=3, default=0.0)
