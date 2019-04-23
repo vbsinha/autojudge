@@ -278,7 +278,7 @@ class SubmissionTestCase(models.Model):
 
 class Comment(models.Model):
     """
-    Model for Person.
+    Model for Comment.
     """
 
     # (FK) Problem ID of the Problem.
