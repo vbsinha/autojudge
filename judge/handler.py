@@ -207,11 +207,13 @@ def process_solution(problem_id: str, participant: str, file_type,
     problem is the 'code' (pk) of the problem. participant is email(pk) of the participant
     """
     try:
-        file_type = '.py'  # TODO file_type
         problem = models.Problem.objects.get(pk=problem_id)
         participant = models.Person.objects.get(email=participant)
         s = problem.submission_set.create(participant=participant, file_type=file_type,
                                           submission_file=submission_file, timestamp=timestamp)
+        if file_type not in problem.file_format.split(','):
+            return (False, 'Accepted file types: \"{}\"'
+                           .format(', '.join(problem.file_format.split(','))))
         s.save()
     except Exception as e:
         traceback.print_exc()
@@ -321,8 +323,11 @@ def delete_personcontest(person: str, contest: str) -> Tuple[bool, Optional[str]
     try:
         p = models.Person.objects.get(email=person)
         c = models.Contest.objects.get(pk=contest)
-        models.ContestPerson.objects.filter(person=p, contest=c).delete()
-        return (True, None)
+        if models.ContestPerson.objects.filter(contest=c).count() > 1:
+            models.ContestPerson.objects.filter(person=p, contest=c).delete()
+            return (True, None)
+        else:
+            return (False, 'This contest cannot be orphaned!')
     except Exception as e:
         traceback.print_exc()
         return (False, e.__str__())

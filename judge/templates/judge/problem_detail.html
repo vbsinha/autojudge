@@ -141,6 +141,7 @@
                     {% endif %}
                     {% csrf_token %}
                     {% for field in form %}
+                    {% if field.name == 'submission_file' %}
                     <div class="form-group custom-file">
                         <label class="custom-file-label" for="{{ field.auto_id }}">{{ field.label }}</label>
                         {{ field }}
@@ -153,6 +154,20 @@
                         </div>
                         {% endif %}
                     </div>
+                    {% else %}
+                    <div class="form-group">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text|safe }}</small>
+                        {% endif %}
+                        {% if field.errors %}
+                        <div class="alert alert-danger mt-2" role="alert">
+                            {{ field.errors|striptags }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                     {% endfor %}
                     <div class="form-group my-2">
                         <button type="submit" class="btn btn-primary">Submit</button>

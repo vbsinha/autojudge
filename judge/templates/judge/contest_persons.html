@@ -33,7 +33,10 @@
         <div class="list-group">
             {% for person in persons %}
             <div class="list-group-item">
-                <span>{{ person }}</span><button class="btn btn-danger float-right pdp-delete-person" data-email="{{ person }}"><i class="fa fa-trash"></i></button>
+                <span>{{ person }}</span>
+                {% if permission %}
+                <button class="btn btn-danger float-right pdp-delete-person" data-email="{{ person }}"><i class="fa fa-trash"></i></button>
+                {% endif %}
             </div>
             {% empty %}
             <p>There are no {{ type|lower }}s for this contest.</p>

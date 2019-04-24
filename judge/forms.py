@@ -97,6 +97,12 @@ class EditProblemForm(forms.Form):
 
 
 class NewSubmissionForm(forms.Form):
+    # TODO For now choices are hard coded
+    file_type = forms.ChoiceField(label='File type', choices=[
+        ('.cpp', 'C++'),
+        ('.c', 'C'),
+        ('.py', 'Python'),
+    ])
     submission_file = forms.FileField(label='Choose file', widget=forms.FileInput(
         attrs={'class': 'form-control-file'}
     ))

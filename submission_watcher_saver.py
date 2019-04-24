@@ -21,6 +21,16 @@ LS: List[Any] = []
 REFRESH_LS_TRIGGER = 10
 
 
+def _compute_lint_score(error_dict):
+    if error_dict['statement'] > 0:
+        high = 10.0
+        penalty = (5 * error_dict['error'] + error_dict['warning']) / error_dict['statement']
+        high -= 10 * penalty
+        return max(0.0, high)
+    else:
+        return 0.0
+
+
 def saver(sub_id):
     update_lb = False
     # Based on the result populate SubmsissionTestCase table and return the result
@@ -66,7 +76,8 @@ def saver(sub_id):
     if s.file_type == '.py':
         penalty = Run([os.path.join(CONTENT_DIRECTORY, 'submissions',
                                     'submission_{}.py'.format(submission))], do_exit=False)
-        s.linter_score = penalty.linter.stats['global_note']
+        s.linter_score = _compute_lint_score(
+            penalty.linter.stats['by_module']['submission_{}'.format(submission)])
     current_final_score = s.judge_score + s.ta_score + s.linter_score
 
     penalty_multiplier = 1.0
@@ -86,13 +97,13 @@ def saver(sub_id):
     s.save()
 
     ppf, _ = models.PersonProblemFinalScore.objects.get_or_create(person=s.participant,
-                                                               problem=problem)
+                                                                  problem=problem)
     if ppf.score < s.final_score:
         ppf.score = s.final_score
         update_lb = True
     ppf.save()
 
-    if update_lb and remaining_time >= 0:
+    if update_lb and remaining_time.days >= 0:
         # Update the leaderboard only if not a late submission
         # and the submission imporved the final score
         leaderboard.update_leaderboard(problem.contest.pk, s.participant.email)

@@ -95,7 +95,7 @@ def get_posters(request, contest_id, role=True):
             status, err = handler.delete_personcontest(email, contest_id)
             if not status:
                 logging.debug(err)
-                form.add_error(None, 'Could not delete {}.'.format(email))
+                form.add_error(None, 'Could not delete {}. {}'.format(email, err))
     else:
         form = DeletePersonFromContest()
     context['form'] = form
@@ -185,7 +185,8 @@ def problem_detail(request, problem_id):
             if form.is_valid():
                 # TODO check extension
                 status, err = handler.process_solution(
-                    problem_id, user.email, '.cpp', form.cleaned_data['submission_file'],
+                    problem_id, user.email, form.cleaned_data['file_type'],
+                    form.cleaned_data['submission_file'],
                     timezone.now())
                 if status:
                     return redirect(reverse('judge:problem_submissions', args=(problem_id,)))
