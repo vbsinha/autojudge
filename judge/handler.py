@@ -70,6 +70,14 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
     except models.Problem.DoesNotExist:
         pass
 
+    # Some checks and cleanup
+    if difficulty < 0 or difficulty > 5:
+        return (False, 'Difficulty value: {} not within [0,5]'.format(difficulty))
+
+    code = code.lower()
+    if not code.isalnum():
+        return (False, 'Code: {} is not alphanumeric'.format(code))
+
     # Set up default values
     cp_comp_script, cp_test_script = False, False
     if compilation_script is None:
