@@ -202,7 +202,7 @@ def problem_detail(request, problem_id):
                     request.FILES.get('input'),
                     request.FILES.get('output'))
                 if status:
-                    redirect(reverse('judge:problem_submissions'))
+                    redirect(reverse('judge:problem_submissions'), args=(problem_id,))
                 else:
                     form.add_error(None, err)
         else:
