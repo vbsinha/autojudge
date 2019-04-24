@@ -69,7 +69,7 @@
         <div><b>Max Score:</b> {{ problem.max_score }}</div>
         <div><b>Difficulty:</b> {{ problem.difficulty }}</div>
         <div><b>Time limit:</b> {{ problem.time_limit }}</div>
-        <div><b>Mmemory limit:</b> {{ problem.memory_limit }}</div>
+        <div><b>Memory limit:</b> {{ problem.memory_limit }} MB</div>
         <div><b>Allowed file extensions:</b> {{ problem.file_format }}</div>
     </div>
     <div class="col-12 my-4">
@@ -122,7 +122,7 @@
 </div>
 
 <!-- TODO Check if form is restricted -->
-{% if type == 'Participant' %}
+{% if type == 'Participant' and user.is_authenticated %}
 <div class="row">
     <div class="col-12 my-4">
         <div class="card">
