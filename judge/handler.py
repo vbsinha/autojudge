@@ -472,7 +472,7 @@ def get_submissions(problem_id: str, person_id: Optional[str]) -> Tuple[bool, An
                 problem=p, participant=person).order_by('participant')
         result = {}
         if len(submission_set) == 0:
-            if person is None:
+            if person_id is None:
                 return (True, {})
             else:
                 return (True, {person.pk: []})

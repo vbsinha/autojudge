@@ -49,7 +49,7 @@ class DeletePersonFromContest(forms.Form):
 
 class NewProblemForm(forms.Form):
     code = forms.CharField(label='Code', max_length=10, widget=forms.TextInput(
-        attrs={'class': 'form-control'}), help_text='Lowercase unique alphanumeric code')
+        attrs={'class': 'form-control'}), help_text='Lowercase unique alphanumeric code of length at most 10')
     name = forms.CharField(label='Title', max_length=50, widget=forms.TextInput(
         attrs={'class': 'form-control'}))
     statement = forms.CharField(label='Statement', widget=forms.HiddenInput())
