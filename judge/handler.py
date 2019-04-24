@@ -13,7 +13,7 @@ from . import models
 
 
 def process_contest(name: str, start_datetime, soft_end_datetime, hard_end_datetime,
-                    penalty: float, public: bool):
+                    penalty: float, public: bool) -> Tuple[bool, str]:
     """
     Process a New Contest
     Only penalty can be None in which case Penalty will be set to 0
@@ -38,7 +38,7 @@ def process_contest(name: str, start_datetime, soft_end_datetime, hard_end_datet
         return (False, 'Contest could not be created')
 
 
-def delete_contest(contest: int):
+def delete_contest(contest: int) -> Tuple[bool, Optional[str]]:
     """
     Delete the contest.
     This will cascade delete in all the tables that have contest as FK.
@@ -56,7 +56,7 @@ def delete_contest(contest: int):
 def process_problem(code: str, contest: int, name: str, statement: str, input_format: str,
                     output_format: str, difficulty: int, time_limit: int, memory_limit: int,
                     file_format: str, start_code, max_score: int, compilation_script, test_script,
-                    setter_solution):
+                    setter_solution) -> Tuple[bool, Optional[str]]:
     """
     Process a new Problem
     Nullable [None-able] Fields: start_code, compilation_script, test_script, file_format
@@ -128,7 +128,7 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
 
 
 def update_problem(code: str, name: str, statement: str, input_format: str,
-                   output_format: str, difficulty: str):
+                   output_format: str, difficulty: str) -> Tuple[bool, Optional[str]]:
     """
     Update the fields in problem
     Pass the code as pk of problem
@@ -150,7 +150,7 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
         return (False, e.__str__())
 
 
-def delete_problem(problem: str):
+def delete_problem(problem: str) -> Tuple[bool, Optional[str]]:
     """
     Delete the problem.
     This will cascade delete in all the tables that have problem as FK.
@@ -183,7 +183,8 @@ def process_person(email, rank=0) -> Tuple[bool, Optional[str]]:
         return (False, e.__str__())
 
 
-def process_testcase(problem_id: str, ispublic: bool, inputfile, outputfile):
+def process_testcase(problem_id: str, ispublic: bool,
+                     inputfile, outputfile) -> Tuple[bool, Optional[str]]:
     """
     Process a new Testcase
     problem is the 'code' (pk) of the problem.
@@ -199,7 +200,8 @@ def process_testcase(problem_id: str, ispublic: bool, inputfile, outputfile):
         return (False, e.__str__())
 
 
-def process_solution(problem_id: str, participant: str, file_type, submission_file, timestamp: str):
+def process_solution(problem_id: str, participant: str, file_type,
+                     submission_file, timestamp: str) -> Tuple[bool, Optional[str]]:
     """
     Process a new Solution
     problem is the 'code' (pk) of the problem. participant is email(pk) of the participant
@@ -249,7 +251,8 @@ def process_solution(problem_id: str, participant: str, file_type, submission_fi
     return (True, None)
 
 
-def add_person_to_contest(person: str, contest: str, permission: bool):
+def add_person_to_contest(person: str, contest: str,
+                          permission: bool) -> Tuple[bool, Optional[str]]:
     """
     Add the relation between Person and Contest
     person is the email of the person
@@ -309,7 +312,7 @@ def get_personcontest_permission(person: Optional[str], contest: int) -> Optiona
     return None
 
 
-def delete_personcontest(person: str, contest: str):
+def delete_personcontest(person: str, contest: str) -> Tuple[bool, Optional[str]]:
     """
     Delete the record of person and contest in ContestPerson table
     Passed person is email and contest is the pk
@@ -325,7 +328,7 @@ def delete_personcontest(person: str, contest: str):
         return (False, e.__str__())
 
 
-def get_personproblem_permission(person: Optional[str], problem: str):
+def get_personproblem_permission(person: Optional[str], problem: str) -> Optional[bool]:
     """
     Determine the relation between Person and Problem
     person is the email of the person
@@ -338,7 +341,7 @@ def get_personproblem_permission(person: Optional[str], problem: str):
     return get_personcontest_permission(person, p.contest.pk)
 
 
-def get_posters(contest):
+def get_posters(contest) -> Tuple[bool, Optional[str]]:
     """
     Return the posters for the contest.
     contest is the pk of the Contest
@@ -354,7 +357,7 @@ def get_posters(contest):
         return (False, e.__str__())
 
 
-def get_participants(contest):
+def get_participants(contest) -> Tuple[bool, Any]:
     """
     Return the participants for the contest.
     contest is the pk of the Contest
@@ -373,7 +376,7 @@ def get_participants(contest):
         return (False, e.__str__())
 
 
-def get_personcontest_score(person: str, contest: int):
+def get_personcontest_score(person: str, contest: int) -> Tuple[bool, Any]:
     """
     Get the final score which is the sum of individual final scores of all problems in the contest.
     Pass email in person and contest's pk
@@ -447,7 +450,7 @@ def get_submission_status(person: str, problem: str, submission):
     return (True, (verdict_dict, score_dict))
 
 
-def get_submissions(problem: str, person: Optional[str]):
+def get_submissions(problem_id: str, person_id: Optional[str]) -> Tuple[bool, Any]:
     """
     Get all the submissions for this problem by this (or all) persons who attempted.
     problem is the pk of the Problem.
@@ -455,15 +458,16 @@ def get_submissions(problem: str, person: Optional[str]):
     Returns (True, {emailofperson: [SubmissionObject1, SubmissionObject2, ...],
                     emailofperson: [SubmissionObjecti, SubmissionObjectj, ...],
                                     ... ) when person is None
-    When person is not None returns (True, {emailofperson: [SubmissionObject1, SubmissionObject2, ...]})
+    When person is not None returns (True, {emailofperson:
+                                            [SubmissionObject1, SubmissionObject2, ...]})
     """
     try:
-        p = models.Problem.objects.get(code=problem)
-        if person is None:
+        p = models.Problem.objects.get(code=problem_id)
+        if person_id is None:
             submission_set = models.Submission.objects.filter(
                 problem=p).order_by('participant')
         else:
-            person = models.Person.objects.get(email=person)
+            person = models.Person.objects.get(email=person_id)
             submission_set = models.Submission.objects.filter(
                 problem=p, participant=person).order_by('participant')
         result = {}
@@ -486,7 +490,7 @@ def get_submissions(problem: str, person: Optional[str]):
         return (False, e.__str__())
 
 
-def get_submission_status_mini(submission: str):
+def get_submission_status_mini(submission: str) -> Tuple[bool, Any]:
     """
     Get the current status of the submission.
     Returns: (True, ({TestcaseID: (Verdict, Time_taken, Memory_taken, ispublic, message), ...},
@@ -517,7 +521,7 @@ def get_submission_status_mini(submission: str):
         return (False, e.__str__())
 
 
-def get_leaderboard(contest: int):
+def get_leaderboard(contest: int) -> Tuple[bool, Any]:
     """
     Returns the current leaderboard for the passed contest
     Pass contest's pk
@@ -535,7 +539,8 @@ def get_leaderboard(contest: int):
         return (False, e.__str__())
 
 
-def process_comment(problem: str, person: str, commenter: str, timestamp, comment: str):
+def process_comment(problem: str, person: str, commenter: str,
+                    timestamp, comment: str) -> Tuple[bool, Optional[str]]:
     """
     Privately comment 'comment' on the problem for person by commenter.
     problem is the pk of the Problem.
@@ -555,7 +560,7 @@ def process_comment(problem: str, person: str, commenter: str, timestamp, commen
         return (False, e.__str__())
 
 
-def get_comments(problem: str, person: str):
+def get_comments(problem: str, person: str) -> Tuple[bool, Any]:
     """
     Get the private comments on the problem for the person.
     Returns (True, [(Commeter, Timestamp, Comment) ... (Sorted in ascending order of time)])
@@ -571,7 +576,7 @@ def get_comments(problem: str, person: str):
         return (False, e.__str__())
 
 
-def get_csv(contest: str):
+def get_csv(contest: str) -> Tuple[bool, Any]:
     """
     Get the csv (in string form) of the current scores of all participants in the contest.
     Pass pk of the contest

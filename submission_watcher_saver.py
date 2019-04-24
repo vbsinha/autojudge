@@ -114,6 +114,10 @@ os.chdir(cur_path)
 print("Docker image: {} built successfully!".format(DOCKER_IMAGE_NAME))
 
 
+if not os.path.exists(MONITOR_DIRECTORY):
+    os.makedirs(MONITOR_DIRECTORY)
+
+
 while True:
     if len(LS) < REFRESH_LS_TRIGGER:
         LS = [os.path.join(MONITOR_DIRECTORY, sub_file)
