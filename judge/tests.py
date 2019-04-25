@@ -1,9 +1,9 @@
-from django.test import TestCase
+from django.test import TestCase, utils
 from django.urls import reverse
+from django.utils import timezone
 from django.contrib.auth.models import User
 
 from datetime import timedelta, datetime
-import pytz
 
 from . import models
 from . import handler
@@ -34,10 +34,8 @@ class ContestProblemTests(TestCase):
                                       hard_end_datetime='2019-04-27T12:30',
                                       penalty=0, public=True)
         c = models.Contest.objects.get(name='Test Contest')
-        print(c)
 
-        models.ContestPerson.objects.create(
-            contest=c, person=poster, role=True)
+        models.ContestPerson.objects.create(contest=c, person=poster, role=True)
 
         models.Problem.objects.create(code='testprob1', contest=c, name='Test Problem 1',
                                       statement='Test Problem Statement',
@@ -46,25 +44,19 @@ class ContestProblemTests(TestCase):
                                       difficulty=5, time_limit=timedelta(seconds=10),
                                       memory_limit=10000)
 
+    @utils.skipIf(True, "Not working as expected")
     def test_contest_check(self):
-        pass
-        # u = User.objects.get(email='admin@admin.org')
-        # self.client.force_login(u)
-        # response = self.client.get(reverse('judge:index'))
-        # self.assertEqual(response.status_code, 200)
-        # self.assertEqual(response.context['user'].is_authenticated, True)
-        # print(list(response.context['contests']))
-        # c = models.Contest.objects.get(name='Test Contest')
-        # print(c)
-        # print(response.context['contests'])
-        # for a, b in response.context['contests']:
-        #     print('Here:', a, b)
-        # contest, perm = next(response.context['contests'])
-        # self.assertEqual(contest.name, 'Test Contest')
-        # self.assertEqual(contest.public, True)
-        # self.assertEqual(perm, True)
-        # print(response.context['contests'], type(response.context['contests']))
-        # self.assertQuerysetEqual(response.context['contests'], zip([c], [False]))
+        u = User.objects.get(email='admin@admin.org')
+        self.client.force_login(u)
+        response = self.client.get(reverse('judge:index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['user'].is_authenticated, True)
+        c = models.Contest.objects.get(name='Test Contest')
+        contest, perm = next(response.context['contests'])
+        self.assertEqual(contest.name, 'Test Contest')
+        self.assertEqual(contest.public, True)
+        self.assertEqual(perm, True)
+        self.assertQuerysetEqual(response.context['contests'], zip([c], [False]))
 
 
 class HandlerTests(TestCase):
@@ -78,16 +70,14 @@ class HandlerTests(TestCase):
         self.assertEqual(len(c), 1)
         c = c[0]
         self.assertEqual(c.name, 'Test Contest')
-        self.assertEqual(c.start_datetime, datetime(
-            2019, 4, 25, 12, 30, tzinfo=pytz.UTC))
-        self.assertEqual(c.soft_end_datetime, datetime(
-            2019, 4, 26, 12, 30, tzinfo=pytz.UTC))
-        self.assertEqual(c.hard_end_datetime, datetime(
-            2019, 4, 27, 12, 30, tzinfo=pytz.UTC))
+        self.assertEqual(c.start_datetime, datetime(2019, 4, 25, 12, 30, tzinfo=timezone.utc))
+        self.assertEqual(c.soft_end_datetime, datetime(2019, 4, 26, 12, 30, tzinfo=timezone.utc))
+        self.assertEqual(c.hard_end_datetime, datetime(2019, 4, 27, 12, 30, tzinfo=timezone.utc))
         self.assertEqual(c.penalty, 0)
         self.assertTrue(c.public)
-        status, _ = handler.delete_contest(contest=int(pk))
+        status, err = handler.delete_contest(contest=int(pk))
         self.assertTrue(status)
+        self.assertIsNone(err)
         c = models.Contest.objects.filter(pk=int(pk))
         self.assertEqual(len(c), 0)
 
@@ -106,6 +96,7 @@ class HandlerTests(TestCase):
             max_score=4, compilation_script=None, test_script=None,
             setter_solution=None)
         self.assertTrue(status)
+        self.assertIsNone(msg)
         p = models.Problem.objects.filter(pk='testprob1')
         self.assertEqual(len(p), 1)
         p = p[0]
@@ -134,7 +125,8 @@ class HandlerTests(TestCase):
         self.assertEqual(p.input_format, 'Updated Test input format')
         self.assertEqual(p.output_format, 'Updated Test output format')
         self.assertEqual(p.difficulty, 4)
-        status, _ = handler.delete_problem(problem='testprob1')
+        status, err = handler.delete_problem(problem='testprob1')
         self.assertTrue(status)
+        self.assertIsNone(err)
         p = models.Problem.objects.filter(pk='testprob1')
         self.assertEqual(len(p), 0)
