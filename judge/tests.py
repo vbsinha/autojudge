@@ -30,7 +30,8 @@ class ContestProblemTests(TestCase):
         # participant = models.Person.objects.get(email='testparticipant@iith.ac.in')
 
         models.Contest.objects.create(name='Test Contest', start_datetime='2019-04-25T12:30',
-                                      soft_end_datetime='2019-04-26T12:30', hard_end_datetime='2019-04-27T12:30',
+                                      soft_end_datetime='2019-04-26T12:30',
+                                      hard_end_datetime='2019-04-27T12:30',
                                       penalty=0, public=True)
         c = models.Contest.objects.get(name='Test Contest')
         print(c)
@@ -39,8 +40,10 @@ class ContestProblemTests(TestCase):
             contest=c, person=poster, role=True)
 
         models.Problem.objects.create(code='testprob1', contest=c, name='Test Problem 1',
-                                      statement='Test Problem Statement', input_format='Test input format',
-                                      output_format='Test output format', difficulty=5, time_limit=timedelta(seconds=10),
+                                      statement='Test Problem Statement',
+                                      input_format='Test input format',
+                                      output_format='Test output format',
+                                      difficulty=5, time_limit=timedelta(seconds=10),
                                       memory_limit=10000)
 
     def test_contest_check(self):
