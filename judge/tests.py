@@ -60,7 +60,7 @@ class ContestProblemTests(TestCase):
 
 
 class HandlerTests(TestCase):
-    def test_process_delete_contest(self):
+    def test_process_and_delete_contest(self):
         status, pk = handler.process_contest(name='Test Contest', start_datetime='2019-04-25T12:30',
                                              soft_end_datetime='2019-04-26T12:30',
                                              hard_end_datetime='2019-04-27T12:30',
@@ -81,7 +81,7 @@ class HandlerTests(TestCase):
         c = models.Contest.objects.filter(pk=int(pk))
         self.assertEqual(len(c), 0)
 
-    def test_process_update_delete_contest(self):
+    def test_process_update_and_delete_problem(self):
         c = models.Contest.objects.create(name='Test Contest', start_datetime='2019-04-25T12:30',
                                           soft_end_datetime='2019-04-26T12:30',
                                           hard_end_datetime='2019-04-27T12:30',
@@ -130,3 +130,22 @@ class HandlerTests(TestCase):
         self.assertIsNone(err)
         p = models.Problem.objects.filter(pk='testprob1')
         self.assertEqual(len(p), 0)
+
+    def test_process_person(self):
+        person = models.Person.objects.create(email='testing1@test.com', rank=0)
+        status, message = handler.process_person(person.email, 1)
+        self.assertTrue(status)
+        self.assertIsNone(message)
+        all_persons = models.Person.objects.all()
+        self.assertEqual(len(all_persons), 1)
+        one_person = all_persons[0]
+        self.assertEqual(one_person.email, 'testing1@test.com')
+        self.assertEqual(one_person.rank, 0)
+        status, message = handler.process_person('testing2@test.com', rank=1)
+        self.assertTrue(status)
+        self.assertIsNone(message)
+        all_persons = models.Person.objects.filter(email='testing2@test.com')
+        self.assertEqual(len(all_persons), 1)
+        one_person = all_persons[0]
+        self.assertEqual(one_person.email, 'testing2@test.com')
+        self.assertEqual(one_person.rank, 1)
