@@ -141,11 +141,3 @@ class HandlerTests(TestCase):
         one_person = all_persons[0]
         self.assertEqual(one_person.email, 'testing1@test.com')
         self.assertEqual(one_person.rank, 0)
-        status, message = handler.process_person('testing2@test.com', rank=1)
-        self.assertTrue(status)
-        self.assertIsNone(message)
-        all_persons = models.Person.objects.filter(email='testing2@test.com')
-        self.assertEqual(len(all_persons), 1)
-        one_person = all_persons[0]
-        self.assertEqual(one_person.email, 'testing2@test.com')
-        self.assertEqual(one_person.rank, 1)
