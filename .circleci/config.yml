@@ -25,3 +25,8 @@ jobs:
             export GOOGLE_OAUTH2_KEY=''
             export GOOGLE_OAUTH2_SECRET=''
             python manage.py test
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - test
