@@ -21,6 +21,16 @@ LS: List[Any] = []
 REFRESH_LS_TRIGGER = 10
 
 
+def _compute_lint_score(error_dict):
+    if error_dict['statement'] > 0:
+        high = 10.0
+        penalty = (5 * error_dict['error'] + error_dict['warning']) / error_dict['statement']
+        high -= 10 * penalty
+        return max(0.0, high)
+    else:
+        return 0.0
+
+
 def saver(sub_id):
     update_lb = False
     # Based on the result populate SubmsissionTestCase table and return the result
@@ -63,10 +73,11 @@ def saver(sub_id):
         st.save()
 
     s.judge_score = score_received
-    if s.file_format == '.py':
+    if s.file_type == '.py':
         penalty = Run([os.path.join(CONTENT_DIRECTORY, 'submissions',
                                     'submission_{}.py'.format(submission))], do_exit=False)
-        s.linter_score = penalty.linter.stats['global_note']
+        s.linter_score = _compute_lint_score(
+            penalty.linter.stats['by_module']['submission_{}'.format(submission)])
     current_final_score = s.judge_score + s.ta_score + s.linter_score
 
     penalty_multiplier = 1.0
@@ -74,27 +85,28 @@ def saver(sub_id):
     # Check if the submission has crossed the hard deadline
     # If yes, penalty_multiplier = 0
     # Else, penality_multiplier = 1 - num_of_days * penalty
+    remaining_time = problem.contest.soft_end_datetime - s.timestamp
     if s.timestamp > problem.contest.soft_end_datetime:
         if s.timestamp > problem.contest.hard_end_datetime:
             penalty_multiplier = 0.0
         else:
-            remaining_time = problem.contest.soft_end_datetime - s.timestamp
             penalty_multiplier += remaining_time.days * problem.contest.penalty
 
     # If num_of_days * penalty > 1.0, then the score is clamped to zero
     s.final_score = max(0.0, current_final_score * penalty_multiplier)
     s.save()
 
-    ppf = models.ProblemPersonFinalScore.get_or_create(person=submission.person, problem=problem)
+    ppf, _ = models.PersonProblemFinalScore.objects.get_or_create(person=s.participant,
+                                                                  problem=problem)
     if ppf.score < s.final_score:
         ppf.score = s.final_score
         update_lb = True
     ppf.save()
 
-    if update_lb and remaining_time >= 0:
+    if update_lb and remaining_time.days >= 0:
         # Update the leaderboard only if not a late submission
         # and the submission imporved the final score
-        leaderboard.update_leaderboard(problem.contest.pk, submission.person.email)
+        leaderboard.update_leaderboard(problem.contest.pk, s.participant.email)
 
     return True
 

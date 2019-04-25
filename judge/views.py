@@ -95,7 +95,7 @@ def get_posters(request, contest_id, role=True):
             status, err = handler.delete_personcontest(email, contest_id)
             if not status:
                 logging.debug(err)
-                form.add_error(None, 'Could not delete {}.'.format(email))
+                form.add_error(None, 'Could not delete {}. {}'.format(email, err))
     else:
         form = DeletePersonFromContest()
     context['form'] = form
@@ -177,13 +177,16 @@ def problem_detail(request, problem_id):
         'public_tests': public_tests,
         'private_tests': private_tests,
     }
-    if perm is False and user.is_authenticated:
+    if perm is False and user is None:
+        pass
+    elif perm is False and user.is_authenticated:
         if request.method == 'POST':
             form = NewSubmissionForm(request.POST, request.FILES)
             if form.is_valid():
                 # TODO check extension
                 status, err = handler.process_solution(
-                    problem_id, user.email, '.cpp', form.cleaned_data['submission_file'],
+                    problem_id, user.email, form.cleaned_data['file_type'],
+                    form.cleaned_data['submission_file'],
                     timezone.now())
                 if status:
                     return redirect(reverse('judge:problem_submissions', args=(problem_id,)))
@@ -199,10 +202,10 @@ def problem_detail(request, problem_id):
                 status, err = handler.process_testcase(
                     problem_id, True if request.POST.get(
                         'test-type') == 'public' else False,
-                    request.FILES.get('input'),
-                    request.FILES.get('output'))
+                    form.cleaned_data['input_file'],
+                    form.cleaned_data['output_file'])
                 if status:
-                    redirect(reverse('judge:problem_submissions'), args=(problem_id,))
+                    redirect(reverse('judge:problem_submissions', args=(problem_id,)))
                 else:
                     form.add_error(None, err)
         else:
@@ -240,7 +243,7 @@ def new_problem(request, contest_id):
     if request.method == 'POST':
         form = NewProblemForm(request.POST, request.FILES)
         if form.is_valid():
-            code = form.cleaned_data['code']
+            code = form.cleaned_data['code'].lower()
             status, err = handler.process_problem(
                 code, contest_id, form.cleaned_data['name'], form.cleaned_data['statement'],
                 form.cleaned_data['input_format'],
