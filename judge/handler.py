@@ -246,8 +246,8 @@ def process_solution(problem_id: str, participant: str, file_type,
             f.write('{}\n'.format(testcase.pk))
 
     try:
-        for i in range(len(testcases)):
-            st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict='R',
+        for testcase in testcases:
+            st = models.SubmissionTestCase(submission=s, testcase=testcase, verdict='R',
                                            memory_taken=0, time_taken=timedelta(seconds=0))
             st.save()
     except Exception as e:
@@ -426,13 +426,13 @@ def get_submission_status(person: str, problem: str, submission):
         if submission is None:
             p = models.Person.objects.get(email=person)
             q = models.Problem.objects.get(code=problem)
-            s = models.Submission.objects.filter(
+            sub_list = models.Submission.objects.filter(
                 participant=p, problem=q).order_by('-timestamp')
             t = models.TestCase.objects.filter(problem=p)
         else:
             submission = models.Submission.objects.get(pk=submission)
             t = models.TestCase.objects.filter(problem=submission.problem)
-            s = [submission]
+            sub_list = [submission]
     except Exception as e:
         print_exc()
         return (False, e.__str__())
@@ -440,7 +440,7 @@ def get_submission_status(person: str, problem: str, submission):
     verdict_dict: Dict[Any, Any] = dict()
     score_dict = dict()
 
-    for submission in s:
+    for submission in sub_list:
         score_dict[submission.pk] = (submission.judge_score, submission.ta_score,
                                      submission.linter_score, submission.final_score,
                                      submission.timestamp, submission.file_type)
@@ -480,7 +480,7 @@ def get_submissions(problem_id: str, person_id: Optional[str]) -> Tuple[bool, An
             submission_set = models.Submission.objects.filter(
                 problem=p, participant=person).order_by('participant')
         result = {}
-        if len(submission_set) == 0:
+        if submission_set.count() == 0:
             if person_id is None:
                 return (True, {})
             else:
@@ -599,13 +599,11 @@ def get_csv(contest: str) -> Tuple[bool, Any]:
         writer = csvwriter(csvstring)
         writer.writerow(['Email', 'Score'])
 
-        if len(problems) > 0:
+        if problems.count() > 0:
             # Get the final scores for each problem for any participant who has attempted.
-            submissions = models.PersonProblemFinalScore.objects.filter(
-                problems[0])
+            submissions = models.PersonProblemFinalScore.objects.filter(problems[0])
             for problem in problems[1:]:
-                submissions |= models.PersonProblemFinalScore.objects.filter(
-                    problem)
+                submissions |= models.PersonProblemFinalScore.objects.filter(problem)
 
             # Now sort all the person-problem-scores by 'person' and 'problem'
             # This will create scores like:
@@ -627,14 +625,14 @@ def get_csv(contest: str) -> Tuple[bool, Any]:
             # 'p1', 5
             # 'p2', 5 etc. in csvstring
             curr_person = scores[0][0]
-            i, sum_scores = 0, 0
-            for i in range(len(scores)):
-                if curr_person == scores[i][0]:
-                    sum_scores += scores[i][1]
+            sum_scores = 0
+            for score in scores:
+                if curr_person == score[0]:
+                    sum_scores += score[1]
                 else:
                     writer.writerow([curr_person, sum_scores])
-                    curr_person = scores[i][0]
-                    sum_scores = scores[i][1]
+                    curr_person = score[0]
+                    sum_scores = score[1]
             writer.writerow([curr_person, sum_scores])
 
         return (True, csvstring)
