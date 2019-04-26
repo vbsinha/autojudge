@@ -1,4 +1,5 @@
 from django import forms
+from django.core.validators import RegexValidator
 
 
 class NewContestForm(forms.Form):
@@ -46,7 +47,7 @@ class DeletePersonFromContest(forms.Form):
 
 class NewProblemForm(forms.Form):
     code = forms.CharField(label='Code', max_length=10, widget=forms.TextInput(
-        attrs={'class': 'form-control'}),
+        attrs={'class': 'form-control'}), validators=[RegexValidator('[a-z0-9]+')],
         help_text='Lowercase unique alphanumeric code of length at most 10')
     name = forms.CharField(label='Title', max_length=50, widget=forms.TextInput(
         attrs={'class': 'form-control'}))
