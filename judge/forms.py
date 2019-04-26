@@ -103,7 +103,7 @@ class NewSubmissionForm(forms.Form):
         ('.py', 'Python'),
     ])
     submission_file = forms.FileField(label='Choose file', widget=forms.FileInput(
-        attrs={'class': 'form-control-file'}
+        attrs={'class': 'custom-file-input'}
     ))
 
 
