@@ -8,23 +8,20 @@ class NewContestForm(forms.Form):
             'placeholder': 'Enter the name of the contest'
         }))
     contest_start = forms.DateTimeField(
-        label='Start Date', input_formats=['%Y-%m-%dT%H:%M'],
+        label='Start Date',
         widget=forms.DateTimeInput(attrs={
-            'type': 'datetime-local',
             'class': 'form-control',
             'placeholder': 'Enter start date of the contest'
         }))
     contest_soft_end = forms.DateTimeField(
-        label='Soft End Date for contest', input_formats=['%Y-%m-%dT%H:%M'],
+        label='Soft End Date for contest',
         widget=forms.DateTimeInput(attrs={
-            'type': 'datetime-local',
             'class': 'form-control',
             'placeholder': 'Enter soft end date of the contest'
         }))
     contest_hard_end = forms.DateTimeField(
-        label='Hard End Date for contest', input_formats=['%Y-%m-%dT%H:%M'],
+        label='Hard End Date for contest',
         widget=forms.DateTimeInput(attrs={
-            'type': 'datetime-local',
             'class': 'form-control',
             'placeholder': 'Enter hard end date of the contest'
         }))
