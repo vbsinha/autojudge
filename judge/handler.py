@@ -1,12 +1,13 @@
-import csv
-import io
-import subprocess
-import traceback
-import logging
 import os
-import pickle
 
+from io import StringIO
+from shutil import rmtree
+from logging import error
+from subprocess import run
 from datetime import timedelta
+from traceback import print_exc
+from csv import writer as csvwriter
+from pickle import load as pickle_load
 from typing import Tuple, Optional, Dict, Any
 
 from . import models
@@ -33,8 +34,8 @@ def process_contest(name: str, start_datetime, soft_end_datetime, hard_end_datet
         return (True, str(c.pk))
     except Exception as e:
         # Exception Case
-        traceback.print_exc()
-        logging.error(e.__str__())
+        print_exc()
+        error(e.__str__())
         return (False, 'Contest could not be created')
 
 
@@ -46,10 +47,12 @@ def delete_contest(contest: int) -> Tuple[bool, Optional[str]]:
     """
     try:
         models.Contest.objects.filter(pk=contest).delete()
+        if os.path.exists(os.path.join('content', 'contests', str(contest))):
+            rmtree(os.path.join('content', 'contests', str(contest)))
         return (True, None)
     except Exception as e:
-        traceback.print_exc()
-        logging.error(e.__str__())
+        print_exc()
+        error(e.__str__())
         return (False, 'Contest could not be deleted')
 
 
@@ -113,17 +116,17 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
 
         if cp_comp_script is True:
             # Copy the default comp_script if the user did not upload custom
-            subprocess.run(['cp', os.path.join('judge', compilation_script),
-                            os.path.join('content', 'problems', p.code, 'compilation_script.sh')])
+            run(['cp', os.path.join('judge', compilation_script),
+                 os.path.join('content', 'problems', p.code, 'compilation_script.sh')])
         if cp_test_script is True:
             # Copy the default test_script if the user did not upload custom
-            subprocess.run(['cp', os.path.join('judge', test_script),
-                            os.path.join('content', 'problems', p.code, 'test_script.sh')])
+            run(['cp', os.path.join('judge', test_script),
+                 os.path.join('content', 'problems', p.code, 'test_script.sh')])
 
         # TODO: Process setter solution
         return (True, None)
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -146,7 +149,7 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
     except models.Problem.DoesNotExist:
         return (False, '{} code does not exist.'.format(code))
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -154,14 +157,15 @@ def delete_problem(problem: str) -> Tuple[bool, Optional[str]]:
     """
     Delete the problem.
     This will cascade delete in all the tables that have problem as FK.
-    Retuns (True, None)
+    Returns (True, None)
     """
     try:
         models.Problem.objects.filter(pk=problem).delete()
+        rmtree(os.path.join('content', 'problems', problem))
         return (True, None)
     except Exception as e:
-        traceback.print_exc()
-        logging.error(e.__str__())
+        print_exc()
+        error(e.__str__())
         return (False, 'Contest could not be deleted')
 
 
@@ -179,7 +183,7 @@ def process_person(email, rank=0) -> Tuple[bool, Optional[str]]:
             p.save()
         return (True, None)
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -196,7 +200,7 @@ def process_testcase(problem_id: str, ispublic: bool,
         t.save()
         return (True, None)
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -216,7 +220,7 @@ def process_solution(problem_id: str, participant: str, file_type,
                            .format(', '.join(problem.file_format.split(','))))
         s.save()
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
     testcases = models.TestCase.objects.filter(problem=problem)
@@ -242,12 +246,12 @@ def process_solution(problem_id: str, participant: str, file_type,
             f.write('{}\n'.format(testcase.pk))
 
     try:
-        for i in range(len(testcases)):
-            st = models.SubmissionTestCase(submission=s, testcase=testcases[i], verdict='R',
+        for testcase in testcases:
+            st = models.SubmissionTestCase(submission=s, testcase=testcase, verdict='R',
                                            memory_taken=0, time_taken=timedelta(seconds=0))
             st.save()
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
     return (True, None)
@@ -280,7 +284,7 @@ def add_person_to_contest(person: str, contest: str,
             cp.save()
             return (True, None)
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -329,7 +333,7 @@ def delete_personcontest(person: str, contest: str) -> Tuple[bool, Optional[str]
         else:
             return (False, 'This contest cannot be orphaned!')
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -358,7 +362,7 @@ def get_posters(contest) -> Tuple[bool, Optional[str]]:
         cps = [cp.person.email for cp in cps]
         return (True, cps)
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -377,7 +381,7 @@ def get_participants(contest) -> Tuple[bool, Any]:
         cps = [cp.person.email for cp in cps]
         return (True, cps)
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -387,16 +391,16 @@ def get_personcontest_score(person: str, contest: int) -> Tuple[bool, Any]:
     Pass email in person and contest's pk
     """
     try:
-        p = models.Person.get(person=person)
-        c = models.Contest.get(contest=contest)
-        problems = models.Problem.filter(contest=c)
+        p = models.Person.objects.get(person=person)
+        c = models.Contest.objects.get(contest=contest)
+        problems = models.Problem.objects.filter(contest=c)
         score = 0
         for problem in problems:
             score += models.PersonProblemFinalScore.objects.get(
                 person=p, problem=problem).score
         return (True, score)
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -422,21 +426,21 @@ def get_submission_status(person: str, problem: str, submission):
         if submission is None:
             p = models.Person.objects.get(email=person)
             q = models.Problem.objects.get(code=problem)
-            s = models.Submission.objects.filter(
+            sub_list = models.Submission.objects.filter(
                 participant=p, problem=q).order_by('-timestamp')
             t = models.TestCase.objects.filter(problem=p)
         else:
             submission = models.Submission.objects.get(pk=submission)
             t = models.TestCase.objects.filter(problem=submission.problem)
-            s = [submission]
+            sub_list = [submission]
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
     verdict_dict: Dict[Any, Any] = dict()
     score_dict = dict()
 
-    for submission in s:
+    for submission in sub_list:
         score_dict[submission.pk] = (submission.judge_score, submission.ta_score,
                                      submission.linter_score, submission.final_score,
                                      submission.timestamp, submission.file_type)
@@ -451,7 +455,7 @@ def get_submission_status(person: str, problem: str, submission):
             # In case Exception occurs for any submission, then
             # that submission's verdict_dict is left empty.
             # This is done to allow the other submissions to give output.
-            traceback.print_exc()
+            print_exc()
     return (True, (verdict_dict, score_dict))
 
 
@@ -476,8 +480,8 @@ def get_submissions(problem_id: str, person_id: Optional[str]) -> Tuple[bool, An
             submission_set = models.Submission.objects.filter(
                 problem=p, participant=person).order_by('participant')
         result = {}
-        if len(submission_set) == 0:
-            if person is None:
+        if submission_set.count() == 0:
+            if person_id is None:
                 return (True, {})
             else:
                 return (True, {person.pk: []})
@@ -491,7 +495,7 @@ def get_submissions(problem_id: str, person_id: Optional[str]) -> Tuple[bool, An
                 result[curr_person] = [submission_set[i]]
         return (True, result)
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -522,7 +526,7 @@ def get_submission_status_mini(submission: str) -> Tuple[bool, Any]:
                        s.timestamp, s.file_type)
         return (True, (verdict_dict, score_tuple))
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -537,10 +541,10 @@ def get_leaderboard(contest: int) -> Tuple[bool, Any]:
         return (False, 'Leaderboard not yet initialized for this contest.')
     try:
         with open(leaderboard_path, 'rb') as f:
-            data = pickle.load(f)
+            data = pickle_load(f)
         return (True, data)
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -561,7 +565,7 @@ def process_comment(problem: str, person: str, commenter: str,
         c.save()
         return (True, None)
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -577,7 +581,7 @@ def get_comments(problem: str, person: str) -> Tuple[bool, Any]:
                   for comment in comments]
         return (True, result)
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())
 
 
@@ -591,17 +595,15 @@ def get_csv(contest: str) -> Tuple[bool, Any]:
         c = models.Contest.objects.get(pk=contest)
         problems = models.Problem.objects.filter(contest=c)
 
-        csvstring = io.StringIO()
-        writer = csv.writer(csvstring)
+        csvstring = StringIO()
+        writer = csvwriter(csvstring)
         writer.writerow(['Email', 'Score'])
 
-        if len(problems) > 0:
+        if problems.count() > 0:
             # Get the final scores for each problem for any participant who has attempted.
-            submissions = models.PersonProblemFinalScore.objects.filter(
-                problems[0])
+            submissions = models.PersonProblemFinalScore.objects.filter(problems[0])
             for problem in problems[1:]:
-                submissions |= models.PersonProblemFinalScore.objects.filter(
-                    problem)
+                submissions |= models.PersonProblemFinalScore.objects.filter(problem)
 
             # Now sort all the person-problem-scores by 'person' and 'problem'
             # This will create scores like:
@@ -623,17 +625,17 @@ def get_csv(contest: str) -> Tuple[bool, Any]:
             # 'p1', 5
             # 'p2', 5 etc. in csvstring
             curr_person = scores[0][0]
-            i, sum_scores = 0, 0
-            for i in range(len(scores)):
-                if curr_person == scores[i][0]:
-                    sum_scores += scores[i][1]
+            sum_scores = 0
+            for score in scores:
+                if curr_person == score[0]:
+                    sum_scores += score[1]
                 else:
                     writer.writerow([curr_person, sum_scores])
-                    curr_person = scores[i][0]
-                    sum_scores = scores[i][1]
+                    curr_person = score[0]
+                    sum_scores = score[1]
             writer.writerow([curr_person, sum_scores])
 
         return (True, csvstring)
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         return (False, e.__str__())

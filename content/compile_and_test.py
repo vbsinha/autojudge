@@ -31,7 +31,7 @@ try:
 except subprocess.CalledProcessError as e:  # If compilation fails, end this script here
     error_msg = e.output.decode('utf-8').replace('\n', '\\n')
     with open(args.submission_config, "a") as stat_file:
-        for testcase_id in sub_info[3:]:
+        for testcase_id in sub_info[5:]:
             stat_file.write("{} {} 0 0 {}\n"
                             .format(testcase_id,
                                     'CE' if e.returncode == 1 else 'NA',

@@ -1,22 +1,32 @@
 version: 2
 jobs:
-  build:
+  test:
     working_directory: ~/pdp-judge
     docker:
       - image: circleci/python:3.7
     steps:
       - checkout
       - run:
+          name: Install Django
           command: |
             sudo pip install Django
             sudo pip install social-auth-app-django
       - run:
+          name: Install flake8
+          command: |
+            sudo pip install flake8
+      - run:
+          name: Lint Check
+          command: |
+            flake8
+      - run:
+          name: Django tests
           command: |
             export GOOGLE_OAUTH2_KEY=''
             export GOOGLE_OAUTH2_SECRET=''
             python manage.py test
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
-          destination: tr1
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - test

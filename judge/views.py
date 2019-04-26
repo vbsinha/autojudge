@@ -200,8 +200,8 @@ def problem_detail(request, problem_id):
             form = AddTestCaseForm(request.POST, request.FILES)
             if form.is_valid():
                 status, err = handler.process_testcase(
-                    problem_id, True if request.POST.get(
-                        'test-type') == 'public' else False,
+                    problem_id,
+                    form.cleaned_data['test_type'] == 'public',
                     form.cleaned_data['input_file'],
                     form.cleaned_data['output_file'])
                 if status:
