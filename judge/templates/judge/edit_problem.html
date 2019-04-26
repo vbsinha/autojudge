@@ -39,13 +39,13 @@
     })
 
     {% if problem.statement != None %}
-    statementQuill.setContents(JSON.parse('{{ problem.statement | escapejs }}'.replace('\n', '\\n')))
+    statementQuill.setContents(JSON.parse('{{ problem.statement | escapejs }}'))
     {% endif %}
     {% if problem.input_format != None %}
-    inputFormatQuill.setContents(JSON.parse('{{ problem.input_format | escapejs }}'.replace('\n', '\\n')))
+    inputFormatQuill.setContents(JSON.parse('{{ problem.input_format | escapejs }}'))
     {% endif %}
     {% if problem.output_format != None %}
-    outputFormatQuill.setContents(JSON.parse('{{ problem.output_format | escapejs }}'.replace('\n', '\\n')))
+    outputFormatQuill.setContents(JSON.parse('{{ problem.output_format | escapejs }}'))
     {% endif %}
 
     $('form').submit(function (e) {
