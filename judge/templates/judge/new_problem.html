@@ -37,10 +37,6 @@
         theme: 'snow',
     })
 
-    {% if post_data.statement %}
-    statementQuill.setContents(JSON.parse('{{ post_data.statement }}'))
-    {% endif %}
-
     $('form').submit(function (e) {
         $('#id_statement').val(JSON.stringify(statementQuill.getContents()))
         $('#id_input_format').val(JSON.stringify(inputFormatQuill.getContents()))

@@ -38,10 +38,6 @@
         theme: 'snow',
     })
 
-    {% if post_data.statement %}
-    statementQuill.setContents(JSON.parse('{{ post_data.statement }}'))
-    {% endif %}
-
     {% if problem.statement != None %}
     statementQuill.setContents(JSON.parse('{{ problem.statement | safe }}'.replace('\n', '\\n')))
     {% endif %}
