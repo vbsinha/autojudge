@@ -37,6 +37,12 @@
         theme: 'snow',
     })
 
+    $(document).ready(function(){
+        statementQuill.setContents(JSON.parse($('#id_statement').val()))
+        inputFormatQuill.setContents(JSON.parse($('#id_input_format').val()))
+        outputFormatQuill.setContents(JSON.parse($('#id_output_format').val()))
+    })
+
     $('form').submit(function (e) {
         $('#id_statement').val(JSON.stringify(statementQuill.getContents()))
         $('#id_input_format').val(JSON.stringify(inputFormatQuill.getContents()))
