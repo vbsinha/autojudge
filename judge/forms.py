@@ -1,4 +1,5 @@
 from django import forms
+from django.core.validators import RegexValidator
 
 
 class NewContestForm(forms.Form):
@@ -8,23 +9,20 @@ class NewContestForm(forms.Form):
             'placeholder': 'Enter the name of the contest'
         }))
     contest_start = forms.DateTimeField(
-        label='Start Date', input_formats=['%Y-%m-%dT%H:%M'],
+        label='Start Date',
         widget=forms.DateTimeInput(attrs={
-            'type': 'datetime-local',
             'class': 'form-control',
             'placeholder': 'Enter start date of the contest'
         }))
     contest_soft_end = forms.DateTimeField(
-        label='Soft End Date for contest', input_formats=['%Y-%m-%dT%H:%M'],
+        label='Soft End Date for contest',
         widget=forms.DateTimeInput(attrs={
-            'type': 'datetime-local',
             'class': 'form-control',
             'placeholder': 'Enter soft end date of the contest'
         }))
     contest_hard_end = forms.DateTimeField(
-        label='Hard End Date for contest', input_formats=['%Y-%m-%dT%H:%M'],
+        label='Hard End Date for contest',
         widget=forms.DateTimeInput(attrs={
-            'type': 'datetime-local',
             'class': 'form-control',
             'placeholder': 'Enter hard end date of the contest'
         }))
@@ -49,7 +47,7 @@ class DeletePersonFromContest(forms.Form):
 
 class NewProblemForm(forms.Form):
     code = forms.CharField(label='Code', max_length=10, widget=forms.TextInput(
-        attrs={'class': 'form-control'}),
+        attrs={'class': 'form-control'}), validators=[RegexValidator('[a-z0-9]+')],
         help_text='Lowercase unique alphanumeric code of length at most 10')
     name = forms.CharField(label='Title', max_length=50, widget=forms.TextInput(
         attrs={'class': 'form-control'}))
@@ -105,7 +103,7 @@ class NewSubmissionForm(forms.Form):
         ('.py', 'Python'),
     ])
     submission_file = forms.FileField(label='Choose file', widget=forms.FileInput(
-        attrs={'class': 'form-control-file'}
+        attrs={'class': 'custom-file-input'}
     ))
 
 

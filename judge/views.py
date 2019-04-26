@@ -156,9 +156,6 @@ def contest_detail(request, contest_id):
         'contest': contest,
         'type': 'Poster' if perm else 'Participant',
         'problems': problems,
-        'contest_start': contest.start_datetime.strftime('%d-%m-%Y %H:%M'),
-        'contest_soft_end': contest.soft_end_datetime.strftime('%d-%m-%Y %H:%M'),
-        'contest_hard_end': contest.hard_end_datetime.strftime('%d-%m-%Y %H:%M'),
     })
 
 

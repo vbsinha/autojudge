@@ -35,23 +35,25 @@
     })
 
     {% if problem.statement != None %}
-    statementQuill.setContents(JSON.parse('{{ problem.statement | safe }}'.replace('\n', '\\n')))
+    statementQuill.setContents(JSON.parse('{{ problem.statement | escapejs }}'))
     {% endif %}
     {% if problem.input_format != None %}
-    inputFormatQuill.setContents(JSON.parse('{{ problem.input_format | safe }}'.replace('\n', '\\n')))
+    inputFormatQuill.setContents(JSON.parse('{{ problem.input_format | escapejs }}'))
     {% endif %}
     {% if problem.output_format != None %}
-    outputFormatQuill.setContents(JSON.parse('{{ problem.output_format | safe }}'.replace('\n', '\\n')))
+    outputFormatQuill.setContents(JSON.parse('{{ problem.output_format | escapejs }}'))
     {% endif %}
 
     statementQuill.disable()
     inputFormatQuill.disable()
     outputFormatQuill.disable()
 
-    $(".custom-file-input").on("change", function () {
-        var fileName = $(this).val().split("\\").pop();
-        $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
-    });
+    $(document).ready(function() {
+        $(".custom-file-input").on("change", function () {
+            var fileName = $(this).val().split("\\").pop();
+            $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+        });
+    })
 </script>
 {% endblock %}
 
@@ -178,7 +180,8 @@
     </div>
     <div class="col-12">
         <!-- TODO -->
-        <a href="{% url 'judge:problem_submissions' problem.pk %}" class="btn btn-default">See my previous submissions</a>
+        <a href="{% url 'judge:problem_submissions' problem.pk %}" class="btn btn-default">See my previous
+            submissions</a>
     </div>
 </div>
 {% endif %}

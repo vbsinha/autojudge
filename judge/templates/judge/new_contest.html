@@ -3,7 +3,22 @@
 {% block title %}New Contest{% endblock %}
 
 {% block styles %}
-<link href="https://unpkg.com/gijgo@1.9.13/css/gijgo.min.css" rel="stylesheet" type="text/css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    date_options = {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i:S",
+        allowInput: true,
+        enableSeconds: true,
+    }
+    $("#id_contest_start").flatpickr(date_options)
+    $("#id_contest_soft_end").flatpickr(date_options)
+    $("#id_contest_hard_end").flatpickr(date_options)
+</script>
 {% endblock %}
 
 {% block breadcrumb %}
