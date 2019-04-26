@@ -96,7 +96,7 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
     output_format = 'No output format specified.' if output_format is None else output_format
     difficulty = 0 if difficulty is None else difficulty
     memory_limit = 200000 if memory_limit is None else memory_limit
-    file_format = '.py,.cpp,.c' if file_format is None else file_format
+    file_format = '.py,.cpp,.c' if file_format is None or file_format is '' else file_format
     max_score = 0 if max_score is None else max_score
 
     try:
