@@ -109,15 +109,13 @@
         <h4>Public test cases</h4>
         {% for test in public_tests %}
         <h5>Test Case {{ forloop.counter }}</h5>
-        <!-- TODO Display input/output files -->
-        <!-- TODO Hide Private test cases for particpants -->
-        <div class="col-12 col-md-6">
+        <div class="col-12">
             <h6>Input</h6>
-            <pre>{{ test.0 }}</pre>
+            <pre class="bg-secondary p-2 rounded"><code>{{ test.0 }}</code></pre>
         </div>
-        <div class="col-12 col-md-6">
+        <div class="col-12">
             <h6>Output</h6>
-            <pre>{{ test.1 }}</pre>
+            <pre class="bg-secondary p-2 rounded"><code>{{ test.1 }}</code></pre>
         </div>
         {% endfor %}
     </div>
@@ -126,13 +124,13 @@
         <h4>Private test cases</h4>
         {% for test in private_tests %}
         <h5>Test Case {{ forloop.counter }}</h5>
-        <div class="col-12 col-md-6">
+        <div class="col-12">
             <h6>Input</h6>
-            <pre>{{ test.0 }}</pre>
+            <pre class="bg-secondary p-2 rounded"><code>{{ test.0 }}</code></pre>
         </div>
-        <div class="col-12 col-md-6">
+        <div class="col-12">
             <h6>Output</h6>
-            <pre>{{ test.1 }}</pre>
+            <pre class="bg-secondary p-2 rounded"><code>{{ test.1 }}</code></pre>
         </div>
         {% endfor %}
     </div>
