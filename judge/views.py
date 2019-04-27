@@ -260,7 +260,7 @@ def new_problem(request, contest_id):
                 form.cleaned_data['time_limit'], form.cleaned_data['memory_limit'],
                 form.cleaned_data['file_exts'], form.cleaned_data['starting_code'],
                 form.cleaned_data['max_score'], form.cleaned_data['compilation_script'],
-                form.cleaned_data['testing_script'], form.cleaned_data['setter_soln'])
+                form.cleaned_data['testing_script'], form.cleaned_data.get('setter_soln'))
             if status:
                 return redirect(reverse('judge:problem_detail', args=(code,)))
             else:
