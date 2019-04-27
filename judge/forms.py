@@ -120,7 +120,8 @@ class NewProblemForm(forms.Form):
     file_exts = forms.CharField(label='Permitted File extensions for submissions',
                                 widget=forms.TextInput(attrs={'class': 'form-control'}),
                                 max_length=100, required=False,
-                                validators=[RegexValidator('\.[a-zA-Z0-9]+(,\.[a-zA-Z0-9]+)*')],
+                                validators=[
+                                 RegexValidator('\.[a-zA-Z0-9]+(,\.[a-zA-Z0-9]+)*')],  # noqa: W605
                                 help_text='Give a comma separated list of extensions accepted \
                                            for submissions.')
 
