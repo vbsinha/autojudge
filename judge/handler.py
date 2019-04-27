@@ -1,5 +1,6 @@
 import os
 
+from re import compile
 from io import StringIO
 from shutil import rmtree
 from logging import error
@@ -220,8 +221,8 @@ def process_testcase(problem_id: str, ispublic: bool,
     """
     Process a new Testcase
     problem is the 'code' (pk) of the problem.
-    WARNING: This function does not rescore all the submissions and so score will not 
-    change in response to the new testcase. DONOT CALL THIS FUNCTION ONCE THE 
+    WARNING: This function does not rescore all the submissions and so score will not
+    change in response to the new testcase. DONOT CALL THIS FUNCTION ONCE THE
     CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
     """
     try:
@@ -235,12 +236,12 @@ def process_testcase(problem_id: str, ispublic: bool,
         return (False, e.__str__())
 
 
-def delete_testcase(testcase_id: str):
+def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
     """
     This function deletes the testcase and cascade deletes in
     all the tables the Fk appears.
-    WARNING: This function does not rescore all the submissions and so score will not 
-    change in response to the deleted testcase. DONOT CALL THIS FUNCTION ONCE THE 
+    WARNING: This function does not rescore all the submissions and so score will not
+    change in response to the deleted testcase. DONOT CALL THIS FUNCTION ONCE THE
     CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
     Returns: (True, None)
     """
@@ -338,6 +339,35 @@ def add_person_to_contest(person: str, contest: str,
             cp = p.contestperson_set.create(contest=c, role=permission)
             cp.save()
             return (True, None)
+    except Exception as e:
+        print_exc()
+        return (False, e.__str__())
+
+
+def add_person_rgx_to_contest(rgx: str, contest: str, 
+                              permission: bool) -> Tuple[bool, Optional[str]]:
+    """
+    Accepts a regex and adds all the participants matching the rgx in the database to the contest
+    with the passed permission
+    Note that unlike add_person_to_contest this function does not create any new perons
+    In case no persons match the rgx,
+    (False, 'Regex {} did not match any person registered'.format(rgx)) is returned
+    Use regex like cs15btech* to add all persons having emails like cs15btech...
+    Returns: (True, None)
+    """
+    pattern = compile(rgx)
+    try:
+        person_emails = [p.email for p in models.Person.get.all()]
+        emails_matches = [email for email in person_emails if bool(pattern.match(email))]
+        c = models.Contest.objects.get(pk=contest)
+        if c.public is True and permission is False:
+            # Do not store participants for public contests
+            return (True, None)
+        if len(emails_matches) == 0:
+            return (False, 'Regex {} did not match any person registered'.format(rgx))
+        for email in emails_matches:
+            add_person_to_contest(email, contest, permission)
+        return (True, None)
     except Exception as e:
         print_exc()
         return (False, e.__str__())
