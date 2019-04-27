@@ -220,8 +220,8 @@ def process_testcase(problem_id: str, ispublic: bool,
     """
     Process a new Testcase
     problem is the 'code' (pk) of the problem.
-    WARNING: This function does not rescore all the submissions and so score will not 
-    change in response to the new testcase. DONOT CALL THIS FUNCTION ONCE THE 
+    WARNING: This function does not rescore all the submissions and so score will not
+    change in response to the new testcase. DO NOT CALL THIS FUNCTION ONCE THE
     CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
     """
     try:
@@ -239,8 +239,8 @@ def delete_testcase(testcase_id: str):
     """
     This function deletes the testcase and cascade deletes in
     all the tables the Fk appears.
-    WARNING: This function does not rescore all the submissions and so score will not 
-    change in response to the deleted testcase. DONOT CALL THIS FUNCTION ONCE THE 
+    WARNING: This function does not rescore all the submissions and so score will not
+    change in response to the deleted testcase. DO NOT CALL THIS FUNCTION ONCE THE
     CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
     Returns: (True, None)
     """
