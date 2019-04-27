@@ -152,12 +152,6 @@ class NewProblemForm(forms.Form):
                                      allow_empty_file=False, required=False,
                                      help_text='Upload a custom testing script.')
 
-    # Problem Setter Solution
-    setter_soln = forms.FileField(label='Setter solution',
-                                  widget=forms.FileInput(attrs={'class': 'form-control-file'}),
-                                  allow_empty_file=False, required=False,
-                                  help_text='Upload the setter\'s solution.')
-
 
 class EditProblemForm(forms.Form):
     """
