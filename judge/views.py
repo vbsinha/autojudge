@@ -128,7 +128,7 @@ def add_poster(request, contest_id, role=True):
         form = AddPersonToContestForm(request.POST)
         if form.is_valid():
             status, err = handler.add_person_to_contest(
-                request.POST.get('email'), contest_id, role)
+                form.cleaned_data.get('email'), contest_id, role)
             if status:
                 return redirect(reverse('judge:get_{}s'.format(context['type'].lower()),
                                         args=(contest_id,)))
@@ -180,7 +180,6 @@ def problem_detail(request, problem_id):
         if request.method == 'POST':
             form = NewSubmissionForm(request.POST, request.FILES)
             if form.is_valid():
-                # TODO check extension
                 status, err = handler.process_solution(
                     problem_id, user.email, form.cleaned_data['file_type'],
                     form.cleaned_data['submission_file'],
@@ -240,7 +239,7 @@ def new_problem(request, contest_id):
     if request.method == 'POST':
         form = NewProblemForm(request.POST, request.FILES)
         if form.is_valid():
-            code = form.cleaned_data['code'].lower()
+            code = form.cleaned_data['code']
             status, err = handler.process_problem(
                 code, contest_id, form.cleaned_data['name'], form.cleaned_data['statement'],
                 form.cleaned_data['input_format'],
