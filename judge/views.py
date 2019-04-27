@@ -128,7 +128,7 @@ def add_poster(request, contest_id, role=True):
         form = AddPersonToContestForm(request.POST)
         if form.is_valid():
             status, err = handler.add_person_to_contest(
-                request.POST.get('email'), contest_id, role)
+                form.cleaned_data.get('email'), contest_id, role)
             if status:
                 return redirect(reverse('judge:get_{}s'.format(context['type'].lower()),
                                         args=(contest_id,)))
@@ -156,9 +156,6 @@ def contest_detail(request, contest_id):
         'contest': contest,
         'type': 'Poster' if perm else 'Participant',
         'problems': problems,
-        'contest_start': contest.start_datetime.strftime('%d-%m-%Y %H:%M'),
-        'contest_soft_end': contest.soft_end_datetime.strftime('%d-%m-%Y %H:%M'),
-        'contest_hard_end': contest.hard_end_datetime.strftime('%d-%m-%Y %H:%M'),
     })
 
 
@@ -174,8 +171,6 @@ def problem_detail(request, problem_id):
     context = {
         'problem': problem,
         'type': 'Poster' if perm else 'Participant',
-        'public_tests': public_tests,
-        'private_tests': private_tests,
     }
     if perm is False and user is None:
         pass
@@ -183,7 +178,6 @@ def problem_detail(request, problem_id):
         if request.method == 'POST':
             form = NewSubmissionForm(request.POST, request.FILES)
             if form.is_valid():
-                # TODO check extension
                 status, err = handler.process_solution(
                     problem_id, user.email, form.cleaned_data['file_type'],
                     form.cleaned_data['submission_file'],
@@ -211,6 +205,21 @@ def problem_detail(request, problem_id):
         else:
             form = AddTestCaseForm()
         context['form'] = form
+    context['public_tests'] = []
+    context['private_tests'] = []
+    for t in public_tests:
+        input_file = File(open(t.inputfile.path, 'r'))
+        output_file = File(open(t.outputfile.path, 'r'))
+        context['public_tests'].append((input_file.file.read(), output_file.file.read()))
+        input_file.close()
+        output_file.close()
+    # TODO restrict private tests
+    for t in private_tests:
+        input_file = File(open(t.inputfile.path, 'r'))
+        output_file = File(open(t.outputfile.path, 'r'))
+        context['private_tests'].append((input_file.file.read(), output_file.file.read()))
+        input_file.close()
+        output_file.close()
     return render(request, 'judge/problem_detail.html', context)
 
 
@@ -243,7 +252,7 @@ def new_problem(request, contest_id):
     if request.method == 'POST':
         form = NewProblemForm(request.POST, request.FILES)
         if form.is_valid():
-            code = form.cleaned_data['code'].lower()
+            code = form.cleaned_data['code']
             status, err = handler.process_problem(
                 code, contest_id, form.cleaned_data['name'], form.cleaned_data['statement'],
                 form.cleaned_data['input_format'],
@@ -251,7 +260,7 @@ def new_problem(request, contest_id):
                 form.cleaned_data['time_limit'], form.cleaned_data['memory_limit'],
                 form.cleaned_data['file_exts'], form.cleaned_data['starting_code'],
                 form.cleaned_data['max_score'], form.cleaned_data['compilation_script'],
-                form.cleaned_data['testing_script'], form.cleaned_data['setter_soln'])
+                form.cleaned_data['testing_script'], form.cleaned_data.get('setter_soln'))
             if status:
                 return redirect(reverse('judge:problem_detail', args=(code,)))
             else:

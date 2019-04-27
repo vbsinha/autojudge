@@ -141,3 +141,60 @@ class HandlerTests(TestCase):
         one_person = all_persons[0]
         self.assertEqual(one_person.email, 'testing1@test.com')
         self.assertEqual(one_person.rank, 0)
+
+    def test_process_and_delete_testcase(self):
+        c = models.Contest.objects.create(name='Test Contest', start_datetime='2019-04-25T12:30',
+                                          soft_end_datetime='2019-04-26T12:30',
+                                          hard_end_datetime='2019-04-27T12:30',
+                                          penalty=0, public=True)
+        prob = models.Problem.objects.create(code='testprob1', contest=c, name='Test Problem 1',
+                                             statement='Test Problem Statement',
+                                             input_format='Test input format',
+                                             output_format='Test output format', difficulty=5,
+                                             time_limit=timedelta(seconds=10),
+                                             memory_limit=10000, file_format='.py', start_code=None,
+                                             max_score=4, compilation_script=None, test_script=None,
+                                             setter_solution=None)
+        pass
+
+    def test_add_get_and_delete_personcontest_get_personprob_perm_and_get_poster_participant(self):
+        c = models.Contest.objects.create(name='Test Contest', start_datetime='2019-04-25T12:30',
+                                          soft_end_datetime='2019-04-26T12:30',
+                                          hard_end_datetime='2019-04-27T12:30',
+                                          penalty=0, public=True)
+        models.Problem.objects.create(code='testprob1', contest=c, name='Test Problem 1',
+                                      statement='Test Problem Statement',
+                                      input_format='Test input format',
+                                      output_format='Test output format', difficulty=5,
+                                      time_limit=timedelta(seconds=10),
+                                      memory_limit=10000, file_format='.py', start_code=None,
+                                      max_score=4, compilation_script=None, test_script=None,
+                                      setter_solution=None)
+        person1 = models.Person.objects.create(email='testing1@test.com', rank=0)
+        models.Person.objects.create(email='testing2@test.com', rank=0)
+        status, message = handler.add_person_to_contest(person1.email, c.pk, True)
+        self.assertTrue(status)
+        self.assertIsNone(message)
+        all_personcontest = models.ContestPerson.objects.all()
+        self.assertEqual(len(all_personcontest), 1)
+        one_cp = all_personcontest[0]
+        self.assertTrue(one_cp.role)
+        self.assertEqual(one_cp.person.email, 'testing1@test.com')
+        self.assertEqual(one_cp.contest.name, 'Test Contest')
+        role = handler.get_personcontest_permission(person='testing1@test.com', contest=c.pk)
+        self.assertTrue(role)
+        role = handler.get_personcontest_permission(person=None, contest=c.pk)
+        self.assertFalse(role)
+        role = handler.get_personproblem_permission(person='testing1@test.com', problem='testprob1')
+        self.assertTrue(role)
+        status, message = handler.delete_personcontest(person='testing1@test.com', contest=c.pk)
+        self.assertFalse(status)
+        role = handler.get_personcontest_permission(person='testing2@test.com', contest=c.pk)
+        self.assertFalse(role)
+        status, posters = handler.get_posters(contest=c.pk)
+        self.assertTrue(status)
+        self.assertEqual(len(posters), 1)
+        self.assertEqual(posters[0], 'testing1@test.com')
+        status, participants = handler.get_participants(contest=c.pk)
+        self.assertTrue(status)
+        self.assertEqual(len(participants), 0)

@@ -1,5 +1,7 @@
 {% extends 'judge/base.html' %}
 
+{% load tz %}
+
 {% block title %}{{ contest.name }}{% endblock %}
 
 {% block breadcrumb %}
@@ -11,11 +13,11 @@
     <div class="col-12">
         <h2 class="d-inline">{{ contest.name }}</h2>
         <div class="float-right">
-            <i class="ni ni-calendar-grid-58"></i> Starts at {{ contest_start }}<br>
-            {% if contest_soft_end != contest_hard_end %}
-            <i class="ni ni-calendar-grid-58"></i> Submissions penalized after {{ contest_soft_end }}<br>
+            <i class="ni ni-calendar-grid-58"></i> Starts at {{ contest.start_datetime|localtime }}<br>
+            {% if contest.soft_end_datetime != contest.hard_end_datetime %}
+            <i class="ni ni-calendar-grid-58"></i> Submissions penalized after {{ contest.soft_end_datetime|localtime }}<br>
             {% endif %}
-            <i class="ni ni-calendar-grid-58"></i> Ends at {{ contest_hard_end }}
+            <i class="ni ni-calendar-grid-58"></i> Ends at {{ contest.hard_end_datetime|localtime }}
         </div>
     </div>
 </div>

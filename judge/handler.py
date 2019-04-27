@@ -1,5 +1,6 @@
 import os
 
+from re import compile
 from io import StringIO
 from shutil import rmtree
 from logging import error
@@ -20,10 +21,6 @@ def process_contest(name: str, start_datetime, soft_end_datetime, hard_end_datet
     Only penalty can be None in which case Penalty will be set to 0
     Returns: (True, None) or (False, Exception string)
     """
-    name = 'Unnamed Contest' if name is None or name.strip() == '' else name
-    penalty = 0. if penalty is None else penalty
-    public = False if public is None else public
-
     try:
         c = models.Contest(name=name, start_datetime=start_datetime,
                            soft_end_datetime=soft_end_datetime,
@@ -39,16 +36,22 @@ def process_contest(name: str, start_datetime, soft_end_datetime, hard_end_datet
         return (False, 'Contest could not be created')
 
 
-def delete_contest(contest: int) -> Tuple[bool, Optional[str]]:
+def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
     """
     Delete the contest.
     This will cascade delete in all the tables that have contest as FK.
+    It calls delete_problem for each problem in the contest.
     Retuns (True, None)
     """
     try:
-        models.Contest.objects.filter(pk=contest).delete()
-        if os.path.exists(os.path.join('content', 'contests', str(contest))):
-            rmtree(os.path.join('content', 'contests', str(contest)))
+        c = models.Contest.objects.get(pk=contest_id)
+        problems = models.Problem.objects.filter(contest=c)
+        for problem in problems:
+            delete_problem(problem.pk)
+        if os.path.exists(os.path.join('content', 'contests', str(contest_id))):
+            rmtree(os.path.join('content', 'contests', str(contest_id)))
+
+        models.Contest.objects.filter(pk=contest_id).delete()
         return (True, None)
     except Exception as e:
         print_exc()
@@ -73,14 +76,6 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
     except models.Problem.DoesNotExist:
         pass
 
-    # Some checks and cleanup
-    if difficulty < 0 or difficulty > 5:
-        return (False, 'Difficulty value: {} not within [0,5]'.format(difficulty))
-
-    code = code.lower()
-    if not code.isalnum():
-        return (False, 'Code: {} is not alphanumeric'.format(code))
-
     # Set up default values
     cp_comp_script, cp_test_script = False, False
     if compilation_script is None:
@@ -90,24 +85,18 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
         test_script = './default/test_script.sh'
         cp_test_script = True
 
-    name = 'Name not set' if name is None else name
     statement = 'The problem statement is empty.' if statement is None else statement
     input_format = 'No input format specified.' if input_format is None else input_format
     output_format = 'No output format specified.' if output_format is None else output_format
-    difficulty = 0 if difficulty is None else difficulty
-    memory_limit = 200000 if memory_limit is None else memory_limit
-    file_format = '.py,.cpp,.c' if file_format is None else file_format
-    max_score = 0 if max_score is None else max_score
 
     try:
         c = models.Contest.objects.get(pk=contest)
-        p = models.Problem(code=code, contest=c, name=name, statement=statement,
-                           input_format=input_format, output_format=output_format,
-                           difficulty=difficulty, time_limit=time_limit, memory_limit=memory_limit,
-                           file_format=file_format, start_code=start_code, max_score=max_score,
-                           compilation_script=compilation_script,
-                           test_script=test_script, setter_solution=setter_solution)
-        p.save()
+        p = models.Problem.objects.create(code=code, contest=c, name=name, statement=statement,
+                                          input_format=input_format, output_format=output_format,
+                                          difficulty=difficulty, time_limit=time_limit, memory_limit=memory_limit,
+                                          file_format=file_format, start_code=start_code, max_score=max_score,
+                                          compilation_script=compilation_script,
+                                          test_script=test_script, setter_solution=setter_solution)
 
         if not os.path.exists(os.path.join('content', 'problems', p.code)):
             # Create the problem directory explictly if not yet created
@@ -153,15 +142,37 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
         return (False, e.__str__())
 
 
-def delete_problem(problem: str) -> Tuple[bool, Optional[str]]:
+def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
     """
     Delete the problem.
     This will cascade delete in all the tables that have problem as FK.
+    It will also delete all the submissions, testcases and the directory
+    (in problems directory) corresponding to the problem .
     Returns (True, None)
     """
     try:
-        models.Problem.objects.filter(pk=problem).delete()
-        rmtree(os.path.join('content', 'problems', problem))
+        problem = models.Problem.objects.get(pk=problem_id)
+        # First delete all the files stored corresponding to this problem
+        testcases = models.TestCase.objects.filter(problem=problem)
+        for testcase in testcases:
+            inputfile_path = os.path.join(
+                'content', 'testcase', 'inputfile_{}.txt'.format(testcase.pk))
+            outputfile_path = os.path.join(
+                'content', 'testcase', 'outputfile_{}.txt'.format(testcase.pk))
+            if os.path.exists(inputfile_path):
+                os.remove(inputfile_path)
+            if os.path.exists(outputfile_path):
+                os.remove(outputfile_path)
+        submissions = models.Submission.objects.filter(problem=problem)
+        for submission in submissions:
+            submission_path = os.path.join(
+                'content', 'submissions',
+                'submission_{}{}'.format(submission.pk, submission.file_type))
+            if os.path.exists(submission_path):
+                os.remove(submission_path)
+        rmtree(os.path.join('content', 'problems', problem_id))
+
+        models.Problem.objects.filter(pk=problem_id).delete()
         return (True, None)
     except Exception as e:
         print_exc()
@@ -192,12 +203,40 @@ def process_testcase(problem_id: str, ispublic: bool,
     """
     Process a new Testcase
     problem is the 'code' (pk) of the problem.
+    WARNING: This function does not rescore all the submissions and so score will not
+    change in response to the new testcase. DO NOT CALL THIS FUNCTION ONCE THE
+    CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
     """
     try:
         problem = models.Problem.objects.get(pk=problem_id)
         t = problem.testcase_set.create(
             public=ispublic, inputfile=inputfile, outputfile=outputfile)
         t.save()
+        return (True, None)
+    except Exception as e:
+        print_exc()
+        return (False, e.__str__())
+
+
+def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
+    """
+    This function deletes the testcase and cascade deletes in
+    all the tables the Fk appears.
+    WARNING: This function does not rescore all the submissions and so score will not
+    change in response to the deleted testcase. DO NOT CALL THIS FUNCTION ONCE THE
+    CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
+    Returns: (True, None)
+    """
+    try:
+        inputfile_path = os.path.join(
+            'content', 'testcase', 'inputfile_{}.txt'.format(testcase_id))
+        outputfile_path = os.path.join(
+            'content', 'testcase', 'outputfile_{}.txt'.format(testcase_id))
+        if os.path.exists(inputfile_path):
+            os.remove(inputfile_path)
+        if os.path.exists(outputfile_path):
+            os.remove(outputfile_path)
+        models.TestCase.objects.filter(pk=testcase_id).delete()
         return (True, None)
     except Exception as e:
         print_exc()
@@ -212,12 +251,12 @@ def process_solution(problem_id: str, participant: str, file_type,
     """
     try:
         problem = models.Problem.objects.get(pk=problem_id)
-        participant = models.Person.objects.get(email=participant)
-        s = problem.submission_set.create(participant=participant, file_type=file_type,
-                                          submission_file=submission_file, timestamp=timestamp)
         if file_type not in problem.file_format.split(','):
             return (False, 'Accepted file types: \"{}\"'
                            .format(', '.join(problem.file_format.split(','))))
+        participant = models.Person.objects.get(email=participant)
+        s = problem.submission_set.create(participant=participant, file_type=file_type,
+                                          submission_file=submission_file, timestamp=timestamp)
         s.save()
     except Exception as e:
         print_exc()
@@ -247,9 +286,8 @@ def process_solution(problem_id: str, participant: str, file_type,
 
     try:
         for testcase in testcases:
-            st = models.SubmissionTestCase(submission=s, testcase=testcase, verdict='R',
-                                           memory_taken=0, time_taken=timedelta(seconds=0))
-            st.save()
+            models.SubmissionTestCase.objects.create(submission=s, testcase=testcase, verdict='R',
+                                                     memory_taken=0, time_taken=timedelta(seconds=0))
     except Exception as e:
         print_exc()
         return (False, e.__str__())
@@ -288,6 +326,35 @@ def add_person_to_contest(person: str, contest: str,
         return (False, e.__str__())
 
 
+def add_person_rgx_to_contest(rgx: str, contest: str,
+                              permission: bool) -> Tuple[bool, Optional[str]]:
+    """
+    Accepts a regex and adds all the participants matching the rgx in the database to the contest
+    with the passed permission
+    Note that unlike add_person_to_contest this function does not create any new perons
+    In case no persons match the rgx,
+    (False, 'Regex {} did not match any person registered'.format(rgx)) is returned
+    Use regex like cs15btech* to add all persons having emails like cs15btech...
+    Returns: (True, None)
+    """
+    pattern = compile(rgx)
+    try:
+        person_emails = [p.email for p in models.Person.objects.all()]
+        emails_matches = [email for email in person_emails if bool(pattern.match(email))]
+        c = models.Contest.objects.get(pk=contest)
+        if c.public is True and permission is False:
+            # Do not store participants for public contests
+            return (True, None)
+        if len(emails_matches) == 0:
+            return (False, 'Regex {} did not match any person registered'.format(rgx))
+        for email in emails_matches:
+            add_person_to_contest(email, contest, permission)
+        return (True, None)
+    except Exception as e:
+        print_exc()
+        return (False, e.__str__())
+
+
 def get_personcontest_permission(person: Optional[str], contest: int) -> Optional[bool]:
     """
     Determine the relation between Person and Contest
@@ -310,7 +377,7 @@ def get_personcontest_permission(person: Optional[str], contest: int) -> Optiona
         cp = models.ContestPerson.objects.get(person=p, contest=c)
         return cp.role
     except models.ContestPerson.DoesNotExist:
-        c = models.Contest.objects.get(pk=contest)
+        c = models.Contest.objects.get(pk=contest)  # TODO: Why is this line duplicated?
         if c.public:
             return False
     except Exception:
@@ -327,11 +394,17 @@ def delete_personcontest(person: str, contest: str) -> Tuple[bool, Optional[str]
     try:
         p = models.Person.objects.get(email=person)
         c = models.Contest.objects.get(pk=contest)
-        if models.ContestPerson.objects.filter(contest=c).count() > 1:
-            models.ContestPerson.objects.filter(person=p, contest=c).delete()
-            return (True, None)
-        else:
-            return (False, 'This contest cannot be orphaned!')
+        cpset = models.ContestPerson.objects.filter(person=p, contest=c)
+        if cpset.count() > 0:
+            cp = cpset[0]
+            if (cp.role is False) or \
+               (models.ContestPerson.objects.filter(contest=c, role=True).count() > 1):
+                # If the person to be deleted is a participant or there are more than 1 posters
+                # then we can delete the record from db.
+                cpset.delete()
+            else:
+                return (False, 'This contest cannot be orphaned!')
+        return (True, None)
     except Exception as e:
         print_exc()
         return (False, e.__str__())
@@ -391,8 +464,8 @@ def get_personcontest_score(person: str, contest: int) -> Tuple[bool, Any]:
     Pass email in person and contest's pk
     """
     try:
-        p = models.Person.objects.get(person=person)
-        c = models.Contest.objects.get(contest=contest)
+        p = models.Person.objects.get(email=person)
+        c = models.Contest.objects.get(pk=contest)
         problems = models.Problem.objects.filter(contest=c)
         score = 0
         for problem in problems:
@@ -560,9 +633,8 @@ def process_comment(problem: str, person: str, commenter: str,
         problem = models.Problem.objects.get(pk=problem)
         person = models.Person.objects.get(email=person)
         commenter = models.Person.objects.get(email=commenter)
-        c = models.Comment(problem=problem, person=person,
-                           commenter=commenter, timestamp=timestamp, comment=comment)
-        c.save()
+        models.Comment.objects.create(problem=problem, person=person,
+                                      commenter=commenter, timestamp=timestamp, comment=comment)
         return (True, None)
     except Exception as e:
         print_exc()
