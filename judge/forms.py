@@ -73,7 +73,7 @@ class NewProblemForm(forms.Form):
     # Problem Code Field
     code = forms.CharField(label='Code', max_length=10, widget=forms.TextInput(
                            attrs={'class': 'form-control'}),
-                           validators=[RegexValidator('[a-z0-9]+')],
+                           validators=[RegexValidator(r'^[a-z0-9]+$')],
                            help_text='Enter a alphanumeric code in lowercase letters as a \
                                       unique identifier for the problem.')
 
@@ -121,7 +121,8 @@ class NewProblemForm(forms.Form):
                                 widget=forms.TextInput(attrs={'class': 'form-control'}),
                                 max_length=100, required=False,
                                 validators=[
-                                 RegexValidator('\.[a-zA-Z0-9]+(,\.[a-zA-Z0-9]+)*')],  # noqa: W605
+                                 RegexValidator('^\.[a-zA-Z0-9]+(,\.[a-zA-Z0-9]+)*$')  # noqa: W605
+                                ],
                                 help_text='Give a comma separated list of extensions accepted \
                                            for submissions.')
 
