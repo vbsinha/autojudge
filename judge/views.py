@@ -168,6 +168,36 @@ def contest_detail(request, contest_id):
     })
 
 
+def delete_contest(request, contest_id):
+    user = _get_user(request)
+    perm = handler.get_personcontest_permission(
+        None if user is None else user.email, contest_id)
+    if perm and request.method == 'POST':
+        status, _ = handler.delete_contest(contest_id)
+        if status:
+            return redirect(reverse('judge:index'))
+        else:
+            handler404(request)
+    else:
+        return handler404(request)
+
+
+def delete_problem(request, problem_id):
+    user = _get_user(request)
+    problem = get_object_or_404(Problem, pk=problem_id)
+    contest_id = problem.contest.pk
+    perm = handler.get_personproblem_permission(
+        None if user is None else user.email, problem_id)
+    if perm and request.method == 'POST':
+        status, _ = handler.delete_problem(problem_id)
+        if status:
+            return redirect(reverse('judge:contest_detail', args=(contest_id,)))
+        else:
+            handler404(request)
+    else:
+        return handler404(request)
+
+
 def problem_detail(request, problem_id):
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
