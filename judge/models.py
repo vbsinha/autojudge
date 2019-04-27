@@ -104,7 +104,7 @@ class Problem(models.Model):
 
     # File format [Char]
     # Support upto 30 file formats
-    file_format = models.CharField(max_length=100, default='.py,.cpp,.c')
+    file_format = models.CharField(max_length=100, default='.py,.cpp')
 
     # Start code [File]
     start_code = models.FileField(upload_to=start_code_name, null=True)
