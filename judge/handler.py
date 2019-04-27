@@ -250,12 +250,11 @@ def process_solution(problem_id: str, participant: str, file_type,
     Process a new Solution
     problem is the 'code' (pk) of the problem. participant is email(pk) of the participant
     """
-    if file_type not in problem.file_format.split(','):
-        return (False, 'Accepted file types: \"{}\"'
-                       .format(', '.join(problem.file_format.split(','))))
-
     try:
         problem = models.Problem.objects.get(pk=problem_id)
+        if file_type not in problem.file_format.split(','):
+            return (False, 'Accepted file types: \"{}\"'
+                           .format(', '.join(problem.file_format.split(','))))
         participant = models.Person.objects.get(email=participant)
         s = problem.submission_set.create(participant=participant, file_type=file_type,
                                           submission_file=submission_file, timestamp=timestamp)
