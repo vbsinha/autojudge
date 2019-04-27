@@ -40,4 +40,6 @@ urlpatterns = [
          views.problem_submissions, name='problem_submissions'),
     path('submission/<str:submission_id>/',
          views.submission_detail, name='submission_detail'),
+    path('problem/<str:problem_id>/testcase/<str:testcase_id>/delete/',
+         views.delete_testcase, name='delete_testcase'),
 ]
