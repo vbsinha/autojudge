@@ -446,8 +446,8 @@ def get_personcontest_score(person: str, contest: int) -> Tuple[bool, Any]:
     Pass email in person and contest's pk
     """
     try:
-        p = models.Person.objects.get(person=person)
-        c = models.Contest.objects.get(contest=contest)
+        p = models.Person.objects.get(email=person)
+        c = models.Contest.objects.get(pk=contest)
         problems = models.Problem.objects.filter(contest=c)
         score = 0
         for problem in problems:
