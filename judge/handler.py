@@ -39,16 +39,22 @@ def process_contest(name: str, start_datetime, soft_end_datetime, hard_end_datet
         return (False, 'Contest could not be created')
 
 
-def delete_contest(contest: int) -> Tuple[bool, Optional[str]]:
+def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
     """
     Delete the contest.
     This will cascade delete in all the tables that have contest as FK.
+    It calls delete_problem for each problem in the contest.
     Retuns (True, None)
     """
     try:
-        models.Contest.objects.filter(pk=contest).delete()
-        if os.path.exists(os.path.join('content', 'contests', str(contest))):
-            rmtree(os.path.join('content', 'contests', str(contest)))
+        c = models.Contest.objects.get(pk=contest_id)
+        problems = models.Problem.objects.filter(contest=c)
+        for problem in problems:
+            delete_problem(problem.pk)
+        if os.path.exists(os.path.join('content', 'contests', str(contest_id))):
+            rmtree(os.path.join('content', 'contests', str(contest_id)))
+
+        models.Contest.objects.filter(pk=contest_id).delete()
         return (True, None)
     except Exception as e:
         print_exc()
@@ -153,15 +159,37 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
         return (False, e.__str__())
 
 
-def delete_problem(problem: str) -> Tuple[bool, Optional[str]]:
+def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
     """
     Delete the problem.
     This will cascade delete in all the tables that have problem as FK.
+    It will also delete all the submissions, testcases and the directory
+    (in problems directory) corresponding to the problem .
     Returns (True, None)
     """
     try:
-        models.Problem.objects.filter(pk=problem).delete()
-        rmtree(os.path.join('content', 'problems', problem))
+        problem = models.Problem.objects.get(pk=problem_id)
+        # First delete all the files stored corresponding to this problem
+        testcases = models.TestCase.objects.filter(problem=problem)
+        for testcase in testcases:
+            inputfile_path = os.path.join(
+                'content', 'testcase', 'inputfile_{}.txt'.format(testcase.pk))
+            outputfile_path = os.path.join(
+                'content', 'testcase', 'outputfile_{}.txt'.format(testcase.pk))
+            if os.path.exists(inputfile_path):
+                os.remove(inputfile_path)
+            if os.path.exists(outputfile_path):
+                os.remove(outputfile_path)
+        submissions = models.Submission.objects.filter(problem=problem)
+        for submission in submissions:
+            submission_path = os.path.join(
+                'content', 'submissions',
+                'submission_{}{}'.format(submission.pk, submission.file_type))
+            if os.path.exists(submission_path):
+                os.remove(submission_path)
+        rmtree(os.path.join('content', 'problems', problem_id))
+
+        models.Problem.objects.filter(pk=problem_id).delete()
         return (True, None)
     except Exception as e:
         print_exc()
@@ -192,6 +220,9 @@ def process_testcase(problem_id: str, ispublic: bool,
     """
     Process a new Testcase
     problem is the 'code' (pk) of the problem.
+    WARNING: This function does not rescore all the submissions and so score will not 
+    change in response to the new testcase. DONOT CALL THIS FUNCTION ONCE THE 
+    CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
     """
     try:
         problem = models.Problem.objects.get(pk=problem_id)
@@ -199,6 +230,30 @@ def process_testcase(problem_id: str, ispublic: bool,
             public=ispublic, inputfile=inputfile, outputfile=outputfile)
         t.save()
         return (True, None)
+    except Exception as e:
+        print_exc()
+        return (False, e.__str__())
+
+
+def delete_testcase(testcase_id: str):
+    """
+    This function deletes the testcase and cascade deletes in
+    all the tables the Fk appears.
+    WARNING: This function does not rescore all the submissions and so score will not 
+    change in response to the deleted testcase. DONOT CALL THIS FUNCTION ONCE THE 
+    CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
+    Returns: (True, None)
+    """
+    try:
+        inputfile_path = os.path.join(
+            'content', 'testcase', 'inputfile_{}.txt'.format(testcase_id))
+        outputfile_path = os.path.join(
+            'content', 'testcase', 'outputfile_{}.txt'.format(testcase_id))
+        if os.path.exists(inputfile_path):
+            os.remove(inputfile_path)
+        if os.path.exists(outputfile_path):
+            os.remove(outputfile_path)
+        models.TestCase.objects.filter(pk=testcase_id).delete()
     except Exception as e:
         print_exc()
         return (False, e.__str__())
