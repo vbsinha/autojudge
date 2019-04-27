@@ -91,13 +91,13 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
 
     try:
         c = models.Contest.objects.get(pk=contest)
-        p = models.Problem(code=code, contest=c, name=name, statement=statement,
-                           input_format=input_format, output_format=output_format,
-                           difficulty=difficulty, time_limit=time_limit, memory_limit=memory_limit,
-                           file_format=file_format, start_code=start_code, max_score=max_score,
-                           compilation_script=compilation_script,
-                           test_script=test_script, setter_solution=setter_solution)
-        p.save()
+        p = models.Problem.objects.create(
+            code=code, contest=c, name=name, statement=statement,
+            input_format=input_format, output_format=output_format,
+            difficulty=difficulty, time_limit=time_limit, memory_limit=memory_limit,
+            file_format=file_format, start_code=start_code, max_score=max_score,
+            compilation_script=compilation_script,
+            test_script=test_script, setter_solution=setter_solution)
 
         if not os.path.exists(os.path.join('content', 'problems', p.code)):
             # Create the problem directory explictly if not yet created
@@ -287,9 +287,9 @@ def process_solution(problem_id: str, participant: str, file_type,
 
     try:
         for testcase in testcases:
-            st = models.SubmissionTestCase(submission=s, testcase=testcase, verdict='R',
-                                           memory_taken=0, time_taken=timedelta(seconds=0))
-            st.save()
+            models.SubmissionTestCase.objects.create(submission=s, testcase=testcase,
+                                                     verdict='R', memory_taken=0,
+                                                     time_taken=timedelta(seconds=0))
     except Exception as e:
         print_exc()
         return (False, e.__str__())
@@ -373,13 +373,12 @@ def get_personcontest_permission(person: Optional[str], contest: int) -> Optiona
                 return None
         except Exception:
             return None
+    p = models.Person.objects.get(email=person)
+    c = models.Contest.objects.get(pk=contest)
     try:
-        p = models.Person.objects.get(email=person)
-        c = models.Contest.objects.get(pk=contest)
         cp = models.ContestPerson.objects.get(person=p, contest=c)
         return cp.role
     except models.ContestPerson.DoesNotExist:
-        c = models.Contest.objects.get(pk=contest)
         if c.public:
             return False
     except Exception:
@@ -396,11 +395,17 @@ def delete_personcontest(person: str, contest: str) -> Tuple[bool, Optional[str]
     try:
         p = models.Person.objects.get(email=person)
         c = models.Contest.objects.get(pk=contest)
-        if models.ContestPerson.objects.filter(contest=c).count() > 1:
-            models.ContestPerson.objects.filter(person=p, contest=c).delete()
-            return (True, None)
-        else:
-            return (False, 'This contest cannot be orphaned!')
+        cpset = models.ContestPerson.objects.filter(person=p, contest=c)
+        if cpset.exists():
+            cp = cpset[0]
+            if (cp.role is False) or \
+               (models.ContestPerson.objects.filter(contest=c, role=True).count() > 1):
+                # If the person to be deleted is a participant or there are more than 1 posters
+                # then we can delete the record from db.
+                cpset.delete()
+            else:
+                return (False, 'This contest cannot be orphaned!')
+        return (True, None)
     except Exception as e:
         print_exc()
         return (False, e.__str__())
@@ -629,9 +634,8 @@ def process_comment(problem: str, person: str, commenter: str,
         problem = models.Problem.objects.get(pk=problem)
         person = models.Person.objects.get(email=person)
         commenter = models.Person.objects.get(email=commenter)
-        c = models.Comment(problem=problem, person=person,
-                           commenter=commenter, timestamp=timestamp, comment=comment)
-        c.save()
+        models.Comment.objects.create(problem=problem, person=person,
+                                      commenter=commenter, timestamp=timestamp, comment=comment)
         return (True, None)
     except Exception as e:
         print_exc()
@@ -668,7 +672,7 @@ def get_csv(contest: str) -> Tuple[bool, Any]:
         writer = csvwriter(csvstring)
         writer.writerow(['Email', 'Score'])
 
-        if problems.count() > 0:
+        if problems.exists():
             # Get the final scores for each problem for any participant who has attempted.
             submissions = models.PersonProblemFinalScore.objects.filter(problems[0])
             for problem in problems[1:]:
