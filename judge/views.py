@@ -20,6 +20,15 @@ def _get_user(request) -> User:
         return None
 
 
+def _return_file_as_response(path_name):
+    f = File(open(path_name, 'rb'))
+    response = HttpResponse(f, content_type='application/octet-stream')
+    f.close()
+    f_name = os.path.basename(path_name)
+    response['Content-Disposition'] = 'attachment; filename="{}"'.format(f_name)
+    return response
+
+
 def handler404(request, exception=None):
     return render(request, '404.html', status=404)
 
@@ -226,17 +235,35 @@ def problem_detail(request, problem_id):
 def problem_starting_code(request, problem_id: str):
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
-    perm = handler.get_personproblem_permission(
-        None if user is None else user.email, problem_id)
+    perm = handler.get_personproblem_permission(None if user is None else user.email, problem_id)
     if perm is None:
         return handler404(request)
     elif problem.start_code:
-        f = File(open(problem.start_code.path, 'rb'))
-        response = HttpResponse(f, content_type='application/octet-stream')
-        f.close()
-        f_name = os.path.basename(problem.start_code.path)
-        response['Content-Disposition'] = 'attachment; filename="{}"'.format(f_name)
-        return response
+        return _return_file_as_response(problem.start_code.path)
+    else:
+        return handler404(request)
+
+
+def problem_compilation_script(request, problem_id: str):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    user = _get_user(request)
+    perm = handler.get_personproblem_permission(None if user is None else user.email, problem_id)
+    if perm is None or not perm:
+        return handler404(request)
+    elif problem.compilation_script:
+        return _return_file_as_response(problem.compilation_script.path)
+    else:
+        return handler404(request)
+
+
+def problem_test_script(request, problem_id: str):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    user = _get_user(request)
+    perm = handler.get_personproblem_permission(None if user is None else user.email, problem_id)
+    if perm is None or not perm:
+        return handler404(request)
+    elif problem.test_script:
+        return _return_file_as_response(problem.test_script.path)
     else:
         return handler404(request)
 

@@ -104,16 +104,22 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
             # This will happen when both compilation_script and test_script were None
             os.makedirs(os.path.join('content', 'problems', p.code))
 
-        if cp_comp_script is True:
+        if cp_comp_script:
             # Copy the default comp_script if the user did not upload custom
             run(['cp', os.path.join('judge', compilation_script),
                  os.path.join('content', 'problems', p.code, 'compilation_script.sh')])
-        if cp_test_script is True:
+            p.compilation_script = os.path.join('content', 'problems',
+                                                p.code, 'compilation_script.sh')
+
+        if cp_test_script:
             # Copy the default test_script if the user did not upload custom
             run(['cp', os.path.join('judge', test_script),
                  os.path.join('content', 'problems', p.code, 'test_script.sh')])
+            p.test_script = os.path.join('content', 'problems', p.code, 'test_script.sh')
 
-        # TODO: Process setter solution
+        if cp_comp_script or cp_test_script:
+            p.save()
+
         return (True, None)
     except Exception as e:
         print_exc()
