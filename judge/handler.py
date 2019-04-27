@@ -373,13 +373,12 @@ def get_personcontest_permission(person: Optional[str], contest: int) -> Optiona
                 return None
         except Exception:
             return None
+    p = models.Person.objects.get(email=person)
+    c = models.Contest.objects.get(pk=contest)
     try:
-        p = models.Person.objects.get(email=person)
-        c = models.Contest.objects.get(pk=contest)
         cp = models.ContestPerson.objects.get(person=p, contest=c)
         return cp.role
     except models.ContestPerson.DoesNotExist:
-        c = models.Contest.objects.get(pk=contest)  # TODO: Why is this line duplicated?
         if c.public:
             return False
     except Exception:
@@ -397,7 +396,7 @@ def delete_personcontest(person: str, contest: str) -> Tuple[bool, Optional[str]
         p = models.Person.objects.get(email=person)
         c = models.Contest.objects.get(pk=contest)
         cpset = models.ContestPerson.objects.filter(person=p, contest=c)
-        if cpset.count() > 0:
+        if cpset.exists():
             cp = cpset[0]
             if (cp.role is False) or \
                (models.ContestPerson.objects.filter(contest=c, role=True).count() > 1):
@@ -673,7 +672,7 @@ def get_csv(contest: str) -> Tuple[bool, Any]:
         writer = csvwriter(csvstring)
         writer.writerow(['Email', 'Score'])
 
-        if problems.count() > 0:
+        if problems.exists():
             # Get the final scores for each problem for any participant who has attempted.
             submissions = models.PersonProblemFinalScore.objects.filter(problems[0])
             for problem in problems[1:]:
