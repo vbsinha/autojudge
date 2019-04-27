@@ -135,19 +135,16 @@
         {% endfor %}
     </div>
     {% endif %}
-    {% if problem.start_code %}
     <div class="col-12 mb-4">
+        {% if problem.start_code %}
         <a href="{% url 'judge:problem_starting_code' problem.pk %}" class="btn btn-default">Download starting code</a>
+        {% endif %}
+        {% if type == 'Poster' %}
+        <a href="{% url 'judge:problem_compilation_script' problem.pk %}" class="btn btn-default">Download Compilation
+            Script</a>
+        <a href="{% url 'judge:problem_test_script' problem.pk %}" class="btn btn-default">Download Test Script</a>
+        {% endif %}
     </div>
-    {% endif %}
-    {% if type == 'Poster' %}
-        <div class="col-6 mb-4">
-            <a href="{% url 'judge:problem_compilation_script' problem.pk %}" class="btn btn-default">Download Compilation Script</a>
-        </div>
-        <div class="col-6 mb-4">
-            <a href="{% url 'judge:problem_test_script' problem.pk %}" class="btn btn-default">Download Test Script</a>
-        </div>
-    {% endif %}
 </div>
 
 <!-- TODO Check if form is restricted -->
