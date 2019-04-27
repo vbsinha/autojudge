@@ -48,7 +48,7 @@
     inputFormatQuill.disable()
     outputFormatQuill.disable()
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         $(".custom-file-input").on("change", function () {
             var fileName = $(this).val().split("\\").pop();
             $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
@@ -67,13 +67,6 @@
         {% if type == 'Poster' %}<a href="{% url 'judge:edit_problem' problem.pk %}" class="btn btn-primary">Edit
             Problem</a>{% endif %}
     </div>
-    <div class="col-12">
-        <div><b>Max Score:</b> {{ problem.max_score }}</div>
-        <div><b>Difficulty:</b> {{ problem.difficulty }}</div>
-        <div><b>Time limit:</b> {{ problem.time_limit }}</div>
-        <div><b>Memory limit:</b> {{ problem.memory_limit }} MB</div>
-        <div><b>Allowed file extensions:</b> {{ problem.file_format }}</div>
-    </div>
     <div class="col-12 my-4">
         <h4 class="">Statement</h4>
         <div id="statementEditor"></div>
@@ -86,36 +79,62 @@
         <h4>Output Format</h4>
         <div id="outputFormatEditor"></div>
     </div>
+    <div class="col-12">
+        <table class="table table-striped">
+            <tbody>
+                <tr>
+                    <th>Max. Score</th>
+                    <td>{{ problem.max_score }}</td>
+                </tr>
+                <tr>
+                    <th>Difficulty</th>
+                    <td>{{ problem.difficulty }}</td>
+                </tr>
+                <tr>
+                    <th>Time limit</th>
+                    <td>{{ problem.time_limit }}</td>
+                </tr>
+                <tr>
+                    <th>Memory limit</th>
+                    <td>{{ problem.memory_limit }} MB</td>
+                </tr>
+                <tr>
+                    <th>Allowed file extensions</th>
+                    <td>{{ problem.file_format }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
     <div class="col-12 my-4">
         <h4>Public test cases</h4>
         {% for test in public_tests %}
         <h5>Test Case {{ forloop.counter }}</h5>
-        <!-- TODO Display input/output files -->
-        <!-- TODO Hide Private test cases for particpants -->
-        <div class="col-12 col-md-6">
+        <div class="col-12">
             <h6>Input</h6>
-            <pre>{{ test }}</pre>
+            <pre class="bg-secondary p-2 rounded"><code>{{ test.0 }}</code></pre>
         </div>
-        <div class="col-12 col-md-6">
+        <div class="col-12">
             <h6>Output</h6>
-            <pre>{{ test }}</pre>
+            <pre class="bg-secondary p-2 rounded"><code>{{ test.1 }}</code></pre>
         </div>
         {% endfor %}
     </div>
+    {% if type == 'Poster' %}
     <div class="col-12 my-4">
         <h4>Private test cases</h4>
         {% for test in private_tests %}
         <h5>Test Case {{ forloop.counter }}</h5>
-        <div class="col-12 col-md-6">
+        <div class="col-12">
             <h6>Input</h6>
-            <pre>{{ test }}</pre>
+            <pre class="bg-secondary p-2 rounded"><code>{{ test.0 }}</code></pre>
         </div>
-        <div class="col-12 col-md-6">
+        <div class="col-12">
             <h6>Output</h6>
-            <pre>{{ test }}</pre>
+            <pre class="bg-secondary p-2 rounded"><code>{{ test.1 }}</code></pre>
         </div>
         {% endfor %}
     </div>
+    {% endif %}
     {% if problem.start_code %}
     <div class="col-12 mb-4">
         <a href="{% url 'judge:problem_starting_code' problem.pk %}" class="btn btn-default">Download starting code</a>

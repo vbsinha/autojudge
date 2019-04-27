@@ -171,8 +171,6 @@ def problem_detail(request, problem_id):
     context = {
         'problem': problem,
         'type': 'Poster' if perm else 'Participant',
-        'public_tests': public_tests,
-        'private_tests': private_tests,
     }
     if perm is False and user is None:
         pass
@@ -207,6 +205,21 @@ def problem_detail(request, problem_id):
         else:
             form = AddTestCaseForm()
         context['form'] = form
+    context['public_tests'] = []
+    context['private_tests'] = []
+    for t in public_tests:
+        input_file = File(open(t.inputfile.path, 'r'))
+        output_file = File(open(t.outputfile.path, 'r'))
+        context['public_tests'].append((input_file.file.read(), output_file.file.read()))
+        input_file.close()
+        output_file.close()
+    # TODO restrict private tests
+    for t in private_tests:
+        input_file = File(open(t.inputfile.path, 'r'))
+        output_file = File(open(t.outputfile.path, 'r'))
+        context['private_tests'].append((input_file.file.read(), output_file.file.read()))
+        input_file.close()
+        output_file.close()
     return render(request, 'judge/problem_detail.html', context)
 
 
