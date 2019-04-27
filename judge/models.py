@@ -59,7 +59,7 @@ class Contest(models.Model):
     hard_end_datetime = models.DateTimeField()
 
     # Penalty for late-submission
-    penalty = models.DecimalField(max_digits=4, decimal_places=3, default=0.0)
+    penalty = models.FloatField(default=0.0)
 
     # Is the contest public
     # In public Contests everyone except posters can participate

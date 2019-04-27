@@ -21,10 +21,6 @@ def process_contest(name: str, start_datetime, soft_end_datetime, hard_end_datet
     Only penalty can be None in which case Penalty will be set to 0
     Returns: (True, None) or (False, Exception string)
     """
-    name = 'Unnamed Contest' if name is None or name.strip() == '' else name
-    penalty = 0. if penalty is None else penalty
-    public = False if public is None else public
-
     try:
         c = models.Contest(name=name, start_datetime=start_datetime,
                            soft_end_datetime=soft_end_datetime,
@@ -80,14 +76,6 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
     except models.Problem.DoesNotExist:
         pass
 
-    # Some checks and cleanup
-    if difficulty < 0 or difficulty > 5:
-        return (False, 'Difficulty value: {} not within [0,5]'.format(difficulty))
-
-    code = code.lower()
-    if not code.isalnum():
-        return (False, 'Code: {} is not alphanumeric'.format(code))
-
     # Set up default values
     cp_comp_script, cp_test_script = False, False
     if compilation_script is None:
@@ -97,14 +85,9 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
         test_script = './default/test_script.sh'
         cp_test_script = True
 
-    name = 'Name not set' if name is None else name
     statement = 'The problem statement is empty.' if statement is None else statement
     input_format = 'No input format specified.' if input_format is None else input_format
     output_format = 'No output format specified.' if output_format is None else output_format
-    difficulty = 0 if difficulty is None else difficulty
-    memory_limit = 200000 if memory_limit is None else memory_limit
-    file_format = '.py,.cpp,.c' if file_format is None or file_format == '' else file_format
-    max_score = 0 if max_score is None else max_score
 
     try:
         c = models.Contest.objects.get(pk=contest)
@@ -222,7 +205,7 @@ def process_testcase(problem_id: str, ispublic: bool,
     Process a new Testcase
     problem is the 'code' (pk) of the problem.
     WARNING: This function does not rescore all the submissions and so score will not
-    change in response to the new testcase. DONOT CALL THIS FUNCTION ONCE THE
+    change in response to the new testcase. DO NOT CALL THIS FUNCTION ONCE THE
     CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
     """
     try:
@@ -241,7 +224,7 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
     This function deletes the testcase and cascade deletes in
     all the tables the Fk appears.
     WARNING: This function does not rescore all the submissions and so score will not
-    change in response to the deleted testcase. DONOT CALL THIS FUNCTION ONCE THE
+    change in response to the deleted testcase. DO NOT CALL THIS FUNCTION ONCE THE
     CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
     Returns: (True, None)
     """
@@ -255,6 +238,7 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
         if os.path.exists(outputfile_path):
             os.remove(outputfile_path)
         models.TestCase.objects.filter(pk=testcase_id).delete()
+        return (True, None)
     except Exception as e:
         print_exc()
         return (False, e.__str__())
@@ -344,7 +328,7 @@ def add_person_to_contest(person: str, contest: str,
         return (False, e.__str__())
 
 
-def add_person_rgx_to_contest(rgx: str, contest: str, 
+def add_person_rgx_to_contest(rgx: str, contest: str,
                               permission: bool) -> Tuple[bool, Optional[str]]:
     """
     Accepts a regex and adds all the participants matching the rgx in the database to the contest
@@ -476,8 +460,8 @@ def get_personcontest_score(person: str, contest: int) -> Tuple[bool, Any]:
     Pass email in person and contest's pk
     """
     try:
-        p = models.Person.objects.get(person=person)
-        c = models.Contest.objects.get(contest=contest)
+        p = models.Person.objects.get(email=person)
+        c = models.Contest.objects.get(pk=contest)
         problems = models.Problem.objects.filter(contest=c)
         score = 0
         for problem in problems:
