@@ -341,7 +341,7 @@ def add_person_rgx_to_contest(rgx: str, contest: str,
     """
     pattern = compile(rgx)
     try:
-        person_emails = [p.email for p in models.Person.get.all()]
+        person_emails = [p.email for p in models.Person.objects.all()]
         emails_matches = [email for email in person_emails if bool(pattern.match(email))]
         c = models.Contest.objects.get(pk=contest)
         if c.public is True and permission is False:
