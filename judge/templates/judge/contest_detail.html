@@ -71,7 +71,10 @@
     <div class="col-12 my-4">
         <form action="{% url 'judge:delete_contest' contest.pk %}" method="POST">
             {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Delete Contest</button>
+            <button type="submit" class="btn btn-danger btn-icon">
+                <span class="btn-inner--icon"><i class="fas fa-trash pb-2"></i></span>
+                <span class="btn-inner--text">Delete Contest</span>
+            </button>
         </form>
     </div>
     {% endif %}

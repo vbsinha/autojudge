@@ -21,6 +21,7 @@
                     <th>Submission</th>
                     <th>Timestamp</th>
                     <th>Final score</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -29,17 +30,22 @@
                     <td><a href="{% url 'judge:submission_detail' sub.pk %}">{{ sub.pk }}</a></td>
                     <td>{{ sub.timestamp }}</td>
                     <td>{{ sub.final_score }}</td>
+                    <td>
+                        <a href="{% url 'judge:submission_download' sub.pk %}" class="btn btn-icon btn-default">
+                            <span class="btn-inner--icon"><i class="fas fa-download"></i></span>
+                        </a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
             <thead class="thead-dark">
                 <tr>
-                    <th colspan="3">Comments</th>
+                    <th colspan="4">Comments</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td colspan="3">
+                    <td colspan="4">
                         <ul class="list-group">
                             {% for comm in subs.1 %}
                             <li class="list-group-item">

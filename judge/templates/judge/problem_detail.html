@@ -10,9 +10,35 @@
 
 {% block styles %}
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<style>
+    .zero-clipboard {
+        position: relative;
+    }
+
+    .copy-btn {
+        position: absolute;
+        top: .5rem;
+        right: .5rem;
+        z-index: 10;
+        display: block;
+        padding: .25rem .5rem;
+        font-size: 75%;
+        color: #818a91;
+        cursor: pointer;
+        background-color: transparent;
+        border: 0;
+        border-radius: .25rem;
+    }
+
+    .copy-btn:hover {
+        color: #fff;
+        background-color: #027de7;
+    }
+</style>
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script>
     let quillModules = {
@@ -55,6 +81,29 @@
         });
     })
 </script>
+<script>
+    $('.copy-btn').attr('data-original-title', 'Copy to clipboard')
+    $('.copy-btn').tooltip({
+        placement: 'bottom'
+    })
+    $('.copy-btn').mouseleave(function () {
+        $(this).attr('data-original-title', 'Copy to clipboard')
+    })
+
+    function setTooltip(btn, message) {
+        $(btn).tooltip('hide').attr('data-original-title', message).tooltip('show')
+    }
+
+    var clipboard = new ClipboardJS('.copy-btn')
+    clipboard.on('success', function (e) {
+        setTooltip(e.trigger, 'Copied!');
+    });
+
+    clipboard.on('error', function (e) {
+        setTooltip(e.trigger, 'Failed!');
+    });
+
+</script>
 {% endblock %}
 
 {% block content %}
@@ -67,11 +116,11 @@
         {% if type == 'Poster' %}
         <div class="float-right">
             <a href="{% url 'judge:edit_problem' problem.pk %}" class="btn btn-primary">
-                <i class="fa fa-edit"></i>
+                <i class="fas fa-edit"></i>
             </a>
             <form class="d-inline" action="{% url 'judge:delete_problem' problem.pk %}" method="POST">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i></button>
             </form>
         </div>
         {% endif %}
@@ -122,17 +171,25 @@
         <div class="d-inline">
             <form class="d-inline" action="{% url 'judge:delete_testcase' problem.pk test.2 %}" method="POST">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i></button>
             </form>
         </div>
         {% endif %}
         <div class="col-12">
             <h6>Input</h6>
-            <pre class="bg-secondary p-2 rounded"><code>{{ test.0 }}</code></pre>
+            <div class="zero-clipboard">
+                <button class="copy-btn" data-clipboard-target="#pub_test_input_{{ forloop.counter }}">Copy</button>
+                <pre
+                    class="bg-secondary p-2 rounded pre-scrollable"><code id="pub_test_input_{{ forloop.counter }}">{{ test.0 }}</code></pre>
+            </div>
         </div>
         <div class="col-12">
             <h6>Output</h6>
-            <pre class="bg-secondary p-2 rounded"><code>{{ test.1 }}</code></pre>
+            <div class="zero-clipboard">
+                <button class="copy-btn" data-clipboard-target="#pub_test_output_{{ forloop.counter }}">Copy</button>
+                <pre
+                    class="bg-secondary p-2 rounded pre-scrollable"><code id="pub_test_output_{{ forloop.counter }}">{{ test.1 }}</code></pre>
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -144,16 +201,24 @@
         <div class="d-inline">
             <form class="d-inline" action="{% url 'judge:delete_testcase' problem.pk test.2 %}" method="POST">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+                <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i></button>
             </form>
         </div>
         <div class="col-12">
             <h6>Input</h6>
-            <pre class="bg-secondary p-2 rounded"><code>{{ test.0 }}</code></pre>
+            <div class="zero-clipboard">
+                <button class="copy-btn" data-clipboard-target="#pri_test_input_{{ forloop.counter }}">Copy</button>
+                <pre
+                    class="bg-secondary p-2 rounded pre-scrollable"><code id="pri_test_input_{{ forloop.counter }}">{{ test.0 }}</code></pre>
+            </div>
         </div>
         <div class="col-12">
             <h6>Output</h6>
-            <pre class="bg-secondary p-2 rounded"><code>{{ test.1 }}</code></pre>
+            <div class="zero-clipboard">
+                <button class="copy-btn" data-clipboard-target="#pri_test_output_{{ forloop.counter }}">Copy</button>
+                <pre
+                    class="bg-secondary p-2 rounded pre-scrollable"><code id="pri_test_output_{{ forloop.counter }}">{{ test.1 }}</code></pre>
+            </div>
         </div>
         {% endfor %}
     </div>

@@ -454,6 +454,19 @@ def problem_submissions(request, problem_id: str):
     return render(request, 'judge/problem_submissions.html', context)
 
 
+def submission_download(request, submission_id: str):
+    user = _get_user(request)
+    submission = get_object_or_404(Submission, pk=submission_id)
+    perm = handler.get_personproblem_permission(
+        None if user is None else user.email, submission.problem.pk)
+    if user is None:
+        return handler404(request)
+    if perm or user.email == submission.participant.pk:
+        return _return_file_as_response(submission.submission_file.path)
+    else:
+        return handler404(request)
+
+
 def submission_detail(request, submission_id: str):
     user = _get_user(request)
     submission = get_object_or_404(Submission, pk=submission_id)
