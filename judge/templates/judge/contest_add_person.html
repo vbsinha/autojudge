@@ -4,6 +4,12 @@
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'judge:contest_detail' contest_id %}">Contest {{ contest_id }}</a></li>
+{% if type == 'Poster' %}
+<li class="breadcrumb-item"><a href="{% url 'judge:get_posters' contest_id %}">Posters</a></li>
+{% endif %}
+{% if type == 'Participant' %}
+<li class="breadcrumb-item"><a href="{% url 'judge:get_participants' contest_id %}">Participants</a></li>
+{% endif %}
 <li class="breadcrumb-item active" aria-current="page">Add {{ type }}</li>
 {% endblock %}
 

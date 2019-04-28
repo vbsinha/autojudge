@@ -5,17 +5,17 @@ from io import StringIO
 from shutil import rmtree
 from logging import error
 from subprocess import run
-from datetime import timedelta
+from datetime import timedelta, datetime
 from traceback import print_exc
 from csv import writer as csvwriter
 from pickle import load as pickle_load
-from typing import Tuple, Optional, Dict, Any
+from typing import Tuple, Optional, Dict, Any, List
 
 from . import models
 
 
-def process_contest(name: str, start_datetime, soft_end_datetime, hard_end_datetime,
-                    penalty: float, public: bool) -> Tuple[bool, str]:
+def process_contest(name: str, start_datetime: datetime, soft_end_datetime: datetime,
+                    hard_end_datetime: datetime, penalty: float, public: bool) -> Tuple[bool, str]:
     """
     Process a New Contest
     Only penalty can be None in which case Penalty will be set to 0
@@ -357,6 +357,46 @@ def add_person_rgx_to_contest(rgx: str, contest: str,
             return (False, 'Regex {} did not match any person registered'.format(rgx))
         for email in emails_matches:
             add_person_to_contest(email, contest, permission)
+        return (True, None)
+    except Exception as e:
+        print_exc()
+        return (False, e.__str__())
+
+
+def add_persons_to_contest(persons: List[str], contest: str,
+                           permission: bool) -> Tuple[bool, Optional[str]]:
+    """
+    Add the relation between Person and Contest for all the Person in persons list
+    persons is the list of email of persons
+    contest is the pk of the contest
+    permission is False if participant and True is poster
+    First checks if any of the person exists with an opposing role. If so DO NOT ADD ANYONE
+    Tnstead return (False, '{} already exists with other permission'.format(p.email))
+    Otherwise if not person hhas conflicting permission add all the persons and return (True, None)
+    This fuction would create records for all the persons who do not already have one irrespective
+    of whether anyone has conflict or not.
+    """
+    try:
+        for person in persons:
+            models.Person.objects.get_or_create(email=person)
+
+        c = models.Contest.objects.get(pk=contest)
+        if c.public is True and permission is False:
+            # Do not store participants for public contests
+            return (True, None)
+
+        person_list = [models.Person.objects.get(email=person) for person in persons]
+        for p in person_list:
+            try:
+                # Check that person is not already registered in the contest with other permission
+                cp = models.ContestPerson.objects.get(person=p, contest=c)
+                if cp.role == (not permission):
+                    return (False, '{} already exists with other permission'.format(p.email))
+            except models.ContestPerson.DoesNotExist:
+                continue
+
+        for p in person_list:
+            models.ContestPerson.objects.get_or_create(contest=c, person=p, role=permission)
         return (True, None)
     except Exception as e:
         print_exc()

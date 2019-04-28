@@ -1,5 +1,29 @@
 from django import forms
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, validate_email, EMPTY_VALUES
+
+
+class MultiEmailField(forms.Field):
+    description = 'Email addresses'
+
+    def __init__(self, *args, **kwargs):
+        self.token = kwargs.pop('token', ',')
+        super(MultiEmailField, self).__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        if value in EMPTY_VALUES:
+            return []
+        return [item.strip() for item in value.split(self.token) if item.strip()]
+
+    def clean(self, value):
+        value = self.to_python(value)
+        if value in EMPTY_VALUES and self.required:
+            raise forms.ValidationError('This field is required.')
+        for email in value:
+            try:
+                validate_email(email)
+            except forms.ValidationError:
+                raise forms.ValidationError("'{}' is not a valid email address.".format(email))
+        return value
 
 
 class NewContestForm(forms.Form):
@@ -53,9 +77,10 @@ class AddPersonToContestForm(forms.Form):
     Form to add a Person to a Contest.
     """
     # Email ID of the person
-    email = forms.EmailField(label='Email',
-                             widget=forms.EmailInput(attrs={'class': 'form-control'}),
-                             help_text='Enter the e-mail of the person you would like to add.')
+    emails = MultiEmailField(
+        label='Emails',
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        help_text='Enter emails seperated using commas')
 
 
 class DeletePersonFromContest(forms.Form):

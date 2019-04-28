@@ -137,13 +137,13 @@ def add_poster(request, contest_id, role=True):
     if request.method == 'POST':
         form = AddPersonToContestForm(request.POST)
         if form.is_valid():
-            status, err = handler.add_person_to_contest(
-                form.cleaned_data.get('email'), contest_id, role)
+            emails = form.cleaned_data['emails']
+            status, err = handler.add_persons_to_contest(emails, contest_id, role)
             if status:
                 return redirect(reverse('judge:get_{}s'.format(context['type'].lower()),
                                         args=(contest_id,)))
             else:
-                form.non_field_errors = err
+                form.add_error(None, err)
     else:
         form = AddPersonToContestForm()
     context['form'] = form
