@@ -4,7 +4,10 @@
     <div class="col-12">
         <h1 class="d-inline-block">Contests</h1>
         {% if user.is_authenticated %}
-        <a class="btn btn-primary float-right" href="{% url 'judge:new_contest' %}">New Contest</a>
+        <a class="btn btn-icon btn-primary float-right" href="{% url 'judge:new_contest' %}">
+            <span class="btn-inner--icon"><i class="fa fa-plus"></i></span>
+            <span class="btn-inner--text">New Contest</span>
+        </a>
         {% endif %}
     </div>
     <div class="col-12">
