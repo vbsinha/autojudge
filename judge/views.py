@@ -172,6 +172,22 @@ def contest_detail(request, contest_id):
     })
 
 
+def contest_scores_csv(request, contest_id):
+    user = _get_user(request)
+    perm = handler.get_personcontest_permission(
+        None if user is None else user.email, contest_id)
+    if perm:
+        status, csv = handler.get_csv(contest_id)
+        if status:
+            response = HttpResponse(csv)
+            response.AddHeader("Content-Disposition",
+                               "attachment;filename=contest_{}.csv".format(contest_id))
+            return response
+        # else:
+        #     print(csv)
+    return handler404(request)
+
+
 def problem_detail(request, problem_id):
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
