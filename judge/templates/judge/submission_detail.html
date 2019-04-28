@@ -6,11 +6,20 @@
 <li class="breadcrumb-item"><a href="{% url 'judge:contest_detail' problem.contest.pk %}">Contest
         {{ problem.contest.pk }}</a></li>
 <li class="breadcrumb-item"><a href="{% url 'judge:problem_detail' problem.pk %}">Problem {{ problem.code }}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'judge:problem_submissions' problem.pk %}">Submissions</a></li>
 <li class="breadcrumb-item active" aria-current="page">Submission {{ submission.pk }}</li>
 {% endblock %}
 
 {% block content %}
 <div class="row">
+    <div class="col-12 my-4">
+        <div class="float-right">
+            <a href="{% url 'judge:submission_download' submission.pk %}" class="btn btn-icon btn-default">
+                <span class="btn-inner--icon"><i class="fa fa-download"></i></span>
+                <span class="btn-inner--text">Download</span>
+            </a>
+        </div>
+    </div>
     <div class="col-12">
         <table class="table table-striped">
             <tbody>

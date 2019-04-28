@@ -21,6 +21,7 @@
                     <th>Submission</th>
                     <th>Timestamp</th>
                     <th>Final score</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -29,6 +30,11 @@
                     <td><a href="{% url 'judge:submission_detail' sub.pk %}">{{ sub.pk }}</a></td>
                     <td>{{ sub.timestamp }}</td>
                     <td>{{ sub.final_score }}</td>
+                    <td>
+                        <a href="{% url 'judge:submission_download' sub.pk %}" class="btn btn-icon btn-default">
+                            <span class="btn-inner--icon"><i class="fa fa-download"></i></span>
+                        </a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
