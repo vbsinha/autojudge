@@ -10,6 +10,7 @@ from traceback import print_exc
 from csv import writer as csvwriter
 from pickle import load as pickle_load
 from typing import Tuple, Optional, Dict, Any, List
+from django.utils import timezone
 
 from . import models
 
@@ -410,10 +411,11 @@ def get_personcontest_permission(person: Optional[str], contest: int) -> Optiona
     contest is the pk of the contest
     returns False if participant and True is poster None if neither
     """
+    curr = timezone.now()
     if person is None:
         try:
             c = models.Contest.objects.get(pk=contest)
-            if c.public:
+            if c.public and curr >= c.start_datetime:
                 return False
             else:
                 return None
@@ -421,11 +423,14 @@ def get_personcontest_permission(person: Optional[str], contest: int) -> Optiona
             return None
     p = models.Person.objects.get(email=person)
     c = models.Contest.objects.get(pk=contest)
+    # partcipant and Current datetime < C.date_time -> None
     try:
         cp = models.ContestPerson.objects.get(person=p, contest=c)
+        if cp.role is False and curr < c.start_datetime:
+            return None
         return cp.role
     except models.ContestPerson.DoesNotExist:
-        if c.public:
+        if c.public and curr >= c.start_datetime:
             return False
     except Exception:
         return None
