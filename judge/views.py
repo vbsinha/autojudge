@@ -268,6 +268,10 @@ def problem_test_script(request, problem_id: str):
         return handler404(request)
 
 
+def problem_default_script(request, script_name: str):
+    return _return_file_as_response(os.path.join('judge', 'default', script_name + '.sh'))
+
+
 def new_problem(request, contest_id):
     contest = get_object_or_404(Contest, pk=contest_id)
     user = _get_user(request)
@@ -287,7 +291,7 @@ def new_problem(request, contest_id):
                 form.cleaned_data['time_limit'], form.cleaned_data['memory_limit'],
                 form.cleaned_data['file_exts'], form.cleaned_data['starting_code'],
                 form.cleaned_data['max_score'], form.cleaned_data['compilation_script'],
-                form.cleaned_data['testing_script'], form.cleaned_data.get('setter_soln'))
+                form.cleaned_data['test_script'], form.cleaned_data.get('setter_soln'))
             if status:
                 return redirect(reverse('judge:problem_detail', args=(code,)))
             else:

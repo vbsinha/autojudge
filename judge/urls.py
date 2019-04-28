@@ -24,6 +24,8 @@ urlpatterns = [
          views.problem_compilation_script, name='problem_compilation_script'),
     path('problem/<str:problem_id>/test-script/',
          views.problem_test_script, name='problem_test_script'),
+    path('problem/default-scripts/<str:script_name>/',
+         views.problem_default_script, name='problem_default_script'),
     path('contest/<int:contest_id>/poster/new/',
          views.add_poster, name='contest_add_poster'),
     path('contest/<int:contest_id>/participant/new/',
