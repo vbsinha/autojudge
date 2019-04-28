@@ -184,8 +184,6 @@ def contest_scores_csv(request, contest_id):
             response['Content-Disposition'] = \
                 "attachment; filename=contest_{}.csv".format(contest_id)
             return response
-        # else:
-        #     print(csv)
     return handler404(request)
 
 
