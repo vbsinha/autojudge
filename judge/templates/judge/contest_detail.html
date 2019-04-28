@@ -12,10 +12,11 @@
 <div class="row">
     <div class="col-12">
         <h2 class="d-inline">{{ contest.name }}</h2>
-        <div class="float-right">
+        <div class="col-md-5 float-right">
             <i class="ni ni-calendar-grid-58"></i> Starts at {{ contest.start_datetime|localtime }}<br>
             {% if contest.soft_end_datetime != contest.hard_end_datetime %}
-            <i class="ni ni-calendar-grid-58"></i> Submissions penalized after {{ contest.soft_end_datetime|localtime }}<br>
+            <i class="ni ni-calendar-grid-58"></i> Submissions penalized after
+            {{ contest.soft_end_datetime|localtime }}<br>
             {% endif %}
             <i class="ni ni-calendar-grid-58"></i> Ends at {{ contest.hard_end_datetime|localtime }}
         </div>
@@ -24,12 +25,16 @@
 
 <div class="row">
     <div class="col-12">
-        {% if type == 'Poster' %}<a class="btn btn-primary" href="{% url 'judge:new_problem' contest.pk %}">Add
-            Problem</a>{% endif %}
+        {% if type == 'Poster' %}
+        <a class="btn btn-primary" href="{% url 'judge:new_problem' contest.pk %}">Add Problem</a>
+        <a class="btn btn-primary" href="{% url 'judge:contest_scores_csv' contest.pk %}">Download Scores</a>
+        {% endif %}
         <a class="btn btn-primary" href="{% url 'judge:get_posters' contest.pk %}">See posters</a>
         {% if not contest.public %}<a class="btn btn-primary" href="{% url 'judge:get_participants' contest.pk %}">See
             participants</a>{% endif %}
         {% for problem in problems %}
+    </div>
+    <div class="col-12 col-md-7">
         <div class="card m-3">
             <div class="card-body">
                 <h4><code>[{{ problem.code }}]</code> {{ problem.name }}</h4>
@@ -37,6 +42,30 @@
             </div>
         </div>
         {% endfor %}
+    </div>
+    <div class="col-12 col-md-5">
+        {% if leaderboard_status %}
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Rank</th>
+                    <th>Participant</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in leaderboard %}
+                <tr>
+                    <th>{{ forloop.counter }}</th>
+                    <td>{{ entry.0 }}</td>
+                    <td>{{ entry.1 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>{{ leaderboard }}</p>
+        {% endif %}
     </div>
     {% if type == 'Poster' %}
     <div class="col-12 my-4">

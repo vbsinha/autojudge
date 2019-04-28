@@ -15,6 +15,7 @@ urlpatterns = [
     path('auth/', include('social_django.urls', namespace='social')),
     path('contest/new/', views.new_contest, name='new_contest'),
     path('contest/<int:contest_id>/', views.contest_detail, name='contest_detail'),
+    path('contest/<int:contest_id>/scores/', views.contest_scores_csv, name='contest_scores_csv'),
     path('contest/<int:contest_id>/delete/', views.delete_contest, name='delete_contest'),
     path('contest/<int:contest_id>/problem/new/',
          views.new_problem, name='new_problem'),

@@ -680,9 +680,9 @@ def get_csv(contest: str) -> Tuple[bool, Any]:
 
         if problems.exists():
             # Get the final scores for each problem for any participant who has attempted.
-            submissions = models.PersonProblemFinalScore.objects.filter(problems[0])
+            submissions = models.PersonProblemFinalScore.objects.filter(problem=problems[0])
             for problem in problems[1:]:
-                submissions |= models.PersonProblemFinalScore.objects.filter(problem)
+                submissions |= models.PersonProblemFinalScore.objects.filter(problem=problem)
 
             # Now sort all the person-problem-scores by 'person' and 'problem'
             # This will create scores like:
@@ -714,6 +714,7 @@ def get_csv(contest: str) -> Tuple[bool, Any]:
                     sum_scores = score[1]
             writer.writerow([curr_person, sum_scores])
 
+        csvstring.seek(0)
         return (True, csvstring)
     except Exception as e:
         print_exc()

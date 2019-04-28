@@ -162,11 +162,28 @@ def contest_detail(request, contest_id):
     if perm is None:
         return handler404(request)
     problems = Problem.objects.filter(contest_id=contest_id)
+    status, leaderboard = handler.get_leaderboard(contest_id)
     return render(request, 'judge/contest_detail.html', {
         'contest': contest,
         'type': 'Poster' if perm else 'Participant',
         'problems': problems,
+        'leaderboard_status': status,
+        'leaderboard': leaderboard,
     })
+
+
+def contest_scores_csv(request, contest_id):
+    user = _get_user(request)
+    perm = handler.get_personcontest_permission(
+        None if user is None else user.email, contest_id)
+    if perm:
+        status, csv = handler.get_csv(contest_id)
+        if status:
+            response = HttpResponse(csv.read())
+            response['Content-Disposition'] = \
+                "attachment; filename=contest_{}.csv".format(contest_id)
+            return response
+    return handler404(request)
 
 
 def delete_contest(request, contest_id):
