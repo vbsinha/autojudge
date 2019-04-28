@@ -98,7 +98,9 @@ def saver(sub_id):
 
     ppf, _ = models.PersonProblemFinalScore.objects.get_or_create(person=s.participant,
                                                                   problem=problem)
-    if ppf.score < s.final_score:
+    if ppf.score <= s.final_score:
+        # <= because otherwise when someone submits for the first time and scores 0
+        # (s)he will not show up in leaderboard
         ppf.score = s.final_score
         update_lb = True
     ppf.save()
