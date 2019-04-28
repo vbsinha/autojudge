@@ -59,13 +59,22 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-12 col-md-9 mb-3">
+    <div class="col mb-3">
         <h2 class="d-inline"><code>[{{ problem.code }}]</code></h2>
         <h4 class="d-inline mx-2">{{ problem.name }}</h4>
     </div>
-    <div class="col-12 col-md-3 mb-3">
-        {% if type == 'Poster' %}<a href="{% url 'judge:edit_problem' problem.pk %}" class="btn btn-primary">Edit
-            Problem</a>{% endif %}
+    <div class="col mb-3">
+        {% if type == 'Poster' %}
+        <div class="float-right">
+            <a href="{% url 'judge:edit_problem' problem.pk %}" class="btn btn-primary">
+                <i class="fa fa-edit"></i>
+            </a>
+            <form class="d-inline" action="{% url 'judge:delete_problem' problem.pk %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+            </form>
+        </div>
+        {% endif %}
     </div>
     <div class="col-12 my-4">
         <h4 class="">Statement</h4>
@@ -108,7 +117,15 @@
     <div class="col-12 my-4">
         <h4>Public test cases</h4>
         {% for test in public_tests %}
-        <h5>Test Case {{ forloop.counter }}</h5>
+        <h5 class="d-inline">Test Case {{ forloop.counter }}</h5>
+        {% if type == 'Poster' %}
+        <div class="d-inline">
+            <form class="d-inline" action="{% url 'judge:delete_testcase' problem.pk test.2 %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+            </form>
+        </div>
+        {% endif %}
         <div class="col-12">
             <h6>Input</h6>
             <pre class="bg-secondary p-2 rounded"><code>{{ test.0 }}</code></pre>
@@ -123,7 +140,13 @@
     <div class="col-12 my-4">
         <h4>Private test cases</h4>
         {% for test in private_tests %}
-        <h5>Test Case {{ forloop.counter }}</h5>
+        <h5 class="d-inline">Test Case {{ forloop.counter }}</h5>
+        <div class="d-inline">
+            <form class="d-inline" action="{% url 'judge:delete_testcase' problem.pk test.2 %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+            </form>
+        </div>
         <div class="col-12">
             <h6>Input</h6>
             <pre class="bg-secondary p-2 rounded"><code>{{ test.0 }}</code></pre>
