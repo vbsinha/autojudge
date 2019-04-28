@@ -147,10 +147,10 @@ class NewProblemForm(forms.Form):
                                          help_text='Upload a custom compilation script.')
 
     # Problem Test Script
-    testing_script = forms.FileField(label='Testing script',
-                                     widget=forms.FileInput(attrs={'class': 'form-control-file'}),
-                                     allow_empty_file=False, required=False,
-                                     help_text='Upload a custom testing script.')
+    test_script = forms.FileField(label='Testing script',
+                                  widget=forms.FileInput(attrs={'class': 'form-control-file'}),
+                                  allow_empty_file=False, required=False,
+                                  help_text='Upload a custom testing script.')
 
 
 class EditProblemForm(forms.Form):
