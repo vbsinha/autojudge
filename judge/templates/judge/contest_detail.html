@@ -12,7 +12,7 @@
 <div class="row">
     <div class="col-12">
         <h2 class="d-inline">{{ contest.name }}</h2>
-        <div class="float-right">
+        <div class="col-md-5 float-right">
             <i class="ni ni-calendar-grid-58"></i> Starts at {{ contest.start_datetime|localtime }}<br>
             {% if contest.soft_end_datetime != contest.hard_end_datetime %}
             <i class="ni ni-calendar-grid-58"></i> Submissions penalized after
@@ -34,7 +34,7 @@
             participants</a>{% endif %}
         {% for problem in problems %}
     </div>
-    <div class="col-12 col-md-8">
+    <div class="col-12 col-md-7">
         <div class="card m-3">
             <div class="card-body">
                 <h4><code>[{{ problem.code }}]</code> {{ problem.name }}</h4>
@@ -43,7 +43,7 @@
         </div>
         {% endfor %}
     </div>
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-5">
         {% if leaderboard_status %}
         <table class="table table-striped">
             <thead class="thead-dark">
