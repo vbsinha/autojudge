@@ -19,14 +19,14 @@ class NewContestForm(forms.Form):
     # Contest Soft End Timestamp
     contest_soft_end = forms.DateTimeField(label='Soft End Date for contest',
                                            widget=forms.DateTimeInput(
-                                            attrs={'class': 'form-control'}),
+                                               attrs={'class': 'form-control'}),
                                            help_text='Specify after when would you like to \
                                                       penalize submissions.')
 
     # Contest Hard End Timestamp
     contest_hard_end = forms.DateTimeField(label='Hard End Date for contest',
                                            widget=forms.DateTimeInput(
-                                            attrs={'class': 'form-control'}),
+                                               attrs={'class': 'form-control'}),
                                            help_text='Specify when the contest completely ends.')
 
     # Contest Penalty factor
@@ -142,7 +142,7 @@ class NewProblemForm(forms.Form):
     # Problem Compilation Script
     compilation_script = forms.FileField(label='Compilation script',
                                          widget=forms.FileInput(
-                                          attrs={'class': 'form-control-file'}),
+                                             attrs={'class': 'form-control-file'}),
                                          allow_empty_file=False, required=False,
                                          help_text='Upload a custom compilation script.')
 
@@ -219,3 +219,9 @@ class AddTestCaseForm(forms.Form):
     # TestCase Output
     output_file = forms.FileField(label='Output file', allow_empty_file=False, required=True,
                                   help_text='Upload output for test case.')
+
+
+class NewCommentForm(forms.Form):
+    participant_email = forms.EmailField(label='Email', widget=forms.HiddenInput())
+    comment = forms.CharField(label='Comment', required=True, widget=forms.Textarea(
+        attrs={'class': 'form-control', 'rows': 2}))

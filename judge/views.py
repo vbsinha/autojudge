@@ -10,6 +10,7 @@ import os
 from .models import Contest, Problem, TestCase, Submission
 from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
 from .forms import NewProblemForm, EditProblemForm, NewSubmissionForm, AddTestCaseForm
+from .forms import NewCommentForm
 from . import handler
 
 
@@ -168,6 +169,51 @@ def contest_detail(request, contest_id):
     })
 
 
+def delete_contest(request, contest_id):
+    user = _get_user(request)
+    perm = handler.get_personcontest_permission(
+        None if user is None else user.email, contest_id)
+    if perm and request.method == 'POST':
+        status, _ = handler.delete_contest(contest_id)
+        if status:
+            return redirect(reverse('judge:index'))
+        else:
+            return handler404(request)
+    else:
+        return handler404(request)
+
+
+def delete_problem(request, problem_id):
+    user = _get_user(request)
+    problem = get_object_or_404(Problem, pk=problem_id)
+    contest_id = problem.contest.pk
+    perm = handler.get_personproblem_permission(
+        None if user is None else user.email, problem_id)
+    if perm and request.method == 'POST':
+        status, _ = handler.delete_problem(problem_id)
+        if status:
+            return redirect(reverse('judge:contest_detail', args=(contest_id,)))
+        else:
+            return handler404(request)
+    else:
+        return handler404(request)
+
+
+def delete_testcase(request, problem_id, testcase_id):
+    user = _get_user(request)
+    perm = handler.get_personproblem_permission(
+        None if user is None else user.email, problem_id)
+    testcase = get_object_or_404(TestCase, pk=testcase_id)
+    if problem_id == testcase.problem.pk and perm and request.method == 'POST':
+        status, _ = handler.delete_testcase(testcase_id)
+        if status:
+            return redirect(reverse('judge:problem_detail', args=(problem_id,)))
+        else:
+            return handler404(request)
+    else:
+        return handler404(request)
+
+
 def problem_detail(request, problem_id):
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
@@ -219,14 +265,14 @@ def problem_detail(request, problem_id):
     for t in public_tests:
         input_file = File(open(t.inputfile.path, 'r'))
         output_file = File(open(t.outputfile.path, 'r'))
-        context['public_tests'].append((input_file.file.read(), output_file.file.read()))
+        context['public_tests'].append((input_file.file.read(), output_file.file.read(), t.pk))
         input_file.close()
         output_file.close()
     # TODO restrict private tests
     for t in private_tests:
         input_file = File(open(t.inputfile.path, 'r'))
         output_file = File(open(t.outputfile.path, 'r'))
-        context['private_tests'].append((input_file.file.read(), output_file.file.read()))
+        context['private_tests'].append((input_file.file.read(), output_file.file.read(), t.pk))
         input_file.close()
         output_file.close()
     return render(request, 'judge/problem_detail.html', context)
@@ -343,10 +389,32 @@ def problem_submissions(request, problem_id: str):
         return handler404(request)
     problem = get_object_or_404(Problem, pk=problem_id)
     context = {'problem': problem, 'perm': perm}
+    if request.method == 'POST':
+        form = NewCommentForm(request.POST)
+        if form.is_valid():
+            if perm is False and form.cleaned_data['participant_email'] != user.email:
+                form.add_error(None, 'Your comment was not posted.')
+            else:
+                status, msg = handler.process_comment(
+                    problem_id, form.cleaned_data['participant_email'], user.email,
+                    timezone.now(), form.cleaned_data['comment'])
+                if not status:
+                    form.add_error(None, msg)
+                else:
+                    form = NewCommentForm()
+    else:
+        form = NewCommentForm()
+    submissions = {}
     if perm:
         status, msg = handler.get_submissions(problem_id, None)
         if status:
-            context['submissions'] = msg
+            for email, subs in msg.items():
+                status, comm = handler.get_comments(problem_id, email)
+                if not status:
+                    logging.debug(comm)
+                    return handler404(request)
+                submissions[email] = (subs, comm)
+            context['submissions'] = submissions
         else:
             logging.debug(msg)
             return handler404(request)
@@ -354,12 +422,18 @@ def problem_submissions(request, problem_id: str):
         status, msg = handler.get_submissions(problem_id, user.email)
         if status:
             context['participant'] = True
-            context['submissions'] = msg
+            status, comm = handler.get_comments(problem_id, user.email)
+            if not status:
+                logging.debug(comm)
+                return handler404(request)
+            submissions[user.email] = (msg[user.email], comm)
         else:
             logging.debug(msg)
             return handler404(request)
     else:
         return handler404(request)
+    context['form'] = form
+    context['submissions'] = submissions
     return render(request, 'judge/problem_submissions.html', context)
 
 
