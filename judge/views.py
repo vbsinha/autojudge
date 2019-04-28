@@ -10,6 +10,7 @@ import os
 from .models import Contest, Problem, TestCase, Submission
 from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
 from .forms import NewProblemForm, EditProblemForm, NewSubmissionForm, AddTestCaseForm
+from .forms import NewCommentForm
 from . import handler
 
 
@@ -343,10 +344,32 @@ def problem_submissions(request, problem_id: str):
         return handler404(request)
     problem = get_object_or_404(Problem, pk=problem_id)
     context = {'problem': problem, 'perm': perm}
+    if request.method == 'POST':
+        form = NewCommentForm(request.POST)
+        if form.is_valid():
+            if perm is False and form.cleaned_data['participant_email'] != user.email:
+                form.add_error(None, 'Your comment was not posted.')
+            else:
+                status, msg = handler.process_comment(
+                    problem_id, form.cleaned_data['participant_email'], user.email,
+                    timezone.now(), form.cleaned_data['comment'])
+                if not status:
+                    form.add_error(None, msg)
+                else:
+                    form = NewCommentForm()
+    else:
+        form = NewCommentForm()
+    submissions = {}
     if perm:
         status, msg = handler.get_submissions(problem_id, None)
         if status:
-            context['submissions'] = msg
+            for email, subs in msg.items():
+                status, comm = handler.get_comments(problem_id, email)
+                if not status:
+                    logging.debug(comm)
+                    return handler404(request)
+                submissions[email] = (subs, comm)
+            context['submissions'] = submissions
         else:
             logging.debug(msg)
             return handler404(request)
@@ -354,12 +377,18 @@ def problem_submissions(request, problem_id: str):
         status, msg = handler.get_submissions(problem_id, user.email)
         if status:
             context['participant'] = True
-            context['submissions'] = msg
+            status, comm = handler.get_comments(problem_id, user.email)
+            if not status:
+                logging.debug(comm)
+                return handler404(request)
+            submissions[user.email] = (msg[user.email], comm)
         else:
             logging.debug(msg)
             return handler404(request)
     else:
         return handler404(request)
+    context['form'] = form
+    context['submissions'] = submissions
     return render(request, 'judge/problem_submissions.html', context)
 
 
