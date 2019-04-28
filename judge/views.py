@@ -161,10 +161,14 @@ def contest_detail(request, contest_id):
     if perm is None:
         return handler404(request)
     problems = Problem.objects.filter(contest_id=contest_id)
+    status, leaderboard = handler.get_leaderboard(contest_id)
+    print(leaderboard)
     return render(request, 'judge/contest_detail.html', {
         'contest': contest,
         'type': 'Poster' if perm else 'Participant',
         'problems': problems,
+        'leaderboard_status': status,
+        'leaderboard': leaderboard,
     })
 
 
