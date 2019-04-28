@@ -43,17 +43,14 @@ def index(request):
     user = _get_user(request)
     if user is not None:
         status, err = handler.process_person(request.user.email)
-        if status:
-            contests = Contest.objects.all()
-            permissions = [handler.get_personcontest_permission(
-                user.email, contest.pk) for contest in contests]
-            context['contests'] = zip(contests, permissions)
-            return render(request, 'judge/index.html', context)
-        else:
+        if not status:
             logging.debug(
                 'Although user is not none, it could not be processed. More info: {}'.format(err))
-    contests = Contest.objects.filter(public=True)
-    context['contests'] = zip(contests, [False] * len(contests))
+
+    contests = Contest.objects.all()
+    permissions = [handler.get_personcontest_permission(
+        None if user is None else user.email, contest.pk) for contest in contests]
+    context['contests'] = zip(contests, permissions)
     return render(request, 'judge/index.html', context)
 
 
