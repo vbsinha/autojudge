@@ -16,9 +16,11 @@ urlpatterns = [
     path('contest/new/', views.new_contest, name='new_contest'),
     path('contest/<int:contest_id>/', views.contest_detail, name='contest_detail'),
     path('contest/<int:contest_id>/scores/', views.contest_scores_csv, name='contest_scores_csv'),
+    path('contest/<int:contest_id>/delete/', views.delete_contest, name='delete_contest'),
     path('contest/<int:contest_id>/problem/new/',
          views.new_problem, name='new_problem'),
     path('problem/<str:problem_id>/', views.problem_detail, name='problem_detail'),
+    path('problem/<str:problem_id>/delete/', views.delete_problem, name='delete_problem'),
     path('problem/<str:problem_id>/starting-code/',
          views.problem_starting_code, name='problem_starting_code'),
     path('problem/<str:problem_id>/compilation-script/',
@@ -41,4 +43,6 @@ urlpatterns = [
          views.problem_submissions, name='problem_submissions'),
     path('submission/<str:submission_id>/',
          views.submission_detail, name='submission_detail'),
+    path('problem/<str:problem_id>/testcase/<str:testcase_id>/delete/',
+         views.delete_testcase, name='delete_testcase'),
 ]

@@ -654,7 +654,7 @@ def get_comments(problem: str, person: str) -> Tuple[bool, Any]:
     Returns (True, [(Commeter, Timestamp, Comment) ... (Sorted in ascending order of time)])
     """
     try:
-        comments = models.Comment.object.filter(
+        comments = models.Comment.objects.filter(
             problem=problem, person=person).order_by('timestamp')
         result = [(comment.commenter, comment.timestamp, comment.comment)
                   for comment in comments]
