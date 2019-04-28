@@ -180,9 +180,9 @@ def contest_scores_csv(request, contest_id):
     if perm:
         status, csv = handler.get_csv(contest_id)
         if status:
-            response = HttpResponse(csv)
-            response.AddHeader("Content-Disposition",
-                               "attachment;filename=contest_{}.csv".format(contest_id))
+            response = HttpResponse(csv.read())
+            response['Content-Disposition'] = \
+                "attachment; filename=contest_{}.csv".format(contest_id)
             return response
         # else:
         #     print(csv)
