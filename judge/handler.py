@@ -5,7 +5,7 @@ from io import StringIO
 from shutil import rmtree
 from logging import error
 from subprocess import run
-from datetime import timedelta
+from datetime import timedelta, datetime
 from traceback import print_exc
 from csv import writer as csvwriter
 from pickle import load as pickle_load
@@ -14,8 +14,8 @@ from typing import Tuple, Optional, Dict, Any, List
 from . import models
 
 
-def process_contest(name: str, start_datetime, soft_end_datetime, hard_end_datetime,
-                    penalty: float, public: bool) -> Tuple[bool, str]:
+def process_contest(name: str, start_datetime: datetime, soft_end_datetime: datetime,
+                    hard_end_datetime: datetime, penalty: float, public: bool) -> Tuple[bool, str]:
     """
     Process a New Contest
     Only penalty can be None in which case Penalty will be set to 0

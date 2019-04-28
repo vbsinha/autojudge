@@ -1,10 +1,10 @@
 from django.test import TestCase, utils
 from django.urls import reverse
-# from django.utils import timezone
+from django.utils import timezone
 from django.contrib.auth.models import User
 
 from datetime import timedelta
-# from datetime import datetime
+from datetime import datetime
 
 from . import models
 from . import handler
@@ -71,9 +71,10 @@ class HandlerTests(TestCase):
         self.assertEqual(len(c), 1)
         c = c[0]
         self.assertEqual(c.name, 'Test Contest')
-        # self.assertEqual(c.start_datetime, datetime(2019, 4, 25, 12, 30, tzinfo=timezone.utc))
-        # self.assertEqual(c.soft_end_datetime, datetime(2019, 4, 26, 12, 30, tzinfo=timezone.utc))
-        # self.assertEqual(c.hard_end_datetime, datetime(2019, 4, 27, 12, 30, tzinfo=timezone.utc))
+        # 7 am UTC == 12:30 pm IST
+        self.assertEqual(c.start_datetime, datetime(2019, 4, 25, 7, 0, tzinfo=timezone.utc))
+        self.assertEqual(c.soft_end_datetime, datetime(2019, 4, 26, 7, 0, tzinfo=timezone.utc))
+        self.assertEqual(c.hard_end_datetime, datetime(2019, 4, 27, 7, 0, tzinfo=timezone.utc))
         self.assertEqual(c.penalty, 0)
         self.assertTrue(c.public)
         status, err = handler.delete_contest(contest_id=int(pk))
