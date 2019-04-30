@@ -76,8 +76,9 @@ def saver(sub_id):
     if s.file_type == '.py':
         penalty = Run([os.path.join(CONTENT_DIRECTORY, 'submissions',
                                     'submission_{}.py'.format(submission))], do_exit=False)
-        s.linter_score = _compute_lint_score(
-            penalty.linter.stats['by_module']['submission_{}'.format(submission)])
+        if s.problem.contest.enable_linter_score:
+            s.linter_score = _compute_lint_score(
+                penalty.linter.stats['by_module']['submission_{}'.format(submission)])
     current_final_score = s.judge_score + s.ta_score + s.linter_score
 
     penalty_multiplier = 1.0
