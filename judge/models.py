@@ -61,8 +61,14 @@ class Contest(models.Model):
     penalty = models.FloatField(default=0.0)
     """Penalty for late-submission"""
 
-    public = models.BooleanField()
+    public = models.BooleanField(default=False)
     """Is the contest public?"""
+
+    enable_linter_score = models.BooleanField(default=True)
+    """Enable linter scoring"""
+
+    enable_poster_score = models.BooleanField(default=True)
+    """Enable poster scoring"""
 
     def __str__(self):
         return self.name

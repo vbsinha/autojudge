@@ -16,7 +16,8 @@ from . import models
 
 
 def process_contest(name: str, start_datetime: datetime, soft_end_datetime: datetime,
-                    hard_end_datetime: datetime, penalty: float, public: bool) -> Tuple[bool, str]:
+                    hard_end_datetime: datetime, penalty: float, public: bool,
+                    enable_linter_score: bool, enable_poster_score: bool) -> Tuple[bool, str]:
     """
     Process a New Contest
     Only penalty can be None in which case Penalty will be set to 0
@@ -28,7 +29,9 @@ def process_contest(name: str, start_datetime: datetime, soft_end_datetime: date
         c = models.Contest(name=name, start_datetime=start_datetime,
                            soft_end_datetime=soft_end_datetime,
                            hard_end_datetime=hard_end_datetime,
-                           penalty=penalty, public=public)
+                           penalty=penalty, public=public,
+                           enable_linter_score=enable_linter_score,
+                           enable_poster_score=enable_poster_score)
         c.save()
         # Successfully added to Database
         return (True, str(c.pk))

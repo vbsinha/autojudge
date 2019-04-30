@@ -65,6 +65,14 @@ class NewContestForm(forms.Form):
     is_public = forms.BooleanField(label='Is this contest public?', required=False)
     """Contest is_public property"""
 
+    enable_linter_score = forms.BooleanField(label='Enable linter scoring',
+                                             required=False, initial=True)
+    """Contest enable_linter_score property"""
+
+    enable_poster_score = forms.BooleanField(label='Enable poster scoring',
+                                             required=False, initial=True)
+    """Contest enable_poster_score property"""
+
     def clean(self):
         cleaned_data = super().clean()
         cont_start = cleaned_data.get("contest_start")
