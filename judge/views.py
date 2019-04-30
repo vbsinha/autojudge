@@ -10,7 +10,7 @@ import os
 from .models import Contest, Problem, TestCase, Submission
 from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
 from .forms import NewProblemForm, EditProblemForm, NewSubmissionForm, AddTestCaseForm
-from .forms import NewCommentForm
+from .forms import NewCommentForm, AddPosterScoreForm
 from . import handler
 
 
@@ -580,6 +580,19 @@ def submission_detail(request, submission_id: str):
     if user is None:
         return handler404(request)
     if perm or user.email == submission.participant.pk:
+        context['type'] = 'Poster' if perm else 'Participant'
+        if perm:
+            if request.method == 'POST':
+                form = AddPosterScoreForm(request.POST)
+                if form.is_valid():
+                    try:
+                        submission.ta_score = form.cleaned_data['score']
+                        submission.save()
+                    except Exception as e:
+                        form.add_error(None, e.__str__())
+            else:
+                form = AddPosterScoreForm(initial={'score': submission.ta_score})
+            context['form'] = form
         status, msg = handler.get_submission_status_mini(submission_id)
         if status:
             # TODO Fix this
@@ -593,6 +606,7 @@ def submission_detail(request, submission_id: str):
         else:
             logging.debug(msg)
             return handler404(request)
+
         return render(request, 'judge/submission_detail.html', context)
     else:
         return handler404(request)

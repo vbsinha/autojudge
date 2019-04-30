@@ -18,6 +18,56 @@
                 <span class="btn-inner--icon"><i class="fas fa-download"></i></span>
                 <span class="btn-inner--text">Download</span>
             </a>
+            {% if type == 'Poster' %}
+            <button type="button" class="btn btn-icon btn-default" data-toggle="modal"
+                data-target="#modal-update-score">
+                <span class="btn-inner--icon"><i class="fas fa-edit"></i></span>
+                <span class="btn-inner--text">Update poster score</span>
+            </button>
+            <div class="modal fade" id="modal-update-score" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal- modal-dialog-centered modal-sm" role="document">
+                    <div class="modal-content">
+                        <div class="modal-body p-0">
+                            <div class="card bg-secondary shadow border-0">
+                                <div class="card-body px-lg-5 py-lg-5">
+                                    <div class="text-center text-muted mb-4">
+                                        UPDATE POSTER SCORE
+                                    </div>
+                                    <form method="POST" role="form">
+                                        {% if form.non_field_errors %}
+                                        <div class="alert alert-danger alter-dismissible fade show" role="alert">
+                                            {{ form.non_field_errors }}
+                                        </div>
+                                        {% endif %}
+                                        {% csrf_token %}
+                                        {% for field in form %}
+                                        <div class="form-group mb-1">
+                                            {{ field.label_tag }}
+                                            <div class="input-group input-group-alternative">
+                                                {{ field }}
+                                            </div>
+                                            {% if field.help_text %}
+                                            <small class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                            {% endif %}
+                                            {% if field.errors %}
+                                            <div class="alert alert-danger mt-2" role="alert">
+                                                {{ field.errors|striptags }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                        <div class="text-center">
+                                            <button type="submit" class="btn btn-primary my-4">Update</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
     <div class="col-12">

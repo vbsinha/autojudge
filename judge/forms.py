@@ -266,3 +266,8 @@ class NewCommentForm(forms.Form):
     comment = forms.CharField(label='Comment', required=True, widget=forms.Textarea(
         attrs={'class': 'form-control', 'rows': 2}))
     """Comment content"""
+
+
+class AddPosterScoreForm(forms.Form):
+    score = forms.IntegerField(label='Poster Score', widget=forms.NumberInput(attrs={'class': 'form-control',
+                                                                                     }))
