@@ -31,14 +31,23 @@ def _return_file_as_response(path_name):
 
 
 def handler404(request, exception=None):
+    """
+    Renders 404 page
+    """
     return render(request, '404.html', status=404)
 
 
 def handler500(request, exception=None):
+    """
+    Renders 500 page
+    """
     return render(request, '500.html', status=500)
 
 
 def index(request):
+    """
+    Renders the index page
+    """
     context = {}
     user = _get_user(request)
     if user is not None:
@@ -55,6 +64,9 @@ def index(request):
 
 
 def new_contest(request):
+    """
+    Renders view for the page to create a new contest
+    """
     user = _get_user(request)
     if user is None:
         return handler404(request)
@@ -85,7 +97,11 @@ def new_contest(request):
     return render(request, 'judge/new_contest.html', context)
 
 
-def get_posters(request, contest_id, role=True):
+def get_people(request, contest_id, role):
+    """
+    Function to render the page for viewing participants and posters
+    for a contest based on argument role.
+    """
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
         None if user is None else user.email, contest_id)
@@ -118,12 +134,27 @@ def get_posters(request, contest_id, role=True):
     return render(request, 'judge/contest_persons.html', context)
 
 
+def get_posters(request, contest_id):
+    """
+    Renders the page for posters of a contest.
+    Dispatches to get_people with role=True.
+    """
+    return get_people(request, contest_id, True)
+
+
 def get_participants(request, contest_id):
+    """
+    Renders the page for posters of a contest.
+    Dispatches to get_people with role=False.
+    """
     return get_posters(request, contest_id, False)
 
 
-def add_poster(request, contest_id, role=True):
-    # TODO Have comma seperated values
+def add_person(request, contest_id, role):
+    """
+    Function to render the page for adding a person - participant or poster to
+    a contest.
+    """
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
         None if user is None else user.email, contest_id)
@@ -147,11 +178,26 @@ def add_poster(request, contest_id, role=True):
     return render(request, 'judge/contest_add_person.html', context)
 
 
+def add_poster(request, contest_id):
+    """
+    Renders the page for adding a poster.
+    Dispatches to add_person with role=True.
+    """
+    return add_person(request, contest_id, True)
+
+
 def add_participant(request, contest_id):
-    return add_poster(request, contest_id, False)
+    """
+    Renders the page for adding a participant.
+    Dispatches to add_person with role=False.
+    """
+    return add_person(request, contest_id, False)
 
 
 def contest_detail(request, contest_id):
+    """
+    Renders the contest preview page after the contest has been created.
+    """
     contest = get_object_or_404(Contest, pk=contest_id)
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
@@ -170,6 +216,10 @@ def contest_detail(request, contest_id):
 
 
 def contest_scores_csv(request, contest_id):
+    """
+    Function to provide downloading facility for the CSV of scores
+    of participants in a contest.
+    """
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
         None if user is None else user.email, contest_id)
@@ -184,6 +234,9 @@ def contest_scores_csv(request, contest_id):
 
 
 def delete_contest(request, contest_id):
+    """
+    Function to provide the option to delete a contest.
+    """
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
         None if user is None else user.email, contest_id)
@@ -198,6 +251,9 @@ def delete_contest(request, contest_id):
 
 
 def delete_problem(request, problem_id):
+    """
+    Function to provide the option to delete a problem.
+    """
     user = _get_user(request)
     problem = get_object_or_404(Problem, pk=problem_id)
     contest_id = problem.contest.pk
@@ -214,6 +270,9 @@ def delete_problem(request, problem_id):
 
 
 def delete_testcase(request, problem_id, testcase_id):
+    """
+    Function to provide the option to delete a test-case of a particular problem.
+    """
     user = _get_user(request)
     perm = handler.get_personproblem_permission(
         None if user is None else user.email, problem_id)
@@ -229,6 +288,10 @@ def delete_testcase(request, problem_id, testcase_id):
 
 
 def problem_detail(request, problem_id):
+    """
+    Renders the problem preview page after the problem has been created.
+    This preview will be changed based on the role of the user (poster or participant)
+    """
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
     perm = handler.get_personproblem_permission(
@@ -293,6 +356,10 @@ def problem_detail(request, problem_id):
 
 
 def problem_starting_code(request, problem_id: str):
+    """
+    Function to provide downloading facility for the starting code
+    for a problem.
+    """
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
     perm = handler.get_personproblem_permission(None if user is None else user.email, problem_id)
@@ -305,6 +372,10 @@ def problem_starting_code(request, problem_id: str):
 
 
 def problem_compilation_script(request, problem_id: str):
+    """
+    Function to provide downloading facility for the compilation script
+    for a problem after creating the problem.
+    """
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
     perm = handler.get_personproblem_permission(None if user is None else user.email, problem_id)
@@ -317,6 +388,10 @@ def problem_compilation_script(request, problem_id: str):
 
 
 def problem_test_script(request, problem_id: str):
+    """
+    Function to provide downloading facility for the testing script
+    for a problem after creating the problem.
+    """
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
     perm = handler.get_personproblem_permission(None if user is None else user.email, problem_id)
@@ -329,10 +404,16 @@ def problem_test_script(request, problem_id: str):
 
 
 def problem_default_script(request, script_name: str):
+    """
+    Function to provide downloading facility for the default compilation or test script.
+    """
     return _return_file_as_response(os.path.join('judge', 'default', script_name + '.sh'))
 
 
 def new_problem(request, contest_id):
+    """
+    Renders view for the page to create a new problem in a contest.
+    """
     contest = get_object_or_404(Contest, pk=contest_id)
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
@@ -363,6 +444,9 @@ def new_problem(request, contest_id):
 
 
 def edit_problem(request, problem_id):
+    """
+    Renders view for the page to edit selected fields of a pre-existing problem.
+    """
     problem = get_object_or_404(Problem, pk=problem_id)
     contest = get_object_or_404(Contest, pk=problem.contest_id)
     user = _get_user(request)
@@ -396,6 +480,11 @@ def edit_problem(request, problem_id):
 
 
 def problem_submissions(request, problem_id: str):
+    """
+    Renders the page where all submissions to a given problem can be seen.
+    For posters, this renders a set of tables for each participant.
+    For participants, this renders a table with the scores of their submissions only.
+    """
     user = _get_user(request)
     perm = handler.get_personproblem_permission(
         None if user is None else user.email, problem_id)
@@ -452,6 +541,9 @@ def problem_submissions(request, problem_id: str):
 
 
 def submission_download(request, submission_id: str):
+    """
+    Function to provide downloading facility of a given submission.
+    """
     user = _get_user(request)
     submission = get_object_or_404(Submission, pk=submission_id)
     perm = handler.get_personproblem_permission(
@@ -465,6 +557,10 @@ def submission_download(request, submission_id: str):
 
 
 def submission_detail(request, submission_id: str):
+    """
+    Renders the page where a detailed breakdown with respect to judge's
+    evaluation, additional scores, error messages displayed and so on.
+    """
     user = _get_user(request)
     submission = get_object_or_404(Submission, pk=submission_id)
     perm = handler.get_personproblem_permission(

@@ -20,7 +20,9 @@ def process_contest(name: str, start_datetime: datetime, soft_end_datetime: date
     """
     Process a New Contest
     Only penalty can be None in which case Penalty will be set to 0
-    Returns: (True, None) or (False, Exception string)
+
+    Returns:
+        (True, None) or (False, Exception string)
     """
     try:
         c = models.Contest(name=name, start_datetime=start_datetime,
@@ -42,7 +44,9 @@ def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
     Delete the contest.
     This will cascade delete in all the tables that have contest as FK.
     It calls delete_problem for each problem in the contest.
-    Retuns (True, None)
+
+    Retuns:
+        (True, None)
     """
     try:
         c = models.Contest.objects.get(pk=contest_id)
@@ -67,7 +71,9 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
     """
     Process a new Problem
     Nullable [None-able] Fields: start_code, compilation_script, test_script, file_format
-    Returns: (True, None) or (False, Exception string)
+
+    Returns:
+        (True, None) or (False, Exception string)
     """
 
     # Check if the Problem Code has already been taken
@@ -132,7 +138,9 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
     """
     Update the fields in problem
     Pass the code as pk of problem
-    Returns (True, None)
+
+    Returns:
+        (True, None)
     """
     try:
         p = models.Problem.objects.get(pk=code)
@@ -156,7 +164,9 @@ def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
     This will cascade delete in all the tables that have problem as FK.
     It will also delete all the submissions, testcases and the directory
     (in problems directory) corresponding to the problem .
-    Returns (True, None)
+
+    Returns:
+        (True, None)
     """
     try:
         problem = models.Problem.objects.get(pk=problem_id)
@@ -211,9 +221,11 @@ def process_testcase(problem_id: str, ispublic: bool,
     """
     Process a new Testcase
     problem is the 'code' (pk) of the problem.
-    WARNING: This function does not rescore all the submissions and so score will not
-    change in response to the new testcase. DO NOT CALL THIS FUNCTION ONCE THE
-    CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
+
+    .. warning::
+        This function does not rescore all the submissions and so score will not
+        change in response to the new testcase. DO NOT CALL THIS FUNCTION ONCE THE
+        CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
     """
     try:
         problem = models.Problem.objects.get(pk=problem_id)
@@ -230,10 +242,14 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
     """
     This function deletes the testcase and cascade deletes in
     all the tables the Fk appears.
-    WARNING: This function does not rescore all the submissions and so score will not
-    change in response to the deleted testcase. DO NOT CALL THIS FUNCTION ONCE THE
-    CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
-    Returns: (True, None)
+
+    .. warning::
+        This function does not rescore all the submissions and so score will not
+        change in response to the deleted testcase. DO NOT CALL THIS FUNCTION ONCE THE
+        CONTEST HAS STARTED, IT WILL LEAD TO ERRONEOUS SCORES.
+
+    Returns:
+        (True, None)
     """
     try:
         inputfile_path = os.path.join(
@@ -344,7 +360,9 @@ def add_person_rgx_to_contest(rgx: str, contest: str,
     In case no persons match the rgx,
     (False, 'Regex {} did not match any person registered'.format(rgx)) is returned
     Use regex like cs15btech* to add all persons having emails like cs15btech...
-    Returns: (True, None)
+
+    Returns:
+        (True, None)
     """
     pattern = compile(rgx)
     try:
@@ -371,10 +389,15 @@ def add_persons_to_contest(persons: List[str], contest: str,
     persons is the list of email of persons
     contest is the pk of the contest
     permission is False if participant and True is poster
-    First checks if any of the person exists with an opposing role. If so DO NOT ADD ANYONE
-    Tnstead return (False, '{} already exists with other permission'.format(p.email))
-    Otherwise if not person hhas conflicting permission add all the persons and return (True, None)
-    This fuction would create records for all the persons who do not already have one irrespective
+
+    .. note::
+        First check if any of the person exists with an opposing role.
+        If so, do not add anyone. Instead return a tuple with False and
+        and an appropriate message.
+        Otherwise if person doesn't have conflicting permission,
+        add all the persons and return (True, None).
+
+    This function would create records for all the persons who do not already have one irrespective
     of whether anyone has conflict or not.
     """
     try:
@@ -409,7 +432,9 @@ def get_personcontest_permission(person: Optional[str], contest: int) -> Optiona
     Determine the relation between Person and Contest
     person is the email of the person
     contest is the pk of the contest
-    returns False if participant and True is poster None if neither
+
+    Returns:
+        False if participant and True is poster None if neither
     """
     curr = timezone.now()
     if person is None:
@@ -441,7 +466,9 @@ def delete_personcontest(person: str, contest: str) -> Tuple[bool, Optional[str]
     """
     Delete the record of person and contest in ContestPerson table
     Passed person is email and contest is the pk
-    Returns (True, None)
+
+    Returns:
+        (True, None)
     """
     try:
         p = models.Person.objects.get(email=person)
@@ -467,7 +494,9 @@ def get_personproblem_permission(person: Optional[str], problem: str) -> Optiona
     Determine the relation between Person and Problem
     person is the email of the person
     problem is the code(pk) of the problem
-    returns False if participant and True is poster None if neither
+
+    Returns:
+        False if participant and True is poster None if neither
     """
     p = models.Problem.objects.get(pk=problem)
     if p.contest is None:
@@ -479,7 +508,9 @@ def get_posters(contest) -> Tuple[bool, Optional[str]]:
     """
     Return the posters for the contest.
     contest is the pk of the Contest
-    Return (True, List of the email of the posters)
+
+    Returns:
+        (True, List of the email of the posters)
     """
     try:
         c = models.Contest.objects.get(pk=contest)
@@ -495,8 +526,12 @@ def get_participants(contest) -> Tuple[bool, Any]:
     """
     Return the participants for the contest.
     contest is the pk of the Contest
-    Returns (True, List of the email of the participants)
-    Returns (True, []) if contest is public
+
+    Returns:
+        (True, List of the email of the participants)
+
+    Returns:
+        (True, []) if contest is public
     """
     try:
         c = models.Contest.objects.get(pk=contest)
@@ -533,19 +568,24 @@ def get_submission_status(person: str, problem: str, submission):
     """
     Get the current status of the submission.
     Pass email as person and problem code as problem to get a tuple
-    In case the submission is None, returns:
-    (True, ({SubmissionID: [(TestcaseID, Verdict, Time_taken, Memory_taken, ispublic, message)]},
-     {SubmissionID: (judge_score, ta_score, linter_score, final_score, timestamp, file_type)}))
+    In case the submission is None, returns (True, (dict1, dict2))
     The tuple consists of 2 dictionaries:
-        First dictionary: Key: Submission ID
-                          Value: list of (TestcaseID, Verdict, Time_taken,
-                                          Memory_taken, ispublic, message)
-        Second dictionary: Key: Submission ID
-                           Value: tuple: (judge_score, ta_score, linter_score,
-                                          final_score, timestamp, file_type)
+
+    First dictionary:
+        Key: Submission ID
+
+        Value: list of (TestcaseID, Verdict, Time_taken, Memory_taken, ispublic, message)
+
+    Second dictionary:
+        Key: Submission ID
+
+        Value: tuple: (judge_score, ta_score, linter_score, final_score, timestamp, file_type)
+
     In case submission ID is provided:
     The passed parameters person and problem are ignored and so None is accepted.
-    Returns: The same dictionaries in a tuple but having only 1 key in both
+
+    Returns:
+        The same dictionaries in a tuple but having only 1 key in both
     """
     try:
         if submission is None:
@@ -589,11 +629,15 @@ def get_submissions(problem_id: str, person_id: Optional[str]) -> Tuple[bool, An
     Get all the submissions for this problem by this (or all) persons who attempted.
     problem is the pk of the Problem.
     person is the email of the Person or None if you want to retrieve solutions by all participants
-    Returns (True, {emailofperson: [SubmissionObject1, SubmissionObject2, ...],
-                    emailofperson: [SubmissionObjecti, SubmissionObjectj, ...],
-                                    ... ) when person is None
-    When person is not None returns (True, {emailofperson:
-                                            [SubmissionObject1, SubmissionObject2, ...]})
+
+    Returns:
+        when person_id is None:
+            (True, {emailofperson: [SubmissionObject1, SubmissionObject2, ...], \
+                    emailofperson: [SubmissionObjecti, SubmissionObjectj, ...], \
+                    ...})
+
+        when person_id is not None:
+            (True, {emailofperson: [SubmissionObject1, SubmissionObject2, ...]})
     """
     try:
         p = models.Problem.objects.get(code=problem_id)
@@ -627,14 +671,17 @@ def get_submissions(problem_id: str, person_id: Optional[str]) -> Tuple[bool, An
 def get_submission_status_mini(submission: str) -> Tuple[bool, Any]:
     """
     Get the current status of the submission.
-    Returns: (True, ({TestcaseID: (Verdict, Time_taken, Memory_taken, ispublic, message), ...},
-                     (judge_score, ta_score, linter_score, final_score, timestamp, file_type)))
+
+    Returns:
+        (True, (dict1, tuple1))
+
     The tuple consists of a dictionary and a tuple:
-        Dictionary: Key: TestcaseID
-                    Value: (Verdict, Time_taken,
-                            Memory_taken, ispublic, message)
-        Tuple: (judge_score, ta_score, linter_score,
-                                          final_score, timestamp, file_type)
+        Dictionary:
+            Key: TestcaseID
+
+            Value: (Verdict, Time_taken, Memory_taken, ispublic, message)
+        Tuple:
+            (judge_score, ta_score, linter_score, final_score, timestamp, file_type)
     """
     try:
         s = models.Submission.objects.get(pk=submission)
@@ -659,7 +706,9 @@ def get_leaderboard(contest: int) -> Tuple[bool, Any]:
     """
     Returns the current leaderboard for the passed contest
     Pass contest's pk
-    Returns (True, [[Rank1Email, ScoreofRank1], [Rank2Email, ScoreofRank2] ... ])
+
+    Returns:
+        (True, [[Rank1Email, ScoreofRank1], [Rank2Email, ScoreofRank2] ... ])
     """
     leaderboard_path = os.path.join('content', 'contests', str(contest)+'.lb')
     if not os.path.exists(leaderboard_path):
@@ -679,7 +728,9 @@ def process_comment(problem: str, person: str, commenter: str,
     Privately comment 'comment' on the problem for person by commenter.
     problem is the pk of the Problem.
     person and commenter are emails of Person.
-    Returns (True, None)
+
+    Returns:
+        (True, None)
     """
     try:
         problem = models.Problem.objects.get(pk=problem)
@@ -696,7 +747,9 @@ def process_comment(problem: str, person: str, commenter: str,
 def get_comments(problem: str, person: str) -> Tuple[bool, Any]:
     """
     Get the private comments on the problem for the person.
-    Returns (True, [(Commeter, Timestamp, Comment) ... (Sorted in ascending order of time)])
+
+    Returns:
+        (True, [(Commeter, Timestamp, Comment) ... (Sorted in chronological order)])
     """
     try:
         comments = models.Comment.objects.filter(
@@ -713,7 +766,9 @@ def get_csv(contest: str) -> Tuple[bool, Any]:
     """
     Get the csv (in string form) of the current scores of all participants in the contest.
     Pass pk of the contest
-    Returns (True, csvstring)
+
+    Returns:
+        (True, csvstring)
     """
     try:
         c = models.Contest.objects.get(pk=contest)
