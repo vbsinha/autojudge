@@ -269,5 +269,5 @@ class NewCommentForm(forms.Form):
 
 
 class AddPosterScoreForm(forms.Form):
-    score = forms.IntegerField(label='Poster Score', widget=forms.NumberInput(attrs={'class': 'form-control',
-                                                                                     }))
+    score = forms.IntegerField(
+        label='Poster Score', widget=forms.NumberInput(attrs={'class': 'form-control'}))
