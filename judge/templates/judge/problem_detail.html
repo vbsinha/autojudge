@@ -118,10 +118,12 @@
             <a href="{% url 'judge:edit_problem' problem.pk %}" class="btn btn-primary">
                 <i class="fas fa-edit"></i>
             </a>
+            {% if now < problem.contest.start_datetime %}
             <form class="d-inline" action="{% url 'judge:delete_problem' problem.pk %}" method="POST">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i></button>
             </form>
+            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -167,7 +169,7 @@
         <h4>Public test cases</h4>
         {% for test in public_tests %}
         <h5 class="d-inline">Test Case {{ forloop.counter }}</h5>
-        {% if type == 'Poster' %}
+        {% if type == 'Poster' and now < problem.contest.start_datetime %}
         <div class="d-inline">
             <form class="d-inline" action="{% url 'judge:delete_testcase' problem.pk test.2 %}" method="POST">
                 {% csrf_token %}
@@ -198,12 +200,14 @@
         <h4>Private test cases</h4>
         {% for test in private_tests %}
         <h5 class="d-inline">Test Case {{ forloop.counter }}</h5>
+        {% if now < problem.contest.start_datetime %}
         <div class="d-inline">
             <form class="d-inline" action="{% url 'judge:delete_testcase' problem.pk test.2 %}" method="POST">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i></button>
             </form>
         </div>
+        {% endif %}
         <div class="col-12">
             <h6>Input</h6>
             <div class="zero-clipboard">
@@ -298,9 +302,9 @@
 </div>
 {% endif %}
 
-<!-- TODO Restrict to poster only (check views) -->
 {% if type == 'Poster' %}
 <div class="row">
+    {% if now < problem.contest.start_datetime %}
     <div class="col-12 my-4">
         <div class="card">
             <div class="card-header">
@@ -336,6 +340,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
     <div class="col-12">
         <a href="{% url 'judge:problem_submissions' problem.pk %}" class="btn btn-default">See all solutions</a>
     </div>

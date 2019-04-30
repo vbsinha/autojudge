@@ -203,6 +203,8 @@ def delete_problem(request, problem_id):
     contest_id = problem.contest.pk
     perm = handler.get_personproblem_permission(
         None if user is None else user.email, problem_id)
+    if timezone.now() > problem.contest.start_datetime:
+        return handler404(request)
     if perm and request.method == 'POST':
         status, _ = handler.delete_problem(problem_id)
         if status:
@@ -218,6 +220,8 @@ def delete_testcase(request, problem_id, testcase_id):
     perm = handler.get_personproblem_permission(
         None if user is None else user.email, problem_id)
     testcase = get_object_or_404(TestCase, pk=testcase_id)
+    if timezone.now() > testcase.problem.contest.start_datetime:
+        return handler404(request)
     if problem_id == testcase.problem.pk and perm and request.method == 'POST':
         status, _ = handler.delete_testcase(testcase_id)
         if status:
@@ -259,20 +263,23 @@ def problem_detail(request, problem_id):
             form = NewSubmissionForm()
         context['form'] = form
     if perm is True:
-        if request.method == 'POST':
-            form = AddTestCaseForm(request.POST, request.FILES)
-            if form.is_valid():
-                status, err = handler.process_testcase(
-                    problem_id,
-                    form.cleaned_data['test_type'] == 'public',
-                    form.cleaned_data['input_file'],
-                    form.cleaned_data['output_file'])
-                if status:
-                    redirect(reverse('judge:problem_submissions', args=(problem_id,)))
-                else:
-                    form.add_error(None, err)
+        if timezone.now() < problem.contest.start_datetime:
+            if request.method == 'POST':
+                form = AddTestCaseForm(request.POST, request.FILES)
+                if form.is_valid():
+                    status, err = handler.process_testcase(
+                        problem_id,
+                        form.cleaned_data['test_type'] == 'public',
+                        form.cleaned_data['input_file'],
+                        form.cleaned_data['output_file'])
+                    if status:
+                        redirect(reverse('judge:problem_submissions', args=(problem_id,)))
+                    else:
+                        form.add_error(None, err)
+            else:
+                form = AddTestCaseForm()
         else:
-            form = AddTestCaseForm()
+            form = None
         context['form'] = form
     context['public_tests'] = []
     context['private_tests'] = []
@@ -340,6 +347,8 @@ def new_problem(request, contest_id):
     if not (perm is True):
         return handler404(request)
     context = {'contest': contest}
+    if timezone.now() > contest.start_datetime:
+        return handler404(request)
     if request.method == 'POST':
         form = NewProblemForm(request.POST, request.FILES)
         if form.is_valid():
@@ -420,9 +429,9 @@ def problem_submissions(request, problem_id: str):
         form = NewCommentForm()
     submissions = {}
     if perm:
-        status, msg = handler.get_submissions(problem_id, None)
+        status, all_subs = handler.get_submissions(problem_id, None)
         if status:
-            for email, subs in msg.items():
+            for email, subs in all_subs.items():
                 status, comm = handler.get_comments(problem_id, email)
                 if not status:
                     logging.debug(comm)
@@ -430,19 +439,19 @@ def problem_submissions(request, problem_id: str):
                 submissions[email] = (subs, comm)
             context['submissions'] = submissions
         else:
-            logging.debug(msg)
+            logging.debug(all_subs)
             return handler404(request)
     elif user is not None:
-        status, msg = handler.get_submissions(problem_id, user.email)
+        status, subs = handler.get_submissions(problem_id, user.email)
         if status:
             context['participant'] = True
             status, comm = handler.get_comments(problem_id, user.email)
             if not status:
                 logging.debug(comm)
                 return handler404(request)
-            submissions[user.email] = (msg[user.email], comm)
+            submissions[user.email] = (subs[user.email], comm)
         else:
-            logging.debug(msg)
+            logging.debug(subs)
             return handler404(request)
     else:
         return handler404(request)
