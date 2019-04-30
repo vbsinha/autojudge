@@ -143,3 +143,6 @@ content/contests/
 content/tmp/*
 
 # End of https://www.gitignore.io/api/django
+
+# Docs
+docs/build
