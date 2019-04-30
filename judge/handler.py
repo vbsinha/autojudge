@@ -729,35 +729,36 @@ def get_csv(contest: str) -> Tuple[bool, Any]:
             for problem in problems[1:]:
                 submissions |= models.PersonProblemFinalScore.objects.filter(problem=problem)
 
-            # Now sort all the person-problem-scores by 'person' and 'problem'
-            # This will create scores like:
-            # [('p1', 3(Say score corresponding to problem2)),
-            #  ('p1', 2(score corresponding to problem4)),
-            #  ('p2', 5(score corresponding to problem3)),
-            #  ('p2', 0(score corresponding to problem1)) ... ]
-            # We do not need to save exactly which problem the score correspondes to
-            # we only need to know scores on all problems by a participant
-            submissions.order_by('person', 'problem')
-            scores = [(submission.person, submission.score)
-                      for submission in submissions]
+            if submissions.exists():
+                # Now sort all the person-problem-scores by 'person' and 'problem'
+                # This will create scores like:
+                # [('p1', 3(Say score corresponding to problem2)),
+                #  ('p1', 2(score corresponding to problem4)),
+                #  ('p2', 5(score corresponding to problem3)),
+                #  ('p2', 0(score corresponding to problem1)) ... ]
+                # We do not need to save exactly which problem the score correspondes to
+                # we only need to know scores on all problems by a participant
+                submissions.order_by('person', 'problem')
+                scores = [(submission.person, submission.score)
+                          for submission in submissions]
 
-            # Here we aggregate the previous list.
-            # We simply iterate over scores and for each participant,
-            # we sum up how much has he scored in all the problems.
-            # To do this we exploit the fact that list is already sorted.
-            # In the above case after aggregating we'll write
-            # 'p1', 5
-            # 'p2', 5 etc. in csvstring
-            curr_person = scores[0][0]
-            sum_scores = 0
-            for score in scores:
-                if curr_person == score[0]:
-                    sum_scores += score[1]
-                else:
-                    writer.writerow([curr_person, sum_scores])
-                    curr_person = score[0]
-                    sum_scores = score[1]
-            writer.writerow([curr_person, sum_scores])
+                # Here we aggregate the previous list.
+                # We simply iterate over scores and for each participant,
+                # we sum up how much has he scored in all the problems.
+                # To do this we exploit the fact that list is already sorted.
+                # In the above case after aggregating we'll write
+                # 'p1', 5
+                # 'p2', 5 etc. in csvstring
+                curr_person = scores[0][0]
+                sum_scores = 0
+                for score in scores:
+                    if curr_person == score[0]:
+                        sum_scores += score[1]
+                    else:
+                        writer.writerow([curr_person, sum_scores])
+                        curr_person = score[0]
+                        sum_scores = score[1]
+                writer.writerow([curr_person, sum_scores])
 
         csvstring.seek(0)
         return (True, csvstring)
