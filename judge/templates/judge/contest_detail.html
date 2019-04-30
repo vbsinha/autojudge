@@ -37,7 +37,7 @@
         <h2 class="d-inline">{{ contest.name }}</h2>
         <div class="col-12">
             {% if type == 'Poster' %}
-            {% if now < contest.start_datetime %}<a class="btn btn-primary"
+            {% if curr_time < contest.start_datetime %}<a class="btn btn-primary"
                 href="{% url 'judge:new_problem' contest.pk %}">Add Problem</a>{% endif %}
             <a class="btn btn-primary" href="{% url 'judge:contest_scores_csv' contest.pk %}">Download Scores</a>
             {% endif %}
@@ -45,8 +45,9 @@
             {% if not contest.public %}<a class="btn btn-primary"
                 href="{% url 'judge:get_participants' contest.pk %}">See
                 participants</a>{% endif %}
-            {% if type == 'Poster' and curr_time < contest.hard_end_datetime %}<button type="button" class="btn btn-primary my-2" data-toggle="modal"
-                data-target="#modal-update-dates">Update dates</button>{% endif %}
+            {% if type == 'Poster' and curr_time < contest.hard_end_datetime %}<button type="button"
+                class="btn btn-primary my-2" data-toggle="modal" data-target="#modal-update-dates">Update
+                dates</button>{% endif %}
         </div>
     </div>
     {% if type == 'Poster' and curr_time < contest.hard_end_datetime %}
@@ -91,7 +92,6 @@
                             </form>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

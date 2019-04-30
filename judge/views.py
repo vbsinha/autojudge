@@ -147,7 +147,7 @@ def get_participants(request, contest_id):
     Renders the page for posters of a contest.
     Dispatches to get_people with role=False.
     """
-    return get_posters(request, contest_id, False)
+    return get_people(request, contest_id, False)
 
 
 def add_person(request, contest_id, role):
@@ -385,6 +385,7 @@ def problem_detail(request, problem_id):
         context['private_tests'].append((input_file.file.read(), output_file.file.read(), t.pk))
         input_file.close()
         output_file.close()
+    context['curr_time'] = timezone.now()
     return render(request, 'judge/problem_detail.html', context)
 
 
