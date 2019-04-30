@@ -583,7 +583,7 @@ def submission_detail(request, submission_id: str):
         return handler404(request)
     if perm or user.email == submission.participant.pk:
         context['type'] = 'Poster' if perm else 'Participant'
-        if perm:
+        if perm and submission.problem.contest.enable_poster_score:
             if request.method == 'POST':
                 form = AddPosterScoreForm(request.POST)
                 if form.is_valid():
