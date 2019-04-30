@@ -76,6 +76,36 @@ class NewContestForm(forms.Form):
             raise forms.ValidationError("The final deadline cannot be before the soft deadline")
 
 
+class UpdateContestForm(forms.Form):
+    contest_start = forms.DateTimeField(label='Start Date',
+                                        widget=forms.DateTimeInput(attrs={'class': 'form-control'}),
+                                        help_text='Specify when the contest begins.')
+    """Contest Start Timestamp"""
+
+    contest_soft_end = forms.DateTimeField(label='Soft End Date',
+                                           widget=forms.DateTimeInput(
+                                               attrs={'class': 'form-control'}),
+                                           help_text='Specify after when would you like to \
+                                                      penalize submissions.')
+    """Contest Soft End Timestamp"""
+
+    contest_hard_end = forms.DateTimeField(label='Hard End Date',
+                                           widget=forms.DateTimeInput(
+                                               attrs={'class': 'form-control'}),
+                                           help_text='Specify when the contest completely ends.')
+    """Contest Hard End Timestamp"""
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cont_start = cleaned_data.get("contest_start")
+        cont_soft_end = cleaned_data.get("contest_soft_end")
+        cont_hard_end = cleaned_data.get("contest_hard_end")
+        if cont_start > cont_soft_end:
+            raise forms.ValidationError("Contest cannot end before it contest starts!")
+        if cont_soft_end > cont_hard_end:
+            raise forms.ValidationError("The final deadline cannot be before the soft deadline")
+
+
 class AddPersonToContestForm(forms.Form):
     """
     Form to add a Person to a Contest.

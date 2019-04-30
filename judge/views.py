@@ -10,7 +10,7 @@ import os
 from .models import Contest, Problem, TestCase, Submission
 from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
 from .forms import NewProblemForm, EditProblemForm, NewSubmissionForm, AddTestCaseForm
-from .forms import NewCommentForm
+from .forms import NewCommentForm, UpdateContestForm
 from . import handler
 
 
@@ -206,13 +206,32 @@ def contest_detail(request, contest_id):
         return handler404(request)
     problems = Problem.objects.filter(contest_id=contest_id)
     status, leaderboard = handler.get_leaderboard(contest_id)
-    return render(request, 'judge/contest_detail.html', {
+    context = {
         'contest': contest,
         'type': 'Poster' if perm else 'Participant',
         'problems': problems,
         'leaderboard_status': status,
         'leaderboard': leaderboard,
-    })
+    }
+    if perm is True:
+        if request.method == 'POST':
+            form = UpdateContestForm(request.POST)
+            if form.is_valid():
+                try:
+                    contest.start_datetime = form.cleaned_data['contest_start']
+                    contest.soft_end_datetime = form.cleaned_data['contest_soft_end']
+                    contest.hard_end_datetime = form.cleaned_data['contest_hard_end']
+                    contest.save()
+                except Exception as e:
+                    form.add_error(None, e.__str__())
+        else:
+            form = UpdateContestForm(initial={
+                'contest_start': contest.start_datetime,
+                'contest_soft_end': contest.soft_end_datetime,
+                'contest_hard_end': contest.hard_end_datetime,
+            })
+        context['form'] = form
+    return render(request, 'judge/contest_detail.html', context)
 
 
 def contest_scores_csv(request, contest_id):
