@@ -206,24 +206,31 @@ def contest_detail(request, contest_id):
         return handler404(request)
     problems = Problem.objects.filter(contest_id=contest_id)
     status, leaderboard = handler.get_leaderboard(contest_id)
+    curr_time = timezone.now()
     context = {
         'contest': contest,
         'type': 'Poster' if perm else 'Participant',
         'problems': problems,
         'leaderboard_status': status,
         'leaderboard': leaderboard,
+        'curr_time': curr_time,
     }
     if perm is True:
         if request.method == 'POST':
             form = UpdateContestForm(request.POST)
             if form.is_valid():
-                try:
-                    contest.start_datetime = form.cleaned_data['contest_start']
-                    contest.soft_end_datetime = form.cleaned_data['contest_soft_end']
-                    contest.hard_end_datetime = form.cleaned_data['contest_hard_end']
-                    contest.save()
-                except Exception as e:
-                    form.add_error(None, e.__str__())
+                if (curr_time < contest.soft_end_datetime or
+                    (form.cleaned_data['contest_soft_end'] == contest.soft_end_datetime and
+                        curr_time < contest.hard_end_datetime)):
+                    try:
+                        contest.start_datetime = form.cleaned_data['contest_start']
+                        contest.soft_end_datetime = form.cleaned_data['contest_soft_end']
+                        contest.hard_end_datetime = form.cleaned_data['contest_hard_end']
+                        contest.save()
+                    except Exception as e:
+                        form.add_error(None, e.__str__())
+                else:
+                    form.add_error(None, 'Deadline cannot be extended if it has passed')
         else:
             form = UpdateContestForm(initial={
                 'contest_start': contest.start_datetime,

@@ -45,10 +45,11 @@
             {% if not contest.public %}<a class="btn btn-primary"
                 href="{% url 'judge:get_participants' contest.pk %}">See
                 participants</a>{% endif %}
-            {% if type == 'Poster' %}<button type="button" class="btn btn-primary my-2" data-toggle="modal"
+            {% if type == 'Poster' and curr_time < contest.hard_end_datetime %}<button type="button" class="btn btn-primary my-2" data-toggle="modal"
                 data-target="#modal-update-dates">Update dates</button>{% endif %}
         </div>
     </div>
+    {% if type == 'Poster' and curr_time < contest.hard_end_datetime %}
     <div class="modal fade" id="modal-update-dates" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal- modal-dialog-centered modal-sm" role="document">
             <div class="modal-content">
@@ -95,6 +96,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
     <div class="col-md-5 float-right">
         <i class="ni ni-calendar-grid-58"></i> Starts at {{ contest.start_datetime|localtime }}<br>
         {% if contest.soft_end_datetime != contest.hard_end_datetime %}
