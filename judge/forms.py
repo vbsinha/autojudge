@@ -92,7 +92,7 @@ class AddPersonToContestForm(forms.Form):
     emails = MultiEmailField(
         label='Emails',
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        help_text='Enter emails seperated using commas')
+        help_text='Enter emails separated using commas')
     """Email ID of the person"""
 
 
@@ -277,5 +277,11 @@ class NewCommentForm(forms.Form):
 
 
 class AddPosterScoreForm(forms.Form):
+    """
+    Form to add poster score for a submission
+    """
+
     score = forms.IntegerField(
-        label='Poster Score', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+        label='Poster Score', widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        min_value=0, initial=0)
+    """Score field"""

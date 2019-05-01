@@ -588,7 +588,9 @@ def submission_detail(request, submission_id: str):
                 form = AddPosterScoreForm(request.POST)
                 if form.is_valid():
                     try:
+                        submission.final_score -= submission.ta_score
                         submission.ta_score = form.cleaned_data['score']
+                        submission.final_score += submission.ta_score
                         submission.save()
                     except Exception as e:
                         form.add_error(None, e.__str__())

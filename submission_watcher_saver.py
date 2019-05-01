@@ -1,7 +1,7 @@
 import os
 import django
 
-from pylint.lint import Run
+from pycodestyle import Checker
 from datetime import timedelta
 from subprocess import call
 from typing import List, Any
@@ -21,14 +21,10 @@ LS: List[Any] = []
 REFRESH_LS_TRIGGER = 10
 
 
-def _compute_lint_score(error_dict):
-    if error_dict['statement'] > 0:
-        high = 10.0
-        penalty = (5 * error_dict['error'] + error_dict['warning']) / error_dict['statement']
-        high -= 10 * penalty
-        return max(0.0, high)
-    else:
-        return 0.0
+def _compute_lint_score(report):
+    if len(report.lines) > 0:
+        score = 10.0 * (1 - report.total_errors / len(report.lines))
+        return max(0.0, score)
 
 
 def saver(sub_id):
@@ -73,12 +69,15 @@ def saver(sub_id):
         st.save()
 
     s.judge_score = score_received
-    if s.file_type == '.py':
-        penalty = Run([os.path.join(CONTENT_DIRECTORY, 'submissions',
-                                    'submission_{}.py'.format(submission))], do_exit=False)
-        if s.problem.contest.enable_linter_score:
-            s.linter_score = _compute_lint_score(
-                penalty.linter.stats['by_module']['submission_{}'.format(submission)])
+
+    if s.problem.contest.enable_linter_score:
+        if s.file_type == '.py':
+            checker = Checker(
+                        os.path.join(CONTENT_DIRECTORY,
+                                     'submissions', 'submission_{}.py'.format(submission)),
+                        quiet=True)
+            checker.check_all()
+            s.linter_score = _compute_lint_score(checker.report)
     current_final_score = s.judge_score + s.ta_score + s.linter_score
 
     penalty_multiplier = 1.0
