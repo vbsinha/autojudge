@@ -2,6 +2,16 @@ from django import forms
 from django.core.validators import RegexValidator, validate_email, EMPTY_VALUES
 
 
+def _check_valid_date(cleaned_data):
+    cont_start = cleaned_data.get("contest_start")
+    cont_soft_end = cleaned_data.get("contest_soft_end")
+    cont_hard_end = cleaned_data.get("contest_hard_end")
+    if cont_start > cont_soft_end:
+        raise forms.ValidationError("Contest cannot end before it starts!")
+    if cont_soft_end > cont_hard_end:
+        raise forms.ValidationError("The final deadline cannot be before the soft deadline")
+
+
 class MultiEmailField(forms.Field):
     """
     Subclass of forms.Field to support a list of email addresses.
@@ -75,13 +85,35 @@ class NewContestForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        cont_start = cleaned_data.get("contest_start")
-        cont_soft_end = cleaned_data.get("contest_soft_end")
-        cont_hard_end = cleaned_data.get("contest_hard_end")
-        if cont_start > cont_soft_end:
-            raise forms.ValidationError("Contest cannot end before it contest starts!")
-        if cont_soft_end > cont_hard_end:
-            raise forms.ValidationError("The final deadline cannot be before the soft deadline")
+        _check_valid_date(cleaned_data)
+
+
+class UpdateContestForm(forms.Form):
+    """
+    Form to update the timeline of the Contest
+    """
+
+    contest_start = forms.DateTimeField(label='Start Date',
+                                        widget=forms.DateTimeInput(attrs={'class': 'form-control'}),
+                                        help_text='Specify when the contest begins.')
+    """Contest Start Timestamp"""
+
+    contest_soft_end = forms.DateTimeField(label='Soft End Date',
+                                           widget=forms.DateTimeInput(
+                                               attrs={'class': 'form-control'}),
+                                           help_text='Specify after when would you like to \
+                                                      penalize submissions.')
+    """Contest Soft End Timestamp"""
+
+    contest_hard_end = forms.DateTimeField(label='Hard End Date',
+                                           widget=forms.DateTimeInput(
+                                               attrs={'class': 'form-control'}),
+                                           help_text='Specify when the contest completely ends.')
+    """Contest Hard End Timestamp"""
+
+    def clean(self):
+        cleaned_data = super().clean()
+        _check_valid_date(cleaned_data)
 
 
 class AddPersonToContestForm(forms.Form):

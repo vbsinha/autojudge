@@ -764,9 +764,11 @@ def update_leaderboard(contest: int, person: str):
     Updates the leaderboard for the passed contest for the rank of the person
     Pass pk for contest and email for person
     Only call this function when some submission for some problem of the contest
-     has scored more than its previous submission.
+    has scored more than its previous submission.
     Remember to call this function whenever PersonProblemFinalScore is updated.
-    Returns True if update was successfull else returns False
+
+    Returns:
+        True if update was successful, False otherwise
     """
 
     os.makedirs(os.path.join('content', 'contests'), exist_ok=True)
