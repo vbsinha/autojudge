@@ -10,6 +10,16 @@
 <li class="breadcrumb-item active" aria-current="page">Submission {{ submission.pk }}</li>
 {% endblock %}
 
+{% block scripts %}
+{% if form.errors %}
+<script>
+    $(window).on('load', function () {
+        $('#modal-update-score').modal('show');
+    });
+</script>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-12 my-4">
