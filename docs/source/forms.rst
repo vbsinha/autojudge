@@ -21,6 +21,9 @@ Forms and input pre-processing
     .. autoclass:: AddTestCaseForm
         :members:
 
+    .. autoclass:: UpdateContestForm
+        :members:
+
     .. autoclass:: EditProblemForm
         :members:
 
