@@ -22,7 +22,7 @@
     $("#id_contest_soft_end").flatpickr(date_options)
     $("#id_contest_hard_end").flatpickr(date_options)
 </script> -->
-{% if form.non_field_errors %}
+{% if form.errors %}
 <script>
     $(window).on('load', function () {
         $('#modal-update-dates').modal('show');
