@@ -10,7 +10,7 @@ import os
 from .models import Contest, Problem, TestCase, Submission
 from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
 from .forms import NewProblemForm, EditProblemForm, NewSubmissionForm, AddTestCaseForm
-from .forms import NewCommentForm, UpdateContestForm
+from .forms import NewCommentForm, UpdateContestForm, AddPosterScoreForm
 from . import handler
 
 
@@ -78,13 +78,15 @@ def new_contest(request):
             contest_soft_end = form.cleaned_data['contest_soft_end']
             contest_hard_end = form.cleaned_data['contest_hard_end']
             penalty = form.cleaned_data['penalty']
+            enable_linter_score = form.cleaned_data['enable_linter_score']
+            enable_poster_score = form.cleaned_data['enable_poster_score']
             is_public = form.cleaned_data['is_public']
             if penalty < 0 or penalty > 1:
                 form.add_error('penalty', 'Penalty should be between 0 and 1.')
             else:
                 status, msg = handler.process_contest(
                     contest_name, contest_start, contest_soft_end, contest_hard_end,
-                    penalty, is_public)
+                    penalty, is_public, enable_linter_score, enable_poster_score)
                 if status:
                     handler.add_person_to_contest(user.email, msg, True)
                     return redirect(reverse('judge:index'))
@@ -605,6 +607,18 @@ def submission_detail(request, submission_id: str):
     if user is None:
         return handler404(request)
     if perm or user.email == submission.participant.pk:
+        context['type'] = 'Poster' if perm else 'Participant'
+        if perm and submission.problem.contest.enable_poster_score:
+            if request.method == 'POST':
+                form = AddPosterScoreForm(request.POST)
+                if form.is_valid():
+                    status, err = handler.update_poster_score(submission.pk,
+                                                              form.cleaned_data['score'])
+                    if not status:
+                        form.add_error(None, err)
+            else:
+                form = AddPosterScoreForm(initial={'score': submission.ta_score})
+            context['form'] = form
         status, msg = handler.get_submission_status_mini(submission_id)
         if status:
             # TODO Fix this
@@ -618,6 +632,7 @@ def submission_detail(request, submission_id: str):
         else:
             logging.debug(msg)
             return handler404(request)
+
         return render(request, 'judge/submission_detail.html', context)
     else:
         return handler404(request)

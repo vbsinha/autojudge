@@ -65,6 +65,14 @@ class NewContestForm(forms.Form):
     is_public = forms.BooleanField(label='Is this contest public?', required=False)
     """Contest is_public property"""
 
+    enable_linter_score = forms.BooleanField(label='Enable linter scoring',
+                                             required=False, initial=True)
+    """Contest enable_linter_score property"""
+
+    enable_poster_score = forms.BooleanField(label='Enable poster scoring',
+                                             required=False, initial=True)
+    """Contest enable_poster_score property"""
+
     def clean(self):
         cleaned_data = super().clean()
         cont_start = cleaned_data.get("contest_start")
@@ -114,7 +122,7 @@ class AddPersonToContestForm(forms.Form):
     emails = MultiEmailField(
         label='Emails',
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        help_text='Enter emails seperated using commas')
+        help_text='Enter emails separated using commas')
     """Email ID of the person"""
 
 
@@ -296,3 +304,14 @@ class NewCommentForm(forms.Form):
     comment = forms.CharField(label='Comment', required=True, widget=forms.Textarea(
         attrs={'class': 'form-control', 'rows': 2}))
     """Comment content"""
+
+
+class AddPosterScoreForm(forms.Form):
+    """
+    Form to add poster score for a submission
+    """
+
+    score = forms.IntegerField(
+        label='Poster Score', widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        initial=0)
+    """Score field"""
