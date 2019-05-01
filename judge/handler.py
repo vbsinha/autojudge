@@ -1,4 +1,5 @@
 import os
+import pickle
 
 from re import compile
 from io import StringIO
@@ -8,7 +9,6 @@ from subprocess import run
 from datetime import timedelta, datetime
 from traceback import print_exc
 from csv import writer as csvwriter
-from pickle import load as pickle_load
 from typing import Tuple, Optional, Dict, Any, List
 from django.utils import timezone
 
@@ -321,6 +321,34 @@ def process_solution(problem_id: str, participant: str, file_type,
         return (False, e.__str__())
 
     return (True, None)
+
+
+def update_poster_score(submission_id: str, new_score: int):
+    try:
+        submission = models.Submission.objects.get(pk=submission_id)
+        submission.final_score -= submission.ta_score
+        submission.ta_score = new_score
+        submission.final_score += submission.ta_score
+        submission.save()
+
+        ppf, _ = models.PersonProblemFinalScore.objects.get_or_create(
+            person=submission.participant.pk, problem=submission.problem.pk)
+        # TODO Find the maximum score and update leaderboard
+        if ppf.score <= submission.final_score:
+            # <= because otherwise when someone submits for the first time and scores 0
+            # (s)he will not show up in leaderboard
+            ppf.score = submission.final_score
+            update_lb = True
+            ppf.save()
+
+        if update_lb and submission.problem.contest.soft_end_datetime >= submission.timestamp:
+            # Update the leaderboard only if not a late submission
+            # and the submission imporved the final score
+            update_leaderboard(submission.problem.contest.pk,
+                               submission.participant.email)
+        return (True, None)
+    except Exception as e:
+        return (False, e.__str__())
 
 
 def add_person_to_contest(person: str, contest: str,
@@ -718,11 +746,55 @@ def get_leaderboard(contest: int) -> Tuple[bool, Any]:
         return (False, 'Leaderboard not yet initialized for this contest.')
     try:
         with open(leaderboard_path, 'rb') as f:
-            data = pickle_load(f)
+            data = pickle.load(f)
         return (True, data)
     except Exception as e:
         print_exc()
         return (False, e.__str__())
+
+
+def update_leaderboard(contest: int, person: str):
+    """
+    Updates the leaderboard for the passed contest for the rank of the person
+    Pass pk for contest and email for person
+    Only call this function when some submission for some problem of the contest
+     has scored more than its previous submission.
+    Remember to call this function whenever PersonProblemFinalScore is updated.
+    Returns True if update was successfull else returns False
+    """
+
+    os.makedirs(os.path.join('content', 'contests'), exist_ok=True)
+    pickle_path = os.path.join('content', 'contests', str(contest) + '.lb')
+
+    status, score = get_personcontest_score(person, contest)
+
+    if status:
+        if not os.path.exists(pickle_path):
+            with open(pickle_path, 'wb') as f:
+                data = [[person, score]]
+                pickle.dump(data, f)
+            return True
+        else:
+            with open(pickle_path, 'rb') as f:
+                data = pickle.load(f)
+            with open(pickle_path, 'wb') as f:
+                for i in range(len(data)):
+                    if data[i][0] == person:
+                        data[i][1] = score
+                        pos = i
+                        break
+                else:
+                    data.append([person, score])
+                    pos = len(data) - 1
+                for i in range(pos, 0, -1):
+                    if data[i][1] > data[i-1][1]:
+                        data[i], data[i-1] = data[i-1], data[i]
+                    else:
+                        break
+                pickle.dump(data, f)
+            return True
+    else:
+        return False
 
 
 def process_comment(problem: str, person: str, commenter: str,

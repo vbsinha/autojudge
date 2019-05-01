@@ -283,5 +283,5 @@ class AddPosterScoreForm(forms.Form):
 
     score = forms.IntegerField(
         label='Poster Score', widget=forms.NumberInput(attrs={'class': 'form-control'}),
-        min_value=0, initial=0)
+        initial=0)
     """Score field"""

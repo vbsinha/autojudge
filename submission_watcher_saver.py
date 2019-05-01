@@ -9,7 +9,7 @@ from typing import List, Any
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pdpjudge.settings")
 django.setup()
 
-from judge import models, leaderboard  # noqa: E402
+from judge import models, handler  # noqa: E402
 
 CONTENT_DIRECTORY = 'content'
 TMP_DIRECTORY = 'tmp'
@@ -108,7 +108,7 @@ def saver(sub_id):
     if update_lb and remaining_time.days >= 0:
         # Update the leaderboard only if not a late submission
         # and the submission imporved the final score
-        leaderboard.update_leaderboard(problem.contest.pk, s.participant.email)
+        handler.update_leaderboard(problem.contest.pk, s.participant.email)
 
     return True
 
