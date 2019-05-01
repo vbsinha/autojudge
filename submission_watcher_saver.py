@@ -105,9 +105,8 @@ def saver(sub_id):
         update_lb = True
     ppf.save()
 
-    if update_lb and remaining_time.days >= 0:
-        # Update the leaderboard only if not a late submission
-        # and the submission imporved the final score
+    if update_lb:
+        # Update the leaderboard only if the submission imporved the final score
         handler.update_leaderboard(problem.contest.pk, s.participant.email)
 
     return True

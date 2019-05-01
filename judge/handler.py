@@ -324,6 +324,14 @@ def process_solution(problem_id: str, participant: str, file_type,
 
 
 def update_poster_score(submission_id: str, new_score: int):
+    """
+    Updates the poster score (tascore) for a submission.
+    Input pk of submission and the new poster score.
+    Leaderboard is updated if the new score for the person-problem pair has changed.
+
+    Returns:
+        (True, None) or (False, Exception string)
+    """
     try:
         submission = models.Submission.objects.get(pk=submission_id)
         submission.final_score -= submission.ta_score
@@ -331,19 +339,17 @@ def update_poster_score(submission_id: str, new_score: int):
         submission.final_score += submission.ta_score
         submission.save()
 
+        highest_scoring_submission = models.Submission.objects.filter(
+            problem=submission.problem.pk, participant=submission.participant.pk).\
+            order_by('-final_score').first()
         ppf, _ = models.PersonProblemFinalScore.objects.get_or_create(
             person=submission.participant.pk, problem=submission.problem.pk)
-        # TODO Find the maximum score and update leaderboard
-        if ppf.score <= submission.final_score:
-            # <= because otherwise when someone submits for the first time and scores 0
-            # (s)he will not show up in leaderboard
-            ppf.score = submission.final_score
-            update_lb = True
-            ppf.save()
+        old_highscore = ppf.score
+        ppf.score = highest_scoring_submission.final_score
+        ppf.save()
 
-        if update_lb and submission.problem.contest.soft_end_datetime >= submission.timestamp:
-            # Update the leaderboard only if not a late submission
-            # and the submission imporved the final score
+        if old_highscore != ppf.score:
+            # Update the leaderboard only if submission imporved the final score
             update_leaderboard(submission.problem.contest.pk,
                                submission.participant.email)
         return (True, None)
@@ -479,7 +485,7 @@ def get_personcontest_permission(person: Optional[str], contest: int) -> Optiona
             return None
     p = models.Person.objects.get(email=person)
     c = models.Contest.objects.get(pk=contest)
-    # partcipant and Current datetime < C.date_time -> None
+    # participant and Current datetime < C.date_time -> None
     try:
         cp = models.ContestPerson.objects.get(person=p, contest=c)
         if cp.role is False and curr < c.start_datetime:
@@ -781,16 +787,10 @@ def update_leaderboard(contest: int, person: str):
                 for i in range(len(data)):
                     if data[i][0] == person:
                         data[i][1] = score
-                        pos = i
                         break
                 else:
                     data.append([person, score])
-                    pos = len(data) - 1
-                for i in range(pos, 0, -1):
-                    if data[i][1] > data[i-1][1]:
-                        data[i], data[i-1] = data[i-1], data[i]
-                    else:
-                        break
+                data = sorted(data, key=lambda x: x[1])
                 pickle.dump(data, f)
             return True
     else:

@@ -185,7 +185,7 @@ class Submission(models.Model):
     judge_score = models.PositiveSmallIntegerField(default=0)
     """Judge score"""
 
-    ta_score = models.PositiveSmallIntegerField(default=0)
+    ta_score = models.SmallIntegerField(default=0)
     """TA score"""
 
     linter_score = models.FloatField(default=0.0)
