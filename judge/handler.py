@@ -332,7 +332,7 @@ def update_poster_score(submission_id: str, new_score: int):
         submission.save()
 
         ppf, _ = models.PersonProblemFinalScore.objects.get_or_create(
-            person=submission.participant.pk, problem=submission.problem.pk)
+            person_id=submission.participant.pk, problem_id=submission.problem.pk)
         # TODO Find the maximum score and update leaderboard
         if ppf.score <= submission.final_score:
             # <= because otherwise when someone submits for the first time and scores 0
