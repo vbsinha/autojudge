@@ -343,7 +343,7 @@ def update_poster_score(submission_id: str, new_score: int):
             problem=submission.problem.pk, participant=submission.participant.pk).\
             order_by('-final_score').first()
         ppf, _ = models.PersonProblemFinalScore.objects.get_or_create(
-            person=submission.participant.pk, problem=submission.problem.pk)
+            person=submission.participant, problem=submission.problem)
         old_highscore = ppf.score
         ppf.score = highest_scoring_submission.final_score
         ppf.save()
