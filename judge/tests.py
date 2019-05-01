@@ -65,7 +65,8 @@ class HandlerTests(TestCase):
         status, pk = handler.process_contest(name='Test Contest', start_datetime='2019-04-25T12:30',
                                              soft_end_datetime='2019-04-26T12:30',
                                              hard_end_datetime='2019-04-27T12:30',
-                                             penalty=0, public=True)
+                                             penalty=0, public=True, enable_linter_score=True,
+                                             enable_poster_score=True)
         self.assertTrue(status)
         c = models.Contest.objects.filter(pk=int(pk))
         self.assertEqual(len(c), 1)
