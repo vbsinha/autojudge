@@ -128,7 +128,7 @@ class AddPersonToContestForm(forms.Form):
     """Email ID of the person"""
 
 
-class DeletePersonFromContest(forms.Form):
+class DeletePersonFromContestForm(forms.Form):
     """
     Form to remove a Person from a Contest.
     """

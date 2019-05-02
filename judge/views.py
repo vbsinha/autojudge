@@ -8,7 +8,7 @@ import logging
 import os
 
 from .models import Contest, Problem, TestCase, Submission
-from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
+from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContestForm
 from .forms import NewProblemForm, EditProblemForm, NewSubmissionForm, AddTestCaseForm
 from .forms import NewCommentForm, UpdateContestForm, AddPosterScoreForm
 from . import handler
@@ -114,7 +114,7 @@ def get_people(request, contest_id, role):
     context = {'contest_id': contest_id,
                'type': 'Poster' if role else 'Participant'}
     if request.method == 'POST' and perm is True:
-        form = DeletePersonFromContest(request.POST)
+        form = DeletePersonFromContestForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
             status, err = handler.delete_personcontest(email, contest_id)
@@ -122,7 +122,7 @@ def get_people(request, contest_id, role):
                 logging.debug(err)
                 form.add_error(None, 'Could not delete {}. {}'.format(email, err))
     else:
-        form = DeletePersonFromContest()
+        form = DeletePersonFromContestForm()
     context['form'] = form
     if role:
         status, value = handler.get_posters(contest_id)
