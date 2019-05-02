@@ -110,15 +110,21 @@
 <div class="row">
     <div class="col-12 col-md-7">
         {% for problem in problems %}
-        <div class="card m-3">
+        <div class="card my-4">
             <div class="card-body">
                 <h4><code>[{{ problem.code }}]</code> {{ problem.name }}</h4>
                 <a href="{% url 'judge:problem_detail' problem.pk %}" class="card-link">Go to problem page</a>
             </div>
         </div>
+        {% empty %}
+        <div class="card my-4">
+            <div class="card-body">
+                There are no problems in this contests.
+            </div>
+        </div>
         {% endfor %}
     </div>
-    <div class="col-12 col-md-5">
+    <div class="col-12 col-md-5 my-4">
         {% if leaderboard_status %}
         <table class="table table-striped">
             <thead class="thead-dark">
