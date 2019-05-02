@@ -8,7 +8,7 @@ import logging
 import os
 
 from .models import Contest, Problem, TestCase, Submission
-from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContest
+from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContestForm
 from .forms import NewProblemForm, EditProblemForm, NewSubmissionForm, AddTestCaseForm
 from .forms import NewCommentForm, UpdateContestForm, AddPosterScoreForm
 from . import handler
@@ -32,21 +32,21 @@ def _return_file_as_response(path_name):
 
 def handler404(request, exception=None):
     """
-    Renders 404 page
+    Renders 404 page.
     """
     return render(request, '404.html', status=404)
 
 
 def handler500(request, exception=None):
     """
-    Renders 500 page
+    Renders 500 page.
     """
     return render(request, '500.html', status=500)
 
 
 def index(request):
     """
-    Renders the index page
+    Renders the index page.
     """
     context = {}
     user = _get_user(request)
@@ -65,7 +65,7 @@ def index(request):
 
 def new_contest(request):
     """
-    Renders view for the page to create a new contest
+    Renders view for the page to create a new contest.
     """
     user = _get_user(request)
     if user is None:
@@ -102,7 +102,7 @@ def new_contest(request):
 def get_people(request, contest_id, role):
     """
     Function to render the page for viewing participants and posters
-    for a contest based on argument role.
+    for a contest based on :attr:`role`.
     """
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
@@ -114,7 +114,7 @@ def get_people(request, contest_id, role):
     context = {'contest_id': contest_id,
                'type': 'Poster' if role else 'Participant'}
     if request.method == 'POST' and perm is True:
-        form = DeletePersonFromContest(request.POST)
+        form = DeletePersonFromContestForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
             status, err = handler.delete_personcontest(email, contest_id)
@@ -122,7 +122,7 @@ def get_people(request, contest_id, role):
                 logging.debug(err)
                 form.add_error(None, 'Could not delete {}. {}'.format(email, err))
     else:
-        form = DeletePersonFromContest()
+        form = DeletePersonFromContestForm()
     context['form'] = form
     if role:
         status, value = handler.get_posters(contest_id)
@@ -139,7 +139,7 @@ def get_people(request, contest_id, role):
 def get_posters(request, contest_id):
     """
     Renders the page for posters of a contest.
-    Dispatches to get_people with role=True.
+    Dispatches to :func:`get_people` with :attr:`role` set to ``True``.
     """
     return get_people(request, contest_id, True)
 
@@ -147,7 +147,7 @@ def get_posters(request, contest_id):
 def get_participants(request, contest_id):
     """
     Renders the page for posters of a contest.
-    Dispatches to get_people with role=False.
+    Dispatches to :func:`get_people` with :attr:`role` set to ``False``.
     """
     return get_people(request, contest_id, False)
 
@@ -183,7 +183,7 @@ def add_person(request, contest_id, role):
 def add_poster(request, contest_id):
     """
     Renders the page for adding a poster.
-    Dispatches to add_person with role=True.
+    Dispatches to :func:`add_person` with :attr:`role` set to ``True``.
     """
     return add_person(request, contest_id, True)
 
@@ -191,7 +191,7 @@ def add_poster(request, contest_id):
 def add_participant(request, contest_id):
     """
     Renders the page for adding a participant.
-    Dispatches to add_person with role=False.
+    Dispatches to :func:`add_person` with :attr:`role` set to ``False``.
     """
     return add_person(request, contest_id, False)
 
