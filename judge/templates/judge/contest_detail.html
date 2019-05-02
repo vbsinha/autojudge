@@ -39,7 +39,8 @@
             {% if type == 'Poster' %}
             {% if curr_time < contest.start_datetime %}<a class="btn btn-primary my-1 btn-sm"
                 href="{% url 'judge:new_problem' contest.pk %}">Add Problem</a>{% endif %}
-            <a class="btn btn-primary my-1 btn-sm" href="{% url 'judge:contest_scores_csv' contest.pk %}">Download Scores</a>
+            <a class="btn btn-primary my-1 btn-sm" href="{% url 'judge:contest_scores_csv' contest.pk %}">Download
+                Scores</a>
             {% endif %}
             <a class="btn btn-primary my-1 btn-sm" href="{% url 'judge:get_posters' contest.pk %}">See posters</a>
             {% if not contest.public %}<a class="btn btn-primary my-1 btn-sm"
@@ -57,9 +58,7 @@
                 <div class="modal-body p-0">
                     <div class="card bg-secondary shadow border-0">
                         <div class="card-body px-lg-5 py-lg-5">
-                            <div class="text-center text-muted mb-4">
-                                UPDATE CONTEST
-                            </div>
+                            <div class="text-center text-muted mb-4">UPDATE CONTEST</div>
                             <form method="POST" role="form">
                                 {% if form.non_field_errors %}
                                 <div class="alert alert-danger alter-dismissible fade show" role="alert">
