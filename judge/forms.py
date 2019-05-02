@@ -6,10 +6,11 @@ def _check_valid_date(cleaned_data):
     cont_start = cleaned_data.get("contest_start")
     cont_soft_end = cleaned_data.get("contest_soft_end")
     cont_hard_end = cleaned_data.get("contest_hard_end")
-    if cont_start > cont_soft_end:
-        raise forms.ValidationError("Contest cannot end before it starts!")
-    if cont_soft_end > cont_hard_end:
-        raise forms.ValidationError("The final deadline cannot be before the soft deadline")
+    if cont_start and cont_soft_end and cont_hard_end:
+        if cont_start > cont_soft_end:
+            raise forms.ValidationError("Contest cannot end before it starts!")
+        if cont_soft_end > cont_hard_end:
+            raise forms.ValidationError("The final deadline cannot be before the soft deadline")
 
 
 class MultiEmailField(forms.Field):

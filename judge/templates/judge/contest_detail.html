@@ -37,16 +37,17 @@
         <h2 class="d-inline">{{ contest.name }}</h2>
         <div class="col-12">
             {% if type == 'Poster' %}
-            {% if curr_time < contest.start_datetime %}<a class="btn btn-primary"
+            {% if curr_time < contest.start_datetime %}<a class="btn btn-primary my-1 btn-sm"
                 href="{% url 'judge:new_problem' contest.pk %}">Add Problem</a>{% endif %}
-            <a class="btn btn-primary" href="{% url 'judge:contest_scores_csv' contest.pk %}">Download Scores</a>
+            <a class="btn btn-primary my-1 btn-sm" href="{% url 'judge:contest_scores_csv' contest.pk %}">Download
+                Scores</a>
             {% endif %}
-            <a class="btn btn-primary" href="{% url 'judge:get_posters' contest.pk %}">See posters</a>
-            {% if not contest.public %}<a class="btn btn-primary"
+            <a class="btn btn-primary my-1 btn-sm" href="{% url 'judge:get_posters' contest.pk %}">See posters</a>
+            {% if not contest.public %}<a class="btn btn-primary my-1 btn-sm"
                 href="{% url 'judge:get_participants' contest.pk %}">See
                 participants</a>{% endif %}
             {% if type == 'Poster' and curr_time < contest.hard_end_datetime %}<button type="button"
-                class="btn btn-primary my-2" data-toggle="modal" data-target="#modal-update-dates">Update
+                class="btn btn-primary my-1 btn-sm" data-toggle="modal" data-target="#modal-update-dates">Update
                 dates</button>{% endif %}
         </div>
     </div>
@@ -57,9 +58,7 @@
                 <div class="modal-body p-0">
                     <div class="card bg-secondary shadow border-0">
                         <div class="card-body px-lg-5 py-lg-5">
-                            <div class="text-center text-muted mb-4">
-                                UPDATE CONTEST
-                            </div>
+                            <div class="text-center text-muted mb-4">UPDATE CONTEST</div>
                             <form method="POST" role="form">
                                 {% if form.non_field_errors %}
                                 <div class="alert alert-danger alter-dismissible fade show" role="alert">
@@ -110,15 +109,21 @@
 <div class="row">
     <div class="col-12 col-md-7">
         {% for problem in problems %}
-        <div class="card m-3">
+        <div class="card my-4">
             <div class="card-body">
                 <h4><code>[{{ problem.code }}]</code> {{ problem.name }}</h4>
                 <a href="{% url 'judge:problem_detail' problem.pk %}" class="card-link">Go to problem page</a>
             </div>
         </div>
+        {% empty %}
+        <div class="card my-4">
+            <div class="card-body">
+                There are no problems in this contests.
+            </div>
+        </div>
         {% endfor %}
     </div>
-    <div class="col-12 col-md-5">
+    <div class="col-12 col-md-5 my-4">
         {% if leaderboard_status %}
         <table class="table table-striped">
             <thead class="thead-dark">
