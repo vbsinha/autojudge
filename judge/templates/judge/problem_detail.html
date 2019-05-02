@@ -239,7 +239,6 @@
     </div>
 </div>
 
-<!-- TODO Check if form is restricted -->
 {% if type == 'Participant' and user.is_authenticated %}
 <div class="row">
     <div class="col-12 my-4">
@@ -295,7 +294,6 @@
         </div>
     </div>
     <div class="col-12">
-        <!-- TODO -->
         <a href="{% url 'judge:problem_submissions' problem.pk %}" class="btn btn-default">See my previous
             submissions</a>
     </div>

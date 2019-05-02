@@ -380,7 +380,6 @@ def problem_detail(request, problem_id):
         context['public_tests'].append((input_file.file.read(), output_file.file.read(), t.pk))
         input_file.close()
         output_file.close()
-    # TODO restrict private tests
     for t in private_tests:
         input_file = File(open(t.inputfile.path, 'r'))
         output_file = File(open(t.outputfile.path, 'r'))
@@ -621,7 +620,6 @@ def submission_detail(request, submission_id: str):
             context['form'] = form
         status, msg = handler.get_submission_status_mini(submission_id)
         if status:
-            # TODO Fix this
             context['test_results'] = msg[0]
             context['judge_score'] = msg[1][0]
             context['ta_score'] = msg[1][1]
