@@ -25,3 +25,7 @@ $ python manage.py runserver
 ```
 $ python submission_watcher_saver.py
 ```
+
+## License
+
+This code is licensed under [MIT](LICENSE).
