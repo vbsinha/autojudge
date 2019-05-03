@@ -30,3 +30,7 @@ It must always be kept throughout the time server is running.
 ```
 $ python submission_watcher_saver.py
 ```
+
+## License
+
+This code is licensed under [MIT](LICENSE).
