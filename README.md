@@ -5,7 +5,7 @@
 ---
 This is an implementation of an online judge. 
 The portal can be used for conducting programming contests as well as managing assignments in a university.
-Apart from the facilities of a usual programming contest portals, this portal provides facilities which are well suited for assignment submission. 
+Apart from the facilities of usual programming contest portals, this portal provides facilities which are well suited for assignment submission. 
 These additional features include: Instructor (Problem poster) grades above judge scores, soft and hard deadlines for assignments including penalties, customizable compilation and test script, linter scores etc.
 
 ## Prerequisites
@@ -24,7 +24,7 @@ $ python manage.py makemigrations
 $ python manage.py migrate
 $ python manage.py runserver
 ```
-* Also run the submission_watcher_saver program. 
+* Also run the `submission_watcher_saver` program. 
 This program runs the submissions on testcases and produces output. 
 It must always be kept throughout the time server is running.
 ```
