@@ -25,8 +25,7 @@ $ python manage.py migrate
 $ python manage.py runserver
 ```
 * Also run the `submission_watcher_saver` program. 
-This program runs the submissions on testcases and produces output. 
-It must always be kept throughout the time server is running.
+To evaluate the submissions as and when they are submitted, it is preferred that the program be kept running in parallel with the judge server.
 ```
 $ python submission_watcher_saver.py
 ```
