@@ -804,7 +804,7 @@ def update_leaderboard(contest: int, person: str):
                         break
                 else:
                     data.append([person, score])
-                data = sorted(data, key=lambda x: x[1])
+                data = sorted(data, key=lambda x: x[1], reverse=True)
                 pickle.dump(data, f)
             return True
     else:
