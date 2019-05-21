@@ -78,7 +78,7 @@ def saver(sub_id):
                         quiet=True)
             checker.check_all()
             s.linter_score = _compute_lint_score(checker.report)
-    current_final_score = s.judge_score + s.ta_score + s.linter_score
+    current_final_score = s.judge_score + s.poster_score + s.linter_score
 
     penalty_multiplier = 1.0
     # If the submission crosses soft deadline

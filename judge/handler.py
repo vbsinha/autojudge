@@ -340,9 +340,9 @@ def update_poster_score(submission_id: str, new_score: int):
     """
     try:
         submission = models.Submission.objects.get(pk=submission_id)
-        submission.final_score -= submission.ta_score
-        submission.ta_score = new_score
-        submission.final_score += submission.ta_score
+        submission.final_score -= submission.poster_score
+        submission.poster_score = new_score
+        submission.final_score += submission.poster_score
         submission.save()
 
         highest_scoring_submission = models.Submission.objects.filter(
@@ -627,7 +627,8 @@ def get_submission_status(person: str, problem: str, submission):
         Second dictionary:
             Key: Submission ID
 
-            Value: :code:`(judge_score, ta_score, linter_score, final_score, timestamp, file_type)`
+            Value: :code:`(judge_score, poster_score, linter_score,
+                           final_score, timestamp, file_type)`
 
     In case :attr:`submission` is not ``None``, the passed parameters :attr:`person`
     and :attr:`problem` are ignored and so ``None`` is accepted.
@@ -654,7 +655,7 @@ def get_submission_status(person: str, problem: str, submission):
     score_dict = dict()
 
     for submission in sub_list:
-        score_dict[submission.pk] = (submission.judge_score, submission.ta_score,
+        score_dict[submission.pk] = (submission.judge_score, submission.poster_score,
                                      submission.linter_score, submission.final_score,
                                      submission.timestamp, submission.file_type)
         verdict_dict[submission.pk] = []
@@ -729,7 +730,7 @@ def get_submission_status_mini(submission: str) -> Tuple[bool, Any]:
 
             Value: :code:`(Verdict, Time_taken, Memory_taken, ispublic, message)`
         Tuple:
-            :code:`(judge_score, ta_score, linter_score, final_score, timestamp, file_type)`
+            :code:`(judge_score, poster_score, linter_score, final_score, timestamp, file_type)`
     """
     try:
         s = models.Submission.objects.get(pk=submission)
@@ -742,7 +743,7 @@ def get_submission_status_mini(submission: str) -> Tuple[bool, Any]:
                 submission=s, testcase=testcase)
             verdict_dict[testcase.pk] = (st.get_verdict_display, st.time_taken,
                                          st.memory_taken, testcase.public, st.message)
-        score_tuple = (s.judge_score, s.ta_score, s.linter_score, s.final_score,
+        score_tuple = (s.judge_score, s.poster_score, s.linter_score, s.final_score,
                        s.timestamp, s.file_type)
         return (True, (verdict_dict, score_tuple))
     except Exception as e:

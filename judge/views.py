@@ -616,13 +616,13 @@ def submission_detail(request, submission_id: str):
                     if not status:
                         form.add_error(None, err)
             else:
-                form = AddPosterScoreForm(initial={'score': submission.ta_score})
+                form = AddPosterScoreForm(initial={'score': submission.poster_score})
             context['form'] = form
         status, msg = handler.get_submission_status_mini(submission_id)
         if status:
             context['test_results'] = msg[0]
             context['judge_score'] = msg[1][0]
-            context['ta_score'] = msg[1][1]
+            context['poster_score'] = msg[1][1]
             context['linter_score'] = msg[1][2]
             context['final_score'] = msg[1][3]
             context['timestamp'] = msg[1][4]
