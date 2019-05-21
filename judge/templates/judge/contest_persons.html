@@ -9,9 +9,9 @@
 
 {% block scripts %}
 <script>
-    $('.pdp-delete-person').click(function (){
+    $('.autojudge-delete-person').click(function (){
         $('#id_email').val($(this).attr('data-email'))
-        $('#pdp-delete-form').submit();
+        $('#autojudge-delete-form').submit();
     })
 </script>
 {% endblock %}
@@ -29,13 +29,13 @@
         {% endif %}
     </div>
     <div class="col-12">
-        <form method="POST" id="pdp-delete-form">{% csrf_token %}{{ form }}</form>
+        <form method="POST" id="autojudge-delete-form">{% csrf_token %}{{ form }}</form>
         <div class="list-group">
             {% for person in persons %}
             <div class="list-group-item">
                 <span>{{ person }}</span>
                 {% if permission %}
-                <button class="btn btn-danger float-right pdp-delete-person" data-email="{{ person }}"><i class="fas fa-trash"></i></button>
+                <button class="btn btn-danger float-right autojudge-delete-person" data-email="{{ person }}"><i class="fas fa-trash"></i></button>
                 {% endif %}
             </div>
             {% empty %}

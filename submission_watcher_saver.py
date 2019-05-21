@@ -6,7 +6,7 @@ from datetime import timedelta
 from subprocess import call
 from typing import List, Any
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pdpjudge.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "autojudge.settings")
 django.setup()
 
 from judge import models, handler  # noqa: E402
@@ -15,7 +15,7 @@ CONTENT_DIRECTORY = 'content'
 TMP_DIRECTORY = 'tmp'
 MONITOR_DIRECTORY = os.path.join(CONTENT_DIRECTORY, TMP_DIRECTORY)
 DOCKER_VERSION = '1'
-DOCKER_IMAGE_NAME = 'pdp_docker_{}'.format(DOCKER_VERSION)
+DOCKER_IMAGE_NAME = 'autojudge_docker_{}'.format(DOCKER_VERSION)
 
 LS: List[Any] = []
 REFRESH_LS_TRIGGER = 10
