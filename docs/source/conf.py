@@ -26,7 +26,7 @@ release = ''
 
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.githubpages',
+    'sphinx_autodoc_typehints'
 ]
 
 autodoc_member_order = 'bysource'
