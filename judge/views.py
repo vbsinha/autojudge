@@ -87,7 +87,7 @@ def new_contest(request):
     if request.method == 'POST':
         form = NewContestForm(request.POST)
         if form.is_valid():
-            status, msg = handler.process_contest(contest_name, **form.cleaned_data)
+            status, msg = handler.process_contest(**form.cleaned_data)
             if status:
                 handler.add_person_to_contest(user.email, msg, True)
                 return redirect(reverse('judge:index'))
@@ -410,7 +410,7 @@ def problem_detail(request, problem_id):
             form = NewSubmissionForm(request.POST, request.FILES)
             if form.is_valid():
                 status, err = handler.process_submission(
-                    problem_id, user.email, **form.cleaned_data, timezone.now())
+                    problem_id, user.email, **form.cleaned_data, timestamp=timezone.now())
                 if status:
                     return redirect(reverse('judge:problem_submissions', args=(problem_id,)))
                 if not status:

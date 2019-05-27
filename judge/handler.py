@@ -14,18 +14,25 @@ from django.utils import timezone
 from . import models
 
 
-def process_contest(name: str, contest_start: datetime, contest_soft_end: datetime,
+def process_contest(contest_name: str, contest_start: datetime, contest_soft_end: datetime,
                     contest_hard_end: datetime, penalty: float, is_public: bool,
                     enable_linter_score: bool, enable_poster_score: bool) -> Tuple[bool, str]:
     """
-    Process a New Contest
-    Only :attr:`penalty` can be ``None`` in which case penalty will be set to 0
+    Function to process a new :class:`~judge.models.Contest`.
 
-    Returns:
-        :code:`(True, None)` or :code:`(False, Exception string)`
+    :param contest_name: Name of the contest
+    :param contest_start: A `datetime` object representing the beginning of the contest
+    :param contest_soft_end: A `datetime` object representing the soft deadline of the contest
+    :param contest_hard_end: A `datetime` object representing the hard deadline of the contest
+    :param penalty: A penalty score for late submissions
+    :param is_public: Field to indicate if the contest is public (or private)
+    :param enable_linter_score: Field to indicate if linter scoring is enabled in the contest
+    :param enable_poster_score: Field to indicate if poster scoring is enabled in the contest
+    :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
+              2nd element providing an error message if processing is unsuccessful.
     """
     try:
-        c = models.Contest(name=name, start_datetime=contest_start,
+        c = models.Contest(name=contest_name, start_datetime=contest_start,
                            soft_end_datetime=contest_soft_end,
                            hard_end_datetime=contest_hard_end,
                            penalty=penalty, public=is_public,
@@ -43,12 +50,13 @@ def process_contest(name: str, contest_start: datetime, contest_soft_end: dateti
 
 def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
     """
-    Delete the contest.
+    Function to delete a :class:`~judge.models.Contest` given its contest ID.
     This will cascade delete in all the tables that have :attr:`contest_id` as a foreign key.
     It calls :func:`delete_problem` for each problem in the contest.
 
-    Retuns:
-        :code:`(True, None)`
+    :param contest_id: the contest ID
+    :returns: A 2-tuple - 1st element indicating whether the deletion has succeeded, and
+              2nd element providing an error message if deletion is unsuccessful.
     """
     try:
         c = models.Contest.objects.get(pk=contest_id)
@@ -68,15 +76,27 @@ def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
 
 def process_problem(code: str, contest: int, name: str, statement: str, input_format: str,
                     output_format: str, difficulty: int, time_limit: int, memory_limit: int,
-                    file_format: str, starting_code, max_score: int, compilation_script,
-                    test_script) -> Tuple[bool, Optional[str]]:
+                    file_format: str, starting_code, max_score: int,
+                    compilation_script, test_script) -> Tuple[bool, Optional[str]]:
     """
-    Process a new Problem
-    Optional fields: :attr:`starting_code`, :attr:`compilation_script`,
-    :attr:`test_script`, :attr:`file_format`.
+    Function to process a new :class:`~judge.models.Problem`.
 
-    Returns:
-        :code:`(True, None)` or :code:`(False, Exception string)`
+    :param code: Problem code
+    :param contest: Contest ID to which the problem belongs
+    :param name: Problem name
+    :param statement: Problem statement
+    :param input_format: Problem input format
+    :param output_format: Problem output format
+    :param difficulty: Problem difficulty
+    :param time_limit: Problem execution time limit
+    :param memory_limit: Problem virtual memory limit
+    :param file_format: Accepted file format for submissions
+    :param starting_code: Starting code for the problem
+    :param max_score: Maximum judge score per test case for the problem
+    :param compilation_script: Compilation script for the submissions
+    :param test_script: Test script for the submissions
+    :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
+              2nd element providing an error message if processing is unsuccessful.
     """
 
     # Check if the Problem Code has already been taken
@@ -132,11 +152,18 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
 def update_problem(code: str, name: str, statement: str, input_format: str,
                    output_format: str, difficulty: str) -> Tuple[bool, Optional[str]]:
     """
-    Update the fields in a problem.
-    Use :attr:`code` as private key for the problem.
+    Function to update selected fields in a :class:`~judge.models.Problem` after creation.
+    The fields that can be modified are `name`, `statement`, `input_format`, `output_format`
+    and `difficulty`.
 
-    Returns:
-        :code:`(True, None)`
+    :param code: Problem ID
+    :param name: Modified problem name
+    :param statement: Modified problem statement
+    :param input_format: Modified problem input format
+    :param output_format: Modified problem output format
+    :param difficulty: Modified problem difficulty
+    :returns: A 2-tuple - 1st element indicating whether the updation has succeeded, and
+              2nd element providing an error message if updation is unsuccessful.
     """
     try:
         p = models.Problem.objects.get(pk=code)
@@ -156,13 +183,14 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
 
 def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
     """
-    Delete the problem.
+    Function to delete a :class:`~judge.models.Problem` given its problem ID.
     This will cascade delete in all the tables that have :attr:`problem_id` as a foreign key.
     It will also delete all the submissions, testcases and related
     directories corresponding to the problem.
 
-    Returns:
-        :code:`(True, None)`
+    :param problem_id: the problem ID
+    :returns: A 2-tuple - 1st element indicating whether the deletion has succeeded, and
+              2nd element providing an error message if deletion is unsuccessful.
     """
     try:
         problem = models.Problem.objects.get(pk=problem_id)
@@ -194,10 +222,14 @@ def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
         return (False, 'Contest could not be deleted')
 
 
-def process_person(email, rank=0) -> Tuple[bool, Optional[str]]:
+def process_person(email: str, rank: int=0) -> Tuple[bool, Optional[str]]:
     """
-    Process a new Person.
-    Optional Fields: :attr:`rank`.
+    Function to process a new :class:`~judge.models.Person`.
+
+    :param email: Email of the person
+    :param rank: Rank of the person (defaults to 0).
+    :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
+              2nd element providing an error message if processing is unsuccessful.
     """
     if email is None:
         return (False, 'Email passed is None.')
@@ -215,16 +247,19 @@ def process_person(email, rank=0) -> Tuple[bool, Optional[str]]:
 def process_testcase(problem_id: str, test_type: str,
                      input_file, output_file) -> Tuple[bool, Optional[str]]:
     """
-    Process a new Testcase for a problem.
-    :attr:`problem_id` is the primary key of the problem.
+    Function to process a new :class:`~judge.models.Testcase` for a problem.
 
     .. warning::
         This function does not rescore all the submissions and so score will not
         change in response to the new testcase. Do not call this function once the
         contest has started, it will lead to erroneous scores.
 
-    Returns:
-        :code:`(True, None)`
+    :param problem_id: Problem ID to which the testcase is added.
+    :param test_type: Type of testcase - one of `public`, `private`.
+    :param input_file: Input file for the testcase.
+    :param output_file: Output file for the testcase.
+    :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
+              2nd element providing an error message if processing is unsuccessful.
     """
     try:
         problem = models.Problem.objects.get(pk=problem_id)
@@ -239,16 +274,17 @@ def process_testcase(problem_id: str, test_type: str,
 
 def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
     """
-    This function deletes the testcase and cascade deletes in
-    all the tables the testcase appears.
+    Function to delete a :class:`~judge.models.TestCase` given its testcase ID.
+    This will cascade delete in all the tables where this testcase appears.
 
     .. warning::
         This function does not rescore all the submissions and so score will not
         change in response to the deleted testcase. Do not call this function once the
         contest has started, it will lead to erroneous scores.
 
-    Returns:
-        :code:`(True, None)`
+    :param testcase_id: the testcase ID
+    :returns: A 2-tuple - 1st element indicating whether the deletion has succeeded, and
+              2nd element providing an error message if deletion is unsuccessful.
     """
     try:
         inputfile_path = os.path.join(
