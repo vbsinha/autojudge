@@ -8,7 +8,7 @@ from traceback import print_exc
 from csv import writer as csvwriter
 from shutil import rmtree, copyfile
 from datetime import timedelta, datetime
-from typing import Tuple, Optional, Dict, Any, List
+from typing import Tuple, Optional, Dict, Any, List, Union
 
 from django.utils import timezone
 from . import models
@@ -98,7 +98,6 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
               2nd element providing an error message if processing is unsuccessful.
     """
-
     # Check if the Problem Code has already been taken
     try:
         models.Problem.objects.get(pk=code)
@@ -162,8 +161,8 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
     :param input_format: Modified problem input format
     :param output_format: Modified problem output format
     :param difficulty: Modified problem difficulty
-    :returns: A 2-tuple - 1st element indicating whether the updation has succeeded, and
-              2nd element providing an error message if updation is unsuccessful.
+    :returns: A 2-tuple - 1st element indicating whether the update has succeeded, and
+              2nd element providing an error message if update is unsuccessful.
     """
     try:
         p = models.Problem.objects.get(pk=code)
@@ -222,7 +221,7 @@ def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
         return (False, 'Contest could not be deleted')
 
 
-def process_person(email: str, rank: int=0) -> Tuple[bool, Optional[str]]:
+def process_person(email: str, rank: int = 0) -> Tuple[bool, Optional[str]]:
     """
     Function to process a new :class:`~judge.models.Person`.
 
@@ -247,7 +246,7 @@ def process_person(email: str, rank: int=0) -> Tuple[bool, Optional[str]]:
 def process_testcase(problem_id: str, test_type: str,
                      input_file, output_file) -> Tuple[bool, Optional[str]]:
     """
-    Function to process a new :class:`~judge.models.Testcase` for a problem.
+    Function to process a new :class:`~judge.models.TestCase` for a problem.
 
     .. warning::
         This function does not rescore all the submissions and so score will not
@@ -302,12 +301,18 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
         return (False, e.__str__())
 
 
-def process_submission(problem_id: str, participant: str, file_type,
+def process_submission(problem_id: str, participant: str, file_type: str,
                        submission_file, timestamp: str) -> Tuple[bool, Optional[str]]:
     """
-    Process a new submission.
-    :attr:`problem_id` is the primary key of the problem.
-    :attr:`participant` is the email (which is the primary key) of the participant.
+    Function to process a new :class:`~judge.models.Submission` for a problem by a participant.
+
+    :param problem_id: Problem ID for the problem corresponding to the submission
+    :param participant: Participant ID
+    :param file_type: Submission file type
+    :param submission_file: Submission file
+    :param timestamp: Time at submission
+    :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
+              2nd element providing an error message if processing is unsuccessful.
     """
     try:
         problem = models.Problem.objects.get(pk=problem_id)
@@ -358,13 +363,13 @@ def process_submission(problem_id: str, participant: str, file_type,
 
 def update_poster_score(submission_id: str, new_score: int):
     """
-    Updates the poster score for a submission.
-    :attr:`submission_id` is the primary key of the submission and :attr:`new_score`
-    is the new poster score.
-    Leaderboard is updated if the new score for the person-problem pair has changed.
+    Function to update the poster score for a submission. Leaderboard is updated if the
+    total score for the person-problem pair has changed.
 
-    Returns:
-        :code:`(True, None)` or :code:`(False, Exception string)`
+    :param submission_id: Submission ID of the submission
+    :param new_score: New score to be assigned
+    :returns: A 2-tuple - 1st element indicating whether the update has succeeded, and
+              2nd element providing an error message if update is unsuccessful.
     """
     try:
         submission = models.Submission.objects.get(pk=submission_id)
@@ -391,13 +396,16 @@ def update_poster_score(submission_id: str, new_score: int):
         return (False, e.__str__())
 
 
-def add_person_to_contest(person: str, contest: str,
+def add_person_to_contest(person: str, contest: int,
                           permission: bool) -> Tuple[bool, Optional[str]]:
     """
-    Add the relation between Person and Contest.
-    :attr:`person` is the email of the person.
-    :attr:`contest` is the primary key of the contest.
-    :attr:`permission` is ``False`` if participant or ``True`` if poster.
+    Function to relate a person to a contest with permissions.
+
+    :param person: Person ID
+    :param contest: Contest ID
+    :param permission: If ``True``, then poster, if ``False``, then participant
+    :returns: A 2-tuple - 1st element indicating whether the addition has succeeded, and
+              2nd element providing an error message if addition is unsuccessful.
     """
     try:
         (p, _) = models.Person.objects.get_or_create(email=person)
@@ -422,21 +430,17 @@ def add_person_to_contest(person: str, contest: str,
         return (False, e.__str__())
 
 
-def add_person_rgx_to_contest(rgx: str, contest: str,
+def add_person_rgx_to_contest(rgx: str, contest: int,
                               permission: bool) -> Tuple[bool, Optional[str]]:
     """
-    Accepts a regex and adds all the participants matching the regex in the database to the contest
-    with the permission given by :attr:`permission`.
+    Function to relate a set of person to a contest based on a regex with permissions.
     Note that unlike :func:`add_person_to_contest`, this function does not create any new persons.
-    See example usage below:
 
-    >>> add_person_rgx_to_contest('cs15btech*', 'C1', True)
-
-    Returns:
-        :code:`(True, None)` if there is at least one match
-
-        :code:`(False, error)` if no match
-
+    :param rgx: The regex to be passed
+    :param contest: Contest ID
+    :param permission: If ``True``, then poster, if ``False``, then participant
+    :returns: A 2-tuple - 1st element indicating whether the relation creation has succeeded, and
+              2nd element providing an error message if relation creation is unsuccessful.
     """
     pattern = compile(rgx)
     try:
@@ -456,23 +460,18 @@ def add_person_rgx_to_contest(rgx: str, contest: str,
         return (False, e.__str__())
 
 
-def add_persons_to_contest(persons: List[str], contest: str,
+def add_persons_to_contest(persons: List[str], contest: int,
                            permission: bool) -> Tuple[bool, Optional[str]]:
     """
-    Add the relation between Person and Contest for all the Person in :attr:`persons`.
-    :attr:`persons` is the list of email of persons.
-    :attr:`contest` is the primary key of the contest.
-    :attr:`permission` is ``False`` if participant or ``True`` if poster.
-
-    .. note::
-        First check if any of the person exists with an opposing role.
-        If so, do not add anyone. Instead return a tuple with ``False`` and
-        and an appropriate message.
-        Otherwise if person doesn't have conflicting permission,
-        add all the persons and return :code:`(True, None)`.
-
-    This function would create records for all the persons who do not already have one irrespective
+    Function to relate a list of persons and contest with permissions. This function
+    would create records for all the persons who are not present in the database irrespective
     of whether anyone has conflict or not.
+
+    :param persons: List of person IDs
+    :param contest: Contest ID
+    :param permission: If ``True``, then poster, if ``False``, then participant
+    :returns: A 2-tuple - 1st element indicating whether the relation creation has succeeded, and
+              2nd element providing an error message if relation creation is unsuccessful.
     """
     try:
         for person in persons:
@@ -503,17 +502,19 @@ def add_persons_to_contest(persons: List[str], contest: str,
 
 def get_personcontest_permission(person: Optional[str], contest: int) -> Optional[bool]:
     """
-    Determine the relation between Person and Contest.
-    :attr:`person` is the email of the person.
-    :attr:`contest` is the primary key of the contest.
+    Function to give the relation between a :class:`~judge.models.Person` and a
+    :class:`~judge.models.Contest`.
 
-    Returns:
-        ``False`` if participant, ``True`` if poster and ``None`` if neither.
+    :param person: Person ID
+    :param contest: Contest ID
+    :returns: If participant, then ``False``, if poster, then ``True``, if neither, then ``None``
     """
     curr = timezone.now()
     if person is None:
         try:
             c = models.Contest.objects.get(pk=contest)
+            # The curr >= c.start_datetime is present because contests aren't visible
+            # prior to the deadline
             if c.public and curr >= c.start_datetime:
                 return False
             else:
@@ -536,14 +537,14 @@ def get_personcontest_permission(person: Optional[str], contest: int) -> Optiona
     return None
 
 
-def delete_personcontest(person: str, contest: str) -> Tuple[bool, Optional[str]]:
+def delete_personcontest(person: str, contest: int) -> Tuple[bool, Optional[str]]:
     """
-    Delete the record of :attr:`person` and :attr:`contest` in the
-    :class:`~judge.models.ContestPerson` table.
-    Passed email in :attr:`person` and :attr:`contest` is the primary key.
+    Function to delete the relation between a person and a contest.
 
-    Returns:
-        :code:`(True, None)`
+    :param person: Person ID
+    :param contest: Contest ID
+    :returns: A 2-tuple - 1st element indicating whether the deletion has succeeded, and
+              2nd element providing an error message if deletion is unsuccessful.
     """
     try:
         p = models.Person.objects.get(email=person)
@@ -566,12 +567,13 @@ def delete_personcontest(person: str, contest: str) -> Tuple[bool, Optional[str]
 
 def get_personproblem_permission(person: Optional[str], problem: str) -> Optional[bool]:
     """
-    Determine the relation between a Person and a Problem.
-    :attr:`person` is the email of the person.
-    :attr:`problem` is the primary key of the problem.
+    Function to give the relation between a :class:`~judge.models.Person` and a
+    :class:`~judge.models.Contest`. This dispatches to :func:`get_personcontest_permission`
+    with relevant arguments.
 
-    Returns:
-        ``False`` if participant, ``True`` if poster and ``None`` if neither.
+    :param person: Person ID
+    :param problem: Problem ID
+    :returns: If participant, then ``False``, if poster, then ``True``, if neither, then ``None``
     """
     p = models.Problem.objects.get(pk=problem)
     if p.contest is None:
@@ -579,13 +581,14 @@ def get_personproblem_permission(person: Optional[str], problem: str) -> Optiona
     return get_personcontest_permission(person, p.contest.pk)
 
 
-def get_posters(contest) -> Tuple[bool, Optional[str]]:
+def get_posters(contest: int) -> Tuple[bool, Union[str, List[str]]]:
     """
-    Return the posters for a contest.
-    :attr:`contest` is the primary key of the Contest.
+    Function to return the list of the posters for a :class:`~judge.models.Contest`.
 
-    Returns:
-        :code:`(True, List of the email of the posters)`
+    :param contest: Contest ID
+    :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
+              If successful, a list of IDs are present in the 2nd element.
+              If unsucessful, an error message is provided.
     """
     try:
         c = models.Contest.objects.get(pk=contest)
@@ -597,15 +600,15 @@ def get_posters(contest) -> Tuple[bool, Optional[str]]:
         return (False, e.__str__())
 
 
-def get_participants(contest) -> Tuple[bool, Any]:
+def get_participants(contest: int) -> Tuple[bool, Union[str, List[str]]]:
     """
-    Return the participants for the contest.
-    :attr:`contest` is the primary key of the Contest.
+    Function to return the list of the participants for a :class:`~judge.models.Contest`.
 
-    Returns:
-        :code:`(True, List of the email of the participants)` if contest is private.
-
-        :code:`(True, [])` if contest is public.
+    :param contest: Contest ID
+    :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
+              If successful, a list of IDs are present in the 2nd element. The list is
+              empty if the contest is public.
+              If unsucessful, an error message is provided.
     """
     try:
         c = models.Contest.objects.get(pk=contest)
@@ -619,10 +622,16 @@ def get_participants(contest) -> Tuple[bool, Any]:
         return (False, e.__str__())
 
 
-def get_personcontest_score(person: str, contest: int) -> Tuple[bool, Any]:
+def get_personcontest_score(person: str, contest: int) -> Tuple[bool, Union[float, str]]:
     """
-    Get the final score which is the sum of individual final scores of all problems in the contest.
-    Pass email in :attr:`person` and primary key of contest.
+    Function to get the final score, which is the sum of individual final scores
+    of all problems in a contest for a particular person.
+
+    :param person: Person ID
+    :param contest: Contest ID
+    :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
+              If successful, the final score is present in the 2nd element.
+              If unsuccesful, an error message is provided.
     """
     try:
         p = models.Person.objects.get(email=person)
@@ -638,83 +647,20 @@ def get_personcontest_score(person: str, contest: int) -> Tuple[bool, Any]:
         return (False, e.__str__())
 
 
-def get_submission_status(person: str, problem: str, submission):
+def get_submissions(problem_id: str, person_id: Optional[str]) \
+                    -> Tuple[bool, Union[Dict[str, List[Any]], str]]:
     """
-    Get the current status of the submission.
-    Pass email as :attr:`person` and problem code as :attr:`problem` to get a tuple.
-    In case :attr:`submission` is ``None``,
+    Function to retrieve all submissions made by everyone or a specific person for this
+    problem.
 
-    Returns :code:`(True, (dict1, dict2))`
-        The tuple consists of 2 dictionaries:
-
-        First dictionary:
-            Key: Submission ID
-
-            Value: :code:`(TestcaseID, Verdict, Time_taken, Memory_taken, ispublic, message)` list
-
-        Second dictionary:
-            Key: Submission ID
-
-            Value: :code:`(judge_score, poster_score, linter_score,
-                           final_score, timestamp, file_type)`
-
-    In case :attr:`submission` is not ``None``, the passed parameters :attr:`person`
-    and :attr:`problem` are ignored and so ``None`` is accepted.
-
-    Returns:
-        The same dictionaries in a tuple but having only 1 key in both
-    """
-    try:
-        if submission is None:
-            p = models.Person.objects.get(email=person)
-            q = models.Problem.objects.get(code=problem)
-            sub_list = models.Submission.objects.filter(
-                participant=p, problem=q).order_by('-timestamp')
-            t = models.TestCase.objects.filter(problem=p)
-        else:
-            submission = models.Submission.objects.get(pk=submission)
-            t = models.TestCase.objects.filter(problem=submission.problem)
-            sub_list = [submission]
-    except Exception as e:
-        print_exc()
-        return (False, e.__str__())
-
-    verdict_dict: Dict[Any, Any] = dict()
-    score_dict = dict()
-
-    for submission in sub_list:
-        score_dict[submission.pk] = (submission.judge_score, submission.poster_score,
-                                     submission.linter_score, submission.final_score,
-                                     submission.timestamp, submission.file_type)
-        verdict_dict[submission.pk] = []
-        try:
-            for testcase in t:
-                st = models.SubmissionTestCase.objects.get(
-                    submission=submission, testcase=testcase)
-                verdict_dict[submission.pk].append((testcase.pk, st.verdict, st.time_taken,
-                                                    st.memory_taken, testcase.public, st.message))
-        except Exception:
-            # In case Exception occurs for any submission, then
-            # that submission's verdict_dict is left empty.
-            # This is done to allow the other submissions to give output.
-            print_exc()
-    return (True, (verdict_dict, score_dict))
-
-
-def get_submissions(problem_id: str, person_id: Optional[str]) -> Tuple[bool, Any]:
-    """
-    Get all the submissions for this problem by this (or all) persons who attempted.
-    :attr:`problem` is the primary key of the Problem.
-    :attr:`person_id` is the email of the Person or ``None``
-    if you want to retrieve submissions by all participants.
-
-    Returns:
-        when :attr:`person_id` is ``None``:
-            :code:`(True, {emailofperson: [SubmissionObject1, SubmissionObject2, ...],` \
-            :code:`emailofperson: [SubmissionObjecti, SubmissionObjectj, ...], ...})`
-
-        when :attr:`person_id` is not ``None``:
-            :code:`(True, {emailofperson: [SubmissionObject1, SubmissionObject2, ...]})`
+    :param problem_id: Problem ID
+    :param person_id: Person ID
+    :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
+              If successful, and :attr:`person_id` is ``None``, then the list of submissions
+              pertaining to each person is placed in a dictionary, and if :attr:`person_id`
+              is provided, then the list of submissions pertaining to the specific person is
+              placed in a dictionary and returned.
+              If unsuccessful, then an error message is provided.
     """
     try:
         p = models.Problem.objects.get(code=problem_id)
@@ -724,7 +670,7 @@ def get_submissions(problem_id: str, person_id: Optional[str]) -> Tuple[bool, An
         else:
             person = models.Person.objects.get(email=person_id)
             submission_set = models.Submission.objects.filter(
-                problem=p, participant=person).order_by('participant')
+                problem=p, participant=person)
         result = {}
         if submission_set.count() == 0:
             if person_id is None:
@@ -745,27 +691,26 @@ def get_submissions(problem_id: str, person_id: Optional[str]) -> Tuple[bool, An
         return (False, e.__str__())
 
 
-def get_submission_status_mini(submission: str) -> Tuple[bool, Any]:
+def get_submission_status(submission: str):
     """
-    Get the current status of the submission.
+    Function to get the current status of the submission given its submission ID.
 
-    Returns:
-        :code:`(True, (dict1, tuple1))`
-
-    The tuple consists of a dictionary and a tuple:
-        Dictionary:
-            Key: TestcaseID
-
-            Value: :code:`(Verdict, Time_taken, Memory_taken, ispublic, message)`
-        Tuple:
-            :code:`(judge_score, poster_score, linter_score, final_score, timestamp, file_type)`
+    :param submission: Submission ID
+    :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
+              If successful, a tuple consisting of a dictionary and a smaller tuple.
+              The key for the dictionary is the testcase ID, and value is another smaller
+              tuple consisting of the verdict, time taken, memory consumed, flag to indicate
+              if the testcase was public or private and message after checking.
+              The smaller tuple consists of the score given by the judge, poster (if applicable),
+              and linter (if applicable), as well as the final score, timestamp of submission and
+              the file type of submission.
+              If unsuccessful, an error message is provided.
     """
     try:
         s = models.Submission.objects.get(pk=submission)
         testcases = models.TestCase.objects.filter(problem=s.problem)
 
-        verdict_dict: Dict[Any, Any] = dict()
-
+        verdict_dict = dict()
         for testcase in testcases:
             st = models.SubmissionTestCase.objects.get(
                 submission=s, testcase=testcase)
@@ -779,15 +724,17 @@ def get_submission_status_mini(submission: str) -> Tuple[bool, Any]:
         return (False, e.__str__())
 
 
-def get_leaderboard(contest: int) -> Tuple[bool, Any]:
+def get_leaderboard(contest: int) -> Tuple[bool, Union[str, List[List[Union[str, float]]]]]:
     """
-    Returns the current leaderboard for the passed contest.
-    :attr:`contest` is the primary key for contest.
+    Function to returns the current leaderboard for a contest given its contest ID.
 
-    Returns:
-        :code:`(True, [[Rank1Email, ScoreofRank1], [Rank2Email, ScoreofRank2] ... ])`
+    :param contest: Contest ID
+    :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
+              If successful, a list of 2-length lists is returned ordered by decreasing
+              scores. The first element is the rank, and the second element is the score.
+              If unsuccessful, an error message is provided.
     """
-    leaderboard_path = os.path.join('content', 'contests', str(contest)+'.lb')
+    leaderboard_path = os.path.join('content', 'contests', str(contest) + '.lb')
     if not os.path.exists(leaderboard_path):
         return (False, 'Leaderboard not yet initialized for this contest.')
     try:
@@ -799,19 +746,20 @@ def get_leaderboard(contest: int) -> Tuple[bool, Any]:
         return (False, e.__str__())
 
 
-def update_leaderboard(contest: int, person: str):
+def update_leaderboard(contest: int, person: str) -> bool:
     """
-    Updates the leaderboard for the passed contest for the rank of the person.
-    :attr:`contest` is the primary key of the contest and :attr:`person` is the email of person.
-    Only call this function when some submission for some problem of the contest
-    has scored more than its previous submission.
-    Remember to call this function whenever
-    :class:`~judge.models.PersonProblemFinalScore` is updated.
+    Function to update the leaderboard for a person-contest pair given their IDs.
 
-    Returns:
-        ``True`` if update was successful, ``False`` otherwise
+    .. note::
+        Only call this function when some submission for some problem of the contest
+        has scored more than its previous submission.
+        Remember to call this function whenever
+        :class:`~judge.models.PersonProblemFinalScore` is updated.
+
+    :param contest: Contest ID
+    :param person: Person ID
+    :returns: If update is successful, then ``True``. If unsuccessful, then ``False``.
     """
-
     os.makedirs(os.path.join('content', 'contests'), exist_ok=True)
     pickle_path = os.path.join('content', 'contests', str(contest) + '.lb')
 
@@ -841,14 +789,17 @@ def update_leaderboard(contest: int, person: str):
 
 
 def process_comment(problem: str, person: str, commenter: str,
-                    timestamp, comment: str) -> Tuple[bool, Optional[str]]:
+                    timestamp: datetime, comment: str) -> Tuple[bool, Optional[str]]:
     """
-    Privately comment :attr:`comment` on the problem for person by commenter.
-    :attr:`problem` is the primary key of the Problem.
-    :attr:`person` and :attr:`commenter` are emails of Person.
+    Function to process a new :class:`~judge.models.Comment` on the problem.
 
-    Returns:
-        :code:`(True, None)`
+    :param problem: Problem ID
+    :param person: Person ID
+    :param commenter: Commenter (another person) ID
+    :param timestamp: Date and Time of comment
+    :param comment: Comment content
+    :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
+              2nd element providing an error message if processing is unsuccessful.
     """
     try:
         problem = models.Problem.objects.get(pk=problem)
@@ -862,12 +813,17 @@ def process_comment(problem: str, person: str, commenter: str,
         return (False, e.__str__())
 
 
-def get_comments(problem: str, person: str) -> Tuple[bool, Any]:
+def get_comments(problem: str, person: str) -> Tuple[bool, Union[str, List[Tuple[Any]]]]:
     """
-    Get the private comments on the problem for the person.
+    Function to get the private comments on the problem for the person.
 
-    Returns:
-        :code:`(True, [(Commeter, Timestamp, Comment) ... (Sorted in chronological order)])`
+    :param problem: Problem ID
+    :param person: Person ID
+    :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
+              If successful, then the 2nd element consists of list of 3-tuple of comments -
+              the person who commented, the timestamp and the comment content, sorted in
+              chronological order.
+              If unsuccessful, an error message is provided.
     """
     try:
         comments = models.Comment.objects.filter(
@@ -880,13 +836,15 @@ def get_comments(problem: str, person: str) -> Tuple[bool, Any]:
         return (False, e.__str__())
 
 
-def get_csv(contest: str) -> Tuple[bool, Any]:
+def get_csv(contest: int) -> Tuple[bool, Union[str, StringIO]]:
     """
-    Get the CSV (in string form) of the current scores of all participants in the contest.
-    Pass primary key of the contest.
+    Function to get the CSV (in string form) of the current scores of
+    all participants in a contest given its contest ID.
 
-    Returns:
-        :attr:`(True, csvstring)`
+    :param contest: Contest ID
+    :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded, and
+              2nd element providing an error message if processing is unsuccessful or a
+              ``StringIO`` object if successful.
     """
     try:
         c = models.Contest.objects.get(pk=contest)

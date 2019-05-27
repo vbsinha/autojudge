@@ -713,7 +713,7 @@ def submission_detail(request, submission_id: str):
             else:
                 form = AddPosterScoreForm(initial={'score': submission.poster_score})
             context['form'] = form
-        status, msg = handler.get_submission_status_mini(submission_id)
+        status, msg = handler.get_submission_status(submission_id)
         if status:
             context['test_results'] = msg[0]
             context['judge_score'] = msg[1][0]

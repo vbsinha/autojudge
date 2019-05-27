@@ -36,7 +36,6 @@ Getter Functions
     .. autofunction:: get_participants
     .. autofunction:: get_personcontest_score
     .. autofunction:: get_submission_status
-    .. autofunction:: get_submission_status_mini
     .. autofunction:: get_submissions
     .. autofunction:: get_leaderboard
     .. autofunction:: get_comments
