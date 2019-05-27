@@ -14,8 +14,8 @@ from django.utils import timezone
 from . import models
 
 
-def process_contest(name: str, start_datetime: datetime, soft_end_datetime: datetime,
-                    hard_end_datetime: datetime, penalty: float, public: bool,
+def process_contest(name: str, contest_start: datetime, contest_soft_end: datetime,
+                    contest_hard_end: datetime, penalty: float, is_public: bool,
                     enable_linter_score: bool, enable_poster_score: bool) -> Tuple[bool, str]:
     """
     Process a New Contest
@@ -25,10 +25,10 @@ def process_contest(name: str, start_datetime: datetime, soft_end_datetime: date
         :code:`(True, None)` or :code:`(False, Exception string)`
     """
     try:
-        c = models.Contest(name=name, start_datetime=start_datetime,
-                           soft_end_datetime=soft_end_datetime,
-                           hard_end_datetime=hard_end_datetime,
-                           penalty=penalty, public=public,
+        c = models.Contest(name=name, start_datetime=contest_start,
+                           soft_end_datetime=contest_soft_end,
+                           hard_end_datetime=contest_hard_end,
+                           penalty=penalty, public=is_public,
                            enable_linter_score=enable_linter_score,
                            enable_poster_score=enable_poster_score)
         c.save()
@@ -68,11 +68,11 @@ def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
 
 def process_problem(code: str, contest: int, name: str, statement: str, input_format: str,
                     output_format: str, difficulty: int, time_limit: int, memory_limit: int,
-                    file_format: str, start_code, max_score: int, compilation_script,
+                    file_format: str, starting_code, max_score: int, compilation_script,
                     test_script) -> Tuple[bool, Optional[str]]:
     """
     Process a new Problem
-    Optional fields: :attr:`start_code`, :attr:`compilation_script`,
+    Optional fields: :attr:`starting_code`, :attr:`compilation_script`,
     :attr:`test_script`, :attr:`file_format`.
 
     Returns:
@@ -96,7 +96,7 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
             code=code, contest=c, name=name, statement=statement,
             input_format=input_format, output_format=output_format,
             difficulty=difficulty, time_limit=time_limit, memory_limit=memory_limit,
-            file_format=file_format, start_code=start_code, max_score=max_score,
+            file_format=file_format, start_code=starting_code, max_score=max_score,
             compilation_script=compilation_script,
             test_script=test_script)
 
@@ -212,8 +212,8 @@ def process_person(email, rank=0) -> Tuple[bool, Optional[str]]:
         return (False, e.__str__())
 
 
-def process_testcase(problem_id: str, ispublic: bool,
-                     inputfile, outputfile) -> Tuple[bool, Optional[str]]:
+def process_testcase(problem_id: str, test_type: str,
+                     input_file, output_file) -> Tuple[bool, Optional[str]]:
     """
     Process a new Testcase for a problem.
     :attr:`problem_id` is the primary key of the problem.
@@ -229,7 +229,7 @@ def process_testcase(problem_id: str, ispublic: bool,
     try:
         problem = models.Problem.objects.get(pk=problem_id)
         t = problem.testcase_set.create(
-            public=ispublic, inputfile=inputfile, outputfile=outputfile)
+            public=(test_type == 'public'), inputfile=input_file, outputfile=output_file)
         t.save()
         return (True, None)
     except Exception as e:

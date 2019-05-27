@@ -13,7 +13,7 @@ django.setup()
 
 # -- Project information -----------------------------------------------------
 
-project = 'PDP'
+project = 'autojudge'
 copyright = '2019, Vaibhav Sinha, Prateek Kumar, Vishwak Srinivasan'
 author = 'Vaibhav Sinha, Prateek Kumar, Vishwak Srinivasan'
 
