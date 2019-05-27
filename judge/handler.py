@@ -3,15 +3,14 @@ import pickle
 
 from re import compile
 from io import StringIO
-from shutil import rmtree
-from logging import error
-from subprocess import run
-from datetime import timedelta, datetime
+from logging import error as log_error
 from traceback import print_exc
 from csv import writer as csvwriter
+from shutil import rmtree, copyfile
+from datetime import timedelta, datetime
 from typing import Tuple, Optional, Dict, Any, List
-from django.utils import timezone
 
+from django.utils import timezone
 from . import models
 
 
@@ -38,7 +37,7 @@ def process_contest(name: str, start_datetime: datetime, soft_end_datetime: date
     except Exception as e:
         # Exception Case
         print_exc()
-        error(e.__str__())
+        log_error(e.__str__())
         return (False, 'Contest could not be created')
 
 
@@ -63,14 +62,14 @@ def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
         return (True, None)
     except Exception as e:
         print_exc()
-        error(e.__str__())
+        log_error(e.__str__())
         return (False, 'Contest could not be deleted')
 
 
 def process_problem(code: str, contest: int, name: str, statement: str, input_format: str,
                     output_format: str, difficulty: int, time_limit: int, memory_limit: int,
-                    file_format: str, start_code, max_score: int, compilation_script, test_script,
-                    setter_solution) -> Tuple[bool, Optional[str]]:
+                    file_format: str, start_code, max_score: int, compilation_script,
+                    test_script) -> Tuple[bool, Optional[str]]:
     """
     Process a new Problem
     Optional fields: :attr:`start_code`, :attr:`compilation_script`,
@@ -87,15 +86,6 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
     except models.Problem.DoesNotExist:
         pass
 
-    # Set up default values
-    cp_comp_script, cp_test_script = False, False
-    if compilation_script is None:
-        compilation_script = './default/compilation_script.sh'
-        cp_comp_script = True
-    if test_script is None:
-        test_script = './default/test_script.sh'
-        cp_test_script = True
-
     statement = 'The problem statement is empty.' if statement is None else statement
     input_format = 'No input format specified.' if input_format is None else input_format
     output_format = 'No output format specified.' if output_format is None else output_format
@@ -108,27 +98,29 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
             difficulty=difficulty, time_limit=time_limit, memory_limit=memory_limit,
             file_format=file_format, start_code=start_code, max_score=max_score,
             compilation_script=compilation_script,
-            test_script=test_script, setter_solution=setter_solution)
+            test_script=test_script)
 
         if not os.path.exists(os.path.join('content', 'problems', p.code)):
             # Create the problem directory explictly if not yet created
             # This will happen when both compilation_script and test_script were None
             os.makedirs(os.path.join('content', 'problems', p.code))
 
-        if cp_comp_script:
+        if compilation_script is None:
             # Copy the default comp_script if the user did not upload custom
-            run(['cp', os.path.join('judge', compilation_script),
-                 os.path.join('content', 'problems', p.code, 'compilation_script.sh')])
+            copyfile(os.path.join('judge', 'default', 'compilation_script.sh'),
+                     os.path.join('content', 'problems', p.code, 'compilation_script.sh'))
             p.compilation_script = os.path.join('content', 'problems',
                                                 p.code, 'compilation_script.sh')
 
-        if cp_test_script:
+        if test_script is None:
             # Copy the default test_script if the user did not upload custom
-            run(['cp', os.path.join('judge', test_script),
-                 os.path.join('content', 'problems', p.code, 'test_script.sh')])
+            copyfile(os.path.join('judge', 'default', 'test_script.sh'),
+                     os.path.join('content', 'problems', p.code, 'test_script.sh'))
             p.test_script = os.path.join('content', 'problems', p.code, 'test_script.sh')
 
-        if cp_comp_script or cp_test_script:
+        # In this case, either one of compilation_script or test_script hasn't been copied
+        # and saving with update the link(s)
+        if compilation_script is None or test_script is None:
             p.save()
 
         return (True, None)
@@ -198,7 +190,7 @@ def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
         return (True, None)
     except Exception as e:
         print_exc()
-        error(e.__str__())
+        log_error(e.__str__())
         return (False, 'Contest could not be deleted')
 
 
@@ -274,10 +266,10 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
         return (False, e.__str__())
 
 
-def process_solution(problem_id: str, participant: str, file_type,
-                     submission_file, timestamp: str) -> Tuple[bool, Optional[str]]:
+def process_submission(problem_id: str, participant: str, file_type,
+                       submission_file, timestamp: str) -> Tuple[bool, Optional[str]]:
     """
-    Process a new Solution.
+    Process a new submission.
     :attr:`problem_id` is the primary key of the problem.
     :attr:`participant` is the email (which is the primary key) of the participant.
     """
@@ -678,7 +670,7 @@ def get_submissions(problem_id: str, person_id: Optional[str]) -> Tuple[bool, An
     Get all the submissions for this problem by this (or all) persons who attempted.
     :attr:`problem` is the primary key of the Problem.
     :attr:`person_id` is the email of the Person or ``None``
-    if you want to retrieve solutions by all participants.
+    if you want to retrieve submissions by all participants.
 
     Returns:
         when :attr:`person_id` is ``None``:

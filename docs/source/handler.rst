@@ -8,7 +8,7 @@ Process Functions
 
     .. autofunction:: process_contest
     .. autofunction:: process_problem
-    .. autofunction:: process_solution
+    .. autofunction:: process_submission
     .. autofunction:: process_testcase
     .. autofunction:: process_person
     .. autofunction:: process_comment

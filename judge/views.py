@@ -1,17 +1,19 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
-from django.utils import timezone
-from django.contrib.auth.models import User
-from django.core.files import File
-from django.http import HttpResponse
-import logging
 import os
 
+from django.urls import reverse
+from django.core.files import File
+from django.utils import timezone
+from django.http import HttpResponse
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect, get_object_or_404
+
+from logging import debug as log_debug
+
+from . import handler
 from .models import Contest, Problem, TestCase, Submission
 from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContestForm
 from .forms import NewProblemForm, EditProblemForm, NewSubmissionForm, AddTestCaseForm
 from .forms import NewCommentForm, UpdateContestForm, AddPosterScoreForm
-from . import handler
 
 
 def _get_user(request) -> User:
@@ -53,7 +55,7 @@ def index(request):
     if user is not None:
         status, err = handler.process_person(request.user.email)
         if not status:
-            logging.debug(
+            log_debug(
                 'Although user is not none, it could not be processed. More info: {}'.format(err))
 
     contests = Contest.objects.all()
@@ -91,7 +93,7 @@ def new_contest(request):
                     handler.add_person_to_contest(user.email, msg, True)
                     return redirect(reverse('judge:index'))
                 else:
-                    logging.debug(msg)
+                    log_debug(msg)
                     form.add_error(None, 'Contest could not be created.')
     else:
         form = NewContestForm()
@@ -119,7 +121,7 @@ def get_people(request, contest_id, role):
             email = form.cleaned_data['email']
             status, err = handler.delete_personcontest(email, contest_id)
             if not status:
-                logging.debug(err)
+                log_debug(err)
                 form.add_error(None, 'Could not delete {}. {}'.format(email, err))
     else:
         form = DeletePersonFromContestForm()
@@ -342,7 +344,7 @@ def problem_detail(request, problem_id):
         if request.method == 'POST':
             form = NewSubmissionForm(request.POST, request.FILES)
             if form.is_valid():
-                status, err = handler.process_solution(
+                status, err = handler.process_submission(
                     problem_id, user.email, form.cleaned_data['file_type'],
                     form.cleaned_data['submission_file'],
                     timezone.now())
@@ -464,12 +466,11 @@ def new_problem(request, contest_id):
             code = form.cleaned_data['code']
             status, err = handler.process_problem(
                 code, contest_id, form.cleaned_data['name'], form.cleaned_data['statement'],
-                form.cleaned_data['input_format'],
-                form.cleaned_data['output_format'], form.cleaned_data['difficulty'],
-                form.cleaned_data['time_limit'], form.cleaned_data['memory_limit'],
-                form.cleaned_data['file_exts'], form.cleaned_data['starting_code'],
-                form.cleaned_data['max_score'], form.cleaned_data['compilation_script'],
-                form.cleaned_data['test_script'], form.cleaned_data.get('setter_soln'))
+                form.cleaned_data['input_format'], form.cleaned_data['output_format'],
+                form.cleaned_data['difficulty'], form.cleaned_data['time_limit'],
+                form.cleaned_data['memory_limit'], form.cleaned_data['file_exts'],
+                form.cleaned_data['starting_code'], form.cleaned_data['max_score'],
+                form.cleaned_data['compilation_script'], form.cleaned_data['test_script'])
             if status:
                 return redirect(reverse('judge:problem_detail', args=(code,)))
             else:
@@ -551,12 +552,12 @@ def problem_submissions(request, problem_id: str):
             for email, subs in all_subs.items():
                 status, comm = handler.get_comments(problem_id, email)
                 if not status:
-                    logging.debug(comm)
+                    log_debug(comm)
                     return handler404(request)
                 submissions[email] = (subs, comm)
             context['submissions'] = submissions
         else:
-            logging.debug(all_subs)
+            log_debug(all_subs)
             return handler404(request)
     elif user is not None:
         status, subs = handler.get_submissions(problem_id, user.email)
@@ -564,11 +565,11 @@ def problem_submissions(request, problem_id: str):
             context['participant'] = True
             status, comm = handler.get_comments(problem_id, user.email)
             if not status:
-                logging.debug(comm)
+                log_debug(comm)
                 return handler404(request)
             submissions[user.email] = (subs[user.email], comm)
         else:
-            logging.debug(subs)
+            log_debug(subs)
             return handler404(request)
     else:
         return handler404(request)
@@ -628,7 +629,7 @@ def submission_detail(request, submission_id: str):
             context['timestamp'] = msg[1][4]
             context['file_type'] = msg[1][5]
         else:
-            logging.debug(msg)
+            log_debug(msg)
             return handler404(request)
 
         return render(request, 'judge/submission_detail.html', context)

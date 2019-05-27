@@ -96,8 +96,7 @@ class HandlerTests(TestCase):
             output_format='Test output format', difficulty=5,
             time_limit=timedelta(seconds=10),
             memory_limit=10000, file_format='.py', start_code=None,
-            max_score=4, compilation_script=None, test_script=None,
-            setter_solution=None)
+            max_score=4, compilation_script=None, test_script=None)
         self.assertTrue(status)
         self.assertIsNone(msg)
         p = models.Problem.objects.filter(pk='testprob1')
@@ -156,8 +155,7 @@ class HandlerTests(TestCase):
                                       output_format='Test output format', difficulty=5,
                                       time_limit=timedelta(seconds=10),
                                       memory_limit=10000, file_format='.py', start_code=None,
-                                      max_score=4, compilation_script=None, test_script=None,
-                                      setter_solution=None)
+                                      max_score=4, compilation_script=None, test_script=None)
         person1 = models.Person.objects.create(email='testing1@test.com', rank=0)
         models.Person.objects.create(email='testing2@test.com', rank=0)
         status, message = handler.add_person_to_contest(person1.email, c.pk, True)
