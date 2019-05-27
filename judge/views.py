@@ -32,7 +32,7 @@ def _return_file_as_response(path_name):
     return response
 
 
-def handler404(request):
+def handler404(request, *args):
     """
     Renders 404 page.
 
@@ -42,7 +42,7 @@ def handler404(request):
     return render(request, '404.html', status=404)
 
 
-def handler500(request):
+def handler500(request, *args):
     """
     Renders 500 page.
 

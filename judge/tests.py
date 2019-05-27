@@ -62,10 +62,11 @@ class ContestProblemTests(TestCase):
 
 class HandlerTests(TestCase):
     def test_process_and_delete_contest(self):
-        status, pk = handler.process_contest(name='Test Contest', start_datetime='2019-04-25T12:30',
-                                             soft_end_datetime='2019-04-26T12:30',
-                                             hard_end_datetime='2019-04-27T12:30',
-                                             penalty=0, public=True, enable_linter_score=True,
+        status, pk = handler.process_contest(contest_name='Test Contest',
+                                             contest_start='2019-04-25T12:30',
+                                             contest_soft_end='2019-04-26T12:30',
+                                             contest_hard_end='2019-04-27T12:30',
+                                             penalty=0, is_public=True, enable_linter_score=True,
                                              enable_poster_score=True)
         self.assertTrue(status)
         c = models.Contest.objects.filter(pk=int(pk))
@@ -95,7 +96,7 @@ class HandlerTests(TestCase):
             input_format='Test input format',
             output_format='Test output format', difficulty=5,
             time_limit=timedelta(seconds=10),
-            memory_limit=10000, file_format='.py', start_code=None,
+            memory_limit=10000, file_format='.py', starting_code=None,
             max_score=4, compilation_script=None, test_script=None)
         self.assertTrue(status)
         self.assertIsNone(msg)
