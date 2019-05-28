@@ -8,7 +8,7 @@ Process Functions
 
     .. autofunction:: process_contest
     .. autofunction:: process_problem
-    .. autofunction:: process_solution
+    .. autofunction:: process_submission
     .. autofunction:: process_testcase
     .. autofunction:: process_person
     .. autofunction:: process_comment
@@ -36,7 +36,6 @@ Getter Functions
     .. autofunction:: get_participants
     .. autofunction:: get_personcontest_score
     .. autofunction:: get_submission_status
-    .. autofunction:: get_submission_status_mini
     .. autofunction:: get_submissions
     .. autofunction:: get_leaderboard
     .. autofunction:: get_comments

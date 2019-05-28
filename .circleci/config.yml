@@ -1,7 +1,7 @@
 version: 2
 jobs:
   test:
-    working_directory: ~/pdp-judge
+    working_directory: ~/autojudge
     docker:
       - image: circleci/python:3.7
     steps:

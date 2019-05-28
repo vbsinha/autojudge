@@ -7,10 +7,6 @@ from datetime import timedelta
 from django.utils import timezone
 
 
-def setter_sol_name(instance, filename):
-    return 'content/problems/{}/setter_soln{}'.format(instance.code, splitext(filename)[1])
-
-
 def start_code_name(instance, filename):
     return 'content/problems/{}/start_code{}'.format(instance.code, splitext(filename)[1])
 
@@ -128,9 +124,6 @@ class Problem(models.Model):
                           is_compilation=False),
         default='./default/test_script.sh')
     """Problem test script"""
-
-    # Setter solution script [File, Nullable]
-    setter_solution = models.FileField(upload_to=setter_sol_name, null=True)
 
     def __str__(self):
         return self.code

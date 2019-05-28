@@ -1,17 +1,19 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
-from django.utils import timezone
-from django.contrib.auth.models import User
-from django.core.files import File
-from django.http import HttpResponse
-import logging
 import os
 
+from django.urls import reverse
+from django.core.files import File
+from django.utils import timezone
+from django.http import HttpResponse
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect, get_object_or_404
+
+from logging import debug as log_debug
+
+from . import handler
 from .models import Contest, Problem, TestCase, Submission
 from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContestForm
 from .forms import NewProblemForm, EditProblemForm, NewSubmissionForm, AddTestCaseForm
 from .forms import NewCommentForm, UpdateContestForm, AddPosterScoreForm
-from . import handler
 
 
 def _get_user(request) -> User:
@@ -30,16 +32,22 @@ def _return_file_as_response(path_name):
     return response
 
 
-def handler404(request, exception=None):
+def handler404(request, *args):
     """
     Renders 404 page.
+
+    :param request: the request object used
+    :type request: HttpRequest
     """
     return render(request, '404.html', status=404)
 
 
-def handler500(request, exception=None):
+def handler500(request, *args):
     """
     Renders 500 page.
+
+    :param request: the request object used
+    :type request: HttpRequest
     """
     return render(request, '500.html', status=500)
 
@@ -47,14 +55,17 @@ def handler500(request, exception=None):
 def index(request):
     """
     Renders the index page.
+
+    :param request: the request object used
+    :type request: HttpRequest
     """
     context = {}
     user = _get_user(request)
     if user is not None:
         status, err = handler.process_person(request.user.email)
         if not status:
-            logging.debug(
-                'Although user is not none, it could not be processed. More info: {}'.format(err))
+            log_debug(
+                'Although user is not None, it could not be processed. More info: {}'.format(err))
 
     contests = Contest.objects.all()
     permissions = [handler.get_personcontest_permission(
@@ -66,6 +77,9 @@ def index(request):
 def new_contest(request):
     """
     Renders view for the page to create a new contest.
+
+    :param request: the request object used
+    :type request: HttpRequest
     """
     user = _get_user(request)
     if user is None:
@@ -73,26 +87,13 @@ def new_contest(request):
     if request.method == 'POST':
         form = NewContestForm(request.POST)
         if form.is_valid():
-            contest_name = form.cleaned_data['contest_name']
-            contest_start = form.cleaned_data['contest_start']
-            contest_soft_end = form.cleaned_data['contest_soft_end']
-            contest_hard_end = form.cleaned_data['contest_hard_end']
-            penalty = form.cleaned_data['penalty']
-            enable_linter_score = form.cleaned_data['enable_linter_score']
-            enable_poster_score = form.cleaned_data['enable_poster_score']
-            is_public = form.cleaned_data['is_public']
-            if penalty < 0 or penalty > 1:
-                form.add_error('penalty', 'Penalty should be between 0 and 1.')
+            status, msg = handler.process_contest(**form.cleaned_data)
+            if status:
+                handler.add_person_to_contest(user.email, msg, True)
+                return redirect(reverse('judge:index'))
             else:
-                status, msg = handler.process_contest(
-                    contest_name, contest_start, contest_soft_end, contest_hard_end,
-                    penalty, is_public, enable_linter_score, enable_poster_score)
-                if status:
-                    handler.add_person_to_contest(user.email, msg, True)
-                    return redirect(reverse('judge:index'))
-                else:
-                    logging.debug(msg)
-                    form.add_error(None, 'Contest could not be created.')
+                log_debug(msg)
+                form.add_error(None, 'Contest could not be created.')
     else:
         form = NewContestForm()
     context = {'form': form}
@@ -103,6 +104,13 @@ def get_people(request, contest_id, role):
     """
     Function to render the page for viewing participants and posters
     for a contest based on :attr:`role`.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param contest_id: the contest ID
+    :type contest_id: int
+    :param role: ``True`` for Poster, ``False`` for Participant
+    :type role: bool
     """
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
@@ -119,7 +127,7 @@ def get_people(request, contest_id, role):
             email = form.cleaned_data['email']
             status, err = handler.delete_personcontest(email, contest_id)
             if not status:
-                logging.debug(err)
+                log_debug(err)
                 form.add_error(None, 'Could not delete {}. {}'.format(email, err))
     else:
         form = DeletePersonFromContestForm()
@@ -140,6 +148,11 @@ def get_posters(request, contest_id):
     """
     Renders the page for posters of a contest.
     Dispatches to :func:`get_people` with :attr:`role` set to ``True``.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param contest_id: the contest ID
+    :type contest_id: int
     """
     return get_people(request, contest_id, True)
 
@@ -148,6 +161,11 @@ def get_participants(request, contest_id):
     """
     Renders the page for posters of a contest.
     Dispatches to :func:`get_people` with :attr:`role` set to ``False``.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param contest_id: the contest ID
+    :type contest_id: int
     """
     return get_people(request, contest_id, False)
 
@@ -156,6 +174,13 @@ def add_person(request, contest_id, role):
     """
     Function to render the page for adding a person - participant or poster to
     a contest.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param contest_id: the contest ID
+    :type contest_id: int
+    :param role: ``True`` for Poster, ``False`` for Participant
+    :type role: bool
     """
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
@@ -184,6 +209,11 @@ def add_poster(request, contest_id):
     """
     Renders the page for adding a poster.
     Dispatches to :func:`add_person` with :attr:`role` set to ``True``.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param contest_id: the contest ID
+    :type contest_id: int
     """
     return add_person(request, contest_id, True)
 
@@ -192,6 +222,11 @@ def add_participant(request, contest_id):
     """
     Renders the page for adding a participant.
     Dispatches to :func:`add_person` with :attr:`role` set to ``False``.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param contest_id: the contest ID
+    :type contest_id: int
     """
     return add_person(request, contest_id, False)
 
@@ -199,6 +234,11 @@ def add_participant(request, contest_id):
 def contest_detail(request, contest_id):
     """
     Renders the contest preview page after the contest has been created.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param contest_id: the contest ID
+    :type contest_id: int
     """
     contest = get_object_or_404(Contest, pk=contest_id)
     user = _get_user(request)
@@ -245,8 +285,13 @@ def contest_detail(request, contest_id):
 
 def contest_scores_csv(request, contest_id):
     """
-    Function to provide downloading facility for the CSV of scores
-    of participants in a contest.
+    Function to provide the facility to download a CSV of scores
+    of participants in a contest at a given point in time.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param contest_id: the contest ID
+    :type contest_id: int
     """
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
@@ -264,6 +309,11 @@ def contest_scores_csv(request, contest_id):
 def delete_contest(request, contest_id):
     """
     Function to provide the option to delete a contest.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param contest_id: the contest ID
+    :type contest_id: int
     """
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
@@ -281,6 +331,11 @@ def delete_contest(request, contest_id):
 def delete_problem(request, problem_id):
     """
     Function to provide the option to delete a problem.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param problem_id: the problem ID
+    :type problem_id: str
     """
     user = _get_user(request)
     problem = get_object_or_404(Problem, pk=problem_id)
@@ -302,6 +357,13 @@ def delete_problem(request, problem_id):
 def delete_testcase(request, problem_id, testcase_id):
     """
     Function to provide the option to delete a test-case of a particular problem.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param problem_id: the problem ID
+    :type problem_id: str
+    :param testcase_id: the testcase ID
+    :type testcase_id: str
     """
     user = _get_user(request)
     perm = handler.get_personproblem_permission(
@@ -322,7 +384,12 @@ def delete_testcase(request, problem_id, testcase_id):
 def problem_detail(request, problem_id):
     """
     Renders the problem preview page after the problem has been created.
-    This preview will be changed based on the role of the user (poster or participant)
+    This preview will be changed based on the role of the user (poster or participant).
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param problem_id: the problem ID
+    :type problem_id: str
     """
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
@@ -342,10 +409,8 @@ def problem_detail(request, problem_id):
         if request.method == 'POST':
             form = NewSubmissionForm(request.POST, request.FILES)
             if form.is_valid():
-                status, err = handler.process_solution(
-                    problem_id, user.email, form.cleaned_data['file_type'],
-                    form.cleaned_data['submission_file'],
-                    timezone.now())
+                status, err = handler.process_submission(
+                    problem_id, user.email, **form.cleaned_data, timestamp=timezone.now())
                 if status:
                     return redirect(reverse('judge:problem_submissions', args=(problem_id,)))
                 if not status:
@@ -358,11 +423,7 @@ def problem_detail(request, problem_id):
             if request.method == 'POST':
                 form = AddTestCaseForm(request.POST, request.FILES)
                 if form.is_valid():
-                    status, err = handler.process_testcase(
-                        problem_id,
-                        form.cleaned_data['test_type'] == 'public',
-                        form.cleaned_data['input_file'],
-                        form.cleaned_data['output_file'])
+                    status, err = handler.process_testcase(problem_id, **form.cleaned_data)
                     if status:
                         redirect(reverse('judge:problem_submissions', args=(problem_id,)))
                     else:
@@ -375,15 +436,15 @@ def problem_detail(request, problem_id):
     context['public_tests'] = []
     context['private_tests'] = []
     for t in public_tests:
-        input_file = File(open(t.inputfile.path, 'r'))
-        output_file = File(open(t.outputfile.path, 'r'))
-        context['public_tests'].append((input_file.file.read(), output_file.file.read(), t.pk))
+        input_file = open(t.inputfile.path, 'r')
+        output_file = open(t.outputfile.path, 'r')
+        context['public_tests'].append((input_file.read(), output_file.read(), t.pk))
         input_file.close()
         output_file.close()
     for t in private_tests:
-        input_file = File(open(t.inputfile.path, 'r'))
-        output_file = File(open(t.outputfile.path, 'r'))
-        context['private_tests'].append((input_file.file.read(), output_file.file.read(), t.pk))
+        input_file = open(t.inputfile.path, 'r')
+        output_file = open(t.outputfile.path, 'r')
+        context['private_tests'].append((input_file.read(), output_file.read(), t.pk))
         input_file.close()
         output_file.close()
     context['curr_time'] = timezone.now()
@@ -392,8 +453,13 @@ def problem_detail(request, problem_id):
 
 def problem_starting_code(request, problem_id: str):
     """
-    Function to provide downloading facility for the starting code
+    Function to provide the facility to download the starting code
     for a problem.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param problem_id: the problem ID
+    :type problem_id: str
     """
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
@@ -408,8 +474,13 @@ def problem_starting_code(request, problem_id: str):
 
 def problem_compilation_script(request, problem_id: str):
     """
-    Function to provide downloading facility for the compilation script
+    Function to provide the facility to download the compilation script
     for a problem after creating the problem.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param problem_id: the problem ID
+    :type problem_id: str
     """
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
@@ -424,8 +495,13 @@ def problem_compilation_script(request, problem_id: str):
 
 def problem_test_script(request, problem_id: str):
     """
-    Function to provide downloading facility for the testing script
+    Function to provide the facility to download the testing script
     for a problem after creating the problem.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param problem_id: the problem ID
+    :type problem_id: str
     """
     problem = get_object_or_404(Problem, pk=problem_id)
     user = _get_user(request)
@@ -440,14 +516,28 @@ def problem_test_script(request, problem_id: str):
 
 def problem_default_script(request, script_name: str):
     """
-    Function to provide downloading facility for the default compilation or test script.
+    Function to provide the facility to download the
+    default compilation or test script.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param script_name: name of the script - one of `compilation_script` or `test_script`
+    :type script_name: str
     """
-    return _return_file_as_response(os.path.join('judge', 'default', script_name + '.sh'))
+    if script_name not in ['compilation_script', 'test_script']:
+        return handler404(request)
+    else:
+        return _return_file_as_response(os.path.join('judge', 'default', script_name + '.sh'))
 
 
 def new_problem(request, contest_id):
     """
     Renders view for the page to create a new problem in a contest.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param contest_id: the contest ID
+    :type contest_id: int
     """
     contest = get_object_or_404(Contest, pk=contest_id)
     user = _get_user(request)
@@ -462,14 +552,7 @@ def new_problem(request, contest_id):
         form = NewProblemForm(request.POST, request.FILES)
         if form.is_valid():
             code = form.cleaned_data['code']
-            status, err = handler.process_problem(
-                code, contest_id, form.cleaned_data['name'], form.cleaned_data['statement'],
-                form.cleaned_data['input_format'],
-                form.cleaned_data['output_format'], form.cleaned_data['difficulty'],
-                form.cleaned_data['time_limit'], form.cleaned_data['memory_limit'],
-                form.cleaned_data['file_exts'], form.cleaned_data['starting_code'],
-                form.cleaned_data['max_score'], form.cleaned_data['compilation_script'],
-                form.cleaned_data['test_script'], form.cleaned_data.get('setter_soln'))
+            status, err = handler.process_problem(code, contest_id, **form.cleaned_data)
             if status:
                 return redirect(reverse('judge:problem_detail', args=(code,)))
             else:
@@ -483,6 +566,11 @@ def new_problem(request, contest_id):
 def edit_problem(request, problem_id):
     """
     Renders view for the page to edit selected fields of a pre-existing problem.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param problem_id: the problem ID
+    :type problem_id: str
     """
     problem = get_object_or_404(Problem, pk=problem_id)
     contest = get_object_or_404(Contest, pk=problem.contest_id)
@@ -495,22 +583,14 @@ def edit_problem(request, problem_id):
     if request.method == 'POST':
         form = EditProblemForm(request.POST)
         if form.is_valid():
-            status, err = handler.update_problem(
-                problem.code, form.cleaned_data['name'], form.cleaned_data['statement'],
-                form.cleaned_data['input_format'], form.cleaned_data['output_format'],
-                form.cleaned_data['difficulty'])
+            status, err = handler.update_problem(problem.code, **form.cleaned_data)
             if status:
                 return redirect(reverse('judge:problem_detail', args=(problem.code,)))
             else:
                 form.add_error(None, err)
     else:
-        form = EditProblemForm({
-            'name': problem.name,
-            'statement': problem.statement,
-            'input_format': problem.input_format,
-            'output_format': problem.output_format,
-            'difficulty': problem.difficulty
-        })
+        required_fields = ['name', 'statement', 'input_format', 'output_format', 'difficulty']
+        form = EditProblemForm({field: getattr(problem, field) for field in required_fields})
     context['form'] = form
     context['problem'] = problem
     return render(request, 'judge/edit_problem.html', context)
@@ -521,6 +601,11 @@ def problem_submissions(request, problem_id: str):
     Renders the page where all submissions to a given problem can be seen.
     For posters, this renders a set of tables for each participant.
     For participants, this renders a table with the scores of their submissions only.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param problem_id: the problem ID
+    :type problem_id: str
     """
     user = _get_user(request)
     perm = handler.get_personproblem_permission(
@@ -551,12 +636,12 @@ def problem_submissions(request, problem_id: str):
             for email, subs in all_subs.items():
                 status, comm = handler.get_comments(problem_id, email)
                 if not status:
-                    logging.debug(comm)
+                    log_debug(comm)
                     return handler404(request)
                 submissions[email] = (subs, comm)
             context['submissions'] = submissions
         else:
-            logging.debug(all_subs)
+            log_debug(all_subs)
             return handler404(request)
     elif user is not None:
         status, subs = handler.get_submissions(problem_id, user.email)
@@ -564,11 +649,11 @@ def problem_submissions(request, problem_id: str):
             context['participant'] = True
             status, comm = handler.get_comments(problem_id, user.email)
             if not status:
-                logging.debug(comm)
+                log_debug(comm)
                 return handler404(request)
             submissions[user.email] = (subs[user.email], comm)
         else:
-            logging.debug(subs)
+            log_debug(subs)
             return handler404(request)
     else:
         return handler404(request)
@@ -579,7 +664,12 @@ def problem_submissions(request, problem_id: str):
 
 def submission_download(request, submission_id: str):
     """
-    Function to provide downloading facility of a given submission.
+    Function to provide the facility to download a given submission.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param submission_id: the submission ID
+    :type submission_id: str
     """
     user = _get_user(request)
     submission = get_object_or_404(Submission, pk=submission_id)
@@ -597,6 +687,11 @@ def submission_detail(request, submission_id: str):
     """
     Renders the page where a detailed breakdown with respect to judge's
     evaluation, additional scores, error messages displayed and so on.
+
+    :param request: the request object used
+    :type request: HttpRequest
+    :param submission_id: the submission ID
+    :type submission_id: str
     """
     user = _get_user(request)
     submission = get_object_or_404(Submission, pk=submission_id)
@@ -618,7 +713,7 @@ def submission_detail(request, submission_id: str):
             else:
                 form = AddPosterScoreForm(initial={'score': submission.poster_score})
             context['form'] = form
-        status, msg = handler.get_submission_status_mini(submission_id)
+        status, msg = handler.get_submission_status(submission_id)
         if status:
             context['test_results'] = msg[0]
             context['judge_score'] = msg[1][0]
@@ -628,7 +723,7 @@ def submission_detail(request, submission_id: str):
             context['timestamp'] = msg[1][4]
             context['file_type'] = msg[1][5]
         else:
-            logging.debug(msg)
+            log_debug(msg)
             return handler404(request)
 
         return render(request, 'judge/submission_detail.html', context)
