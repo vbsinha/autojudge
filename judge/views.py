@@ -108,7 +108,7 @@ def get_people(request, contest_id, role):
     :param request: the request object used
     :type request: HttpRequest
     :param contest_id: the contest ID
-    :type contest_id: str
+    :type contest_id: int
     :param role: ``True`` for Poster, ``False`` for Participant
     :type role: bool
     """
@@ -152,7 +152,7 @@ def get_posters(request, contest_id):
     :param request: the request object used
     :type request: HttpRequest
     :param contest_id: the contest ID
-    :type contest_id: str
+    :type contest_id: int
     """
     return get_people(request, contest_id, True)
 
@@ -165,7 +165,7 @@ def get_participants(request, contest_id):
     :param request: the request object used
     :type request: HttpRequest
     :param contest_id: the contest ID
-    :type contest_id: str
+    :type contest_id: int
     """
     return get_people(request, contest_id, False)
 
@@ -178,7 +178,7 @@ def add_person(request, contest_id, role):
     :param request: the request object used
     :type request: HttpRequest
     :param contest_id: the contest ID
-    :type contest_id: str
+    :type contest_id: int
     :param role: ``True`` for Poster, ``False`` for Participant
     :type role: bool
     """
@@ -213,7 +213,7 @@ def add_poster(request, contest_id):
     :param request: the request object used
     :type request: HttpRequest
     :param contest_id: the contest ID
-    :type contest_id: str
+    :type contest_id: int
     """
     return add_person(request, contest_id, True)
 
@@ -226,7 +226,7 @@ def add_participant(request, contest_id):
     :param request: the request object used
     :type request: HttpRequest
     :param contest_id: the contest ID
-    :type contest_id: str
+    :type contest_id: int
     """
     return add_person(request, contest_id, False)
 
@@ -238,7 +238,7 @@ def contest_detail(request, contest_id):
     :param request: the request object used
     :type request: HttpRequest
     :param contest_id: the contest ID
-    :type contest_id: str
+    :type contest_id: int
     """
     contest = get_object_or_404(Contest, pk=contest_id)
     user = _get_user(request)
@@ -291,7 +291,7 @@ def contest_scores_csv(request, contest_id):
     :param request: the request object used
     :type request: HttpRequest
     :param contest_id: the contest ID
-    :type contest_id: str
+    :type contest_id: int
     """
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
@@ -313,7 +313,7 @@ def delete_contest(request, contest_id):
     :param request: the request object used
     :type request: HttpRequest
     :param contest_id: the contest ID
-    :type contest_id: str
+    :type contest_id: int
     """
     user = _get_user(request)
     perm = handler.get_personcontest_permission(
@@ -537,7 +537,7 @@ def new_problem(request, contest_id):
     :param request: the request object used
     :type request: HttpRequest
     :param contest_id: the contest ID
-    :type contest_id: str
+    :type contest_id: int
     """
     contest = get_object_or_404(Contest, pk=contest_id)
     user = _get_user(request)
