@@ -109,6 +109,16 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
     input_format = 'No input format specified.' if input_format is None else input_format
     output_format = 'No output format specified.' if output_format is None else output_format
 
+    # if either one of compilation_script or test_script is None,
+    # we create a Problem with the default compilation script and/or test_script
+    # and then we copy a compilation script and/or test_script to the right location
+    # and update the link after creation
+    no_comp_script, no_test_script = compilation_script is None, test_script is None
+    if no_comp_script:
+        compilation_script = './default/compilation_script.sh'
+    if no_test_script:
+        test_script = './default/test_script.sh'
+
     try:
         c = models.Contest.objects.get(pk=contest)
         p = models.Problem.objects.create(
@@ -124,14 +134,14 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
             # This will happen when both compilation_script and test_script were None
             os.makedirs(os.path.join('content', 'problems', p.code))
 
-        if compilation_script is None:
+        if no_comp_script:
             # Copy the default comp_script if the user did not upload custom
             copyfile(os.path.join('judge', 'default', 'compilation_script.sh'),
                      os.path.join('content', 'problems', p.code, 'compilation_script.sh'))
             p.compilation_script = os.path.join('content', 'problems',
                                                 p.code, 'compilation_script.sh')
 
-        if test_script is None:
+        if no_test_script:
             # Copy the default test_script if the user did not upload custom
             copyfile(os.path.join('judge', 'default', 'test_script.sh'),
                      os.path.join('content', 'problems', p.code, 'test_script.sh'))
@@ -139,7 +149,7 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
 
         # In this case, either one of compilation_script or test_script hasn't been copied
         # and saving with update the link(s)
-        if compilation_script is None or test_script is None:
+        if no_comp_script or no_test_script:
             p.save()
 
         return (True, None)
