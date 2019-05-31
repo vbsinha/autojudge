@@ -1,5 +1,34 @@
-# Official Python 3
-FROM python:3
+# Official Ubuntu 18.04
+FROM ubuntu:18.04
+
+# Install basic dependencies
+# Installing build-essential installs gcc-7 and g++-7 for C / C++
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    make \
+    curl \
+    wget \
+    ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install python3.7 for Python
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.7 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install jdk and jre for Java
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    default-jre \
+    default-jdk && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install golang for Go
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    golang && \
+    echo 'export GOPATH=${HOME}/go' >> ~/.bashrc && \
+    echo 'export PATH=${PATH}:${GOPATH}/bin' >> ~/.bashrc && \
+    source ~/.bashrc && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install dependencies for timer_tool (a.k.a. runsolver)
 RUN apt-get update && apt-get install -y libnuma-dev && \
