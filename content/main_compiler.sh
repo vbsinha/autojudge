@@ -24,22 +24,35 @@ SUB_FILE=$2
 # Now perform string-matching to get the extension
 # and the corresponding "executable"
 SUBPATH=${SUB_FDR}/${SUB_FILE}
+EXECPATH=${SUBPATH%.*}
 
 case "$SUBPATH" in
-    *.py)
-        EXECPATH=${SUBPATH%.*}
-        EXTENSION=".py"
-        compile_py $SUBPATH $EXECPATH
+    *.c)
+        EXTENSION=".c"
+        compile_c $SUBPATH $EXECPATH
         chmod 555 $EXECPATH
         ;;
     *.cpp)
-        EXECPATH=${SUBPATH%.*}
         EXTENSION=".cpp"
         compile_cpp $SUBPATH $EXECPATH
         chmod 555 $EXECPATH
         ;;
+    *.py)
+        EXTENSION=".py"
+        compile_py $SUBPATH $EXECPATH
+        chmod 555 $EXECPATH
+        ;;
+    *.go)
+        EXTENSION=".go"
+        compile_go $SUBPATH $EXECPATH
+        chmod 555 $EXECPATH
+        ;;
+    *.hs)
+        EXTENSION=".hs"
+        compile_hs $SUBPATH $EXECPATH
+        chmod 555 $EXECPATH
+        ;;
     *)
-        EXECPATH=${SUBPATH%.*}
         EXTENSION=".none"
         ;;
 esac

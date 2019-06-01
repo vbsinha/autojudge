@@ -160,9 +160,11 @@ class Submission(models.Model):
     # This has to be updated periodically
     PERMISSIBLE_FILE_TYPES = (
         ('.none', 'NOT_SELECTED'),
-        ('.py', 'PYTHON'),
         ('.c', 'C'),
-        ('.cpp', 'CPP'),
+        ('.cpp', 'C++'),
+        ('.py', 'Python3.6'),
+        ('.go', 'Go'),
+        ('.hs', 'Haskell'),
     )
 
     file_type = models.CharField(
