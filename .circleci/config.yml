@@ -30,7 +30,9 @@ jobs:
           command: |
             git fetch origin master
             if git diff --name-only origin/master...$CIRCLE_BRANCH | grep -q Dockerfile ; then
-              echo "Building docker image" && sudo ./.circleci/build_docker.sh
+              echo "Building docker image"
+              chmod +x ./.circleci/build_docker.sh
+              ./.circleci/build_docker.sh
             else
               echo "Skipping docker image build"
             fi
