@@ -16,12 +16,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common && \
     rm -rf /var/lib/apt/lists/*
 
-# Install jdk and jre for Java
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    default-jre \
-    default-jdk && \
-    rm -rf /var/lib/apt/lists/*
-
 # Install golang for Go
 RUN apt-get update && apt-get install -y --no-install-recommends \
     golang && \
