@@ -266,7 +266,9 @@ class NewSubmissionForm(forms.Form):
     file_type = forms.ChoiceField(label='File type', choices=[
         ('.cpp', 'C++'),
         ('.c', 'C'),
-        ('.py', 'Python'),
+        ('.py', 'Python3.6'),
+        ('.go', 'Go'),
+        ('.hs', 'Haskell'),
     ])
     """Choices of file type"""
 

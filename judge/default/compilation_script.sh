@@ -7,7 +7,7 @@
 SUCCESS=0
 FAILURE=1
 
-# This is the function to compile C files using gcc
+# This is the function to compile .c files using gcc
 compile_c() {
   SUBPATH=$1
   EXPATH=$2
@@ -17,7 +17,7 @@ compile_c() {
     return $FAILURE
 }
 
-# This is the function to compile CPP files using g++
+# This is the function to compile .cpp files using g++
 compile_cpp() {
   SUBPATH=$1
   EXPATH=$2
@@ -32,16 +32,28 @@ compile_cpp() {
 compile_py() {
   SUBPATH=$1
   EXPATH=$2
-  echo "#!/usr/local/bin/python" > $EXPATH
+  echo "#!/usr/bin/python3.6" > $EXPATH
   cat $SUBPATH >> $EXPATH
   return $SUCCESS
 }
 
-# This is the function to compile go files using go build
+# This is the function to compile .go files using go build
 compile_go() {
   SUBPATH=$1
   EXPATH=$2
   if go build $SUBPATH -o $EXPATH ; then
+    return $SUCCESS
+  else
+    return $FAILURE
+  fi
+}
+
+# This is the function to compile .hs files using ghc
+compile_hs() {
+  SUBPATH=$1
+  EXPATH=$2
+  if ghc $SUBPATH -o $EXPATH ; then
+    rm -f $EXPATH.hi $EXPATH.o
     return $SUCCESS
   else
     return $FAILURE

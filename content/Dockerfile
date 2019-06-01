@@ -1,19 +1,19 @@
 # Official Ubuntu 18.04
 FROM ubuntu:18.04
 
+### LANGUAGE SUPPORT BELOW
+### Currently we support C, C++, Python3.6, Java, Go and Haskell
+
 # Install basic dependencies
-# Installing build-essential installs gcc-7 and g++-7 for C / C++
+# Installing build-essential installs gcc-7 and g++-7 for C / C++ and
+# Installing software-properties-common installs python3.6 for Python
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     make \
     curl \
     wget \
-    ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install python3.7 for Python
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.7 && \
+    ca-certificates \
+    software-properties-common && \
     rm -rf /var/lib/apt/lists/*
 
 # Install jdk and jre for Java
@@ -30,6 +30,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     source ~/.bashrc && \
     rm -rf /var/lib/apt/lists/*
 
+# Install ghc for Haskell
+RUN add-apt-repository -y ppa:hvr/ghc && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    ghc-8.6.5 && \
+    echo 'export PATH=${PATH}:/opt/ghc/bin/' >> ~/.bashrc && \
+    source ~/.bashrc && \
+    rm -rf /var/lib/apt/lists/*
+
+### TIMER_TOOL SUPPORT BELOW
+
 # Install dependencies for timer_tool (a.k.a. runsolver)
 RUN apt-get update && apt-get install -y libnuma-dev && \
     rm -rf /var/lib/apt/lists/*
@@ -45,7 +55,7 @@ RUN curl https://www.cril.univ-artois.fr/~roussel/runsolver/runsolver-3.4.0.tar.
     mv ~/timer_tool /bin/timer_tool
 
 # Submission ID, to be set at runtime in `docker run` calls
-ENV SUB_ID=0
+ENV SUB_ID=-1
 
 # Set working directory
 WORKDIR /app
