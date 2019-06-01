@@ -29,8 +29,8 @@ jobs:
           name: Build Docker image
           command: |
             git fetch origin master
-            if git diff origin/master...$CIRCLE_BRANCH --name-only | grep Dockerfile ; then
-              echo "Building docker image" && ./.circleci/build_docker.sh
+            if git diff --name-only origin/master...$CIRCLE_BRANCH | grep -q Dockerfile ; then
+              echo "Building docker image" && sudo ./.circleci/build_docker.sh
             else
               echo "Skipping docker image build"
             fi
