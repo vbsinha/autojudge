@@ -3,7 +3,7 @@
 
 import os
 from typing import List
-from .settings import *
+from .settings import *  # noqa: F401, F403
 
 SECRET_KEY = os.environ.get('AUTOJUDGE_SECRET_KEY')
 DEBUG = False
