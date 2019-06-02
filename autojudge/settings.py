@@ -16,7 +16,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '%iyygwb3^wj9p^m8xzo0%5(v$9a0f&(tovjpfb*h1$11h-hk6f'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = (os.environ.get('DEBUG') == 1)
+DEBUG = True
 
 ALLOWED_HOSTS: List[str] = ['*']
 
@@ -105,7 +105,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-in'
 
 TIME_ZONE = 'Asia/Kolkata'
 
@@ -122,12 +122,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 AUTHENTICATION_BACKENDS = (
- # Backends for Google authentication
- 'social_core.backends.open_id.OpenIdAuth',
- 'social_core.backends.google.GoogleOpenId',
- 'social_core.backends.google.GoogleOAuth2',
+    # Backends for Google authentication
+    'social_core.backends.open_id.OpenIdAuth',
+    'social_core.backends.google.GoogleOpenId',
+    'social_core.backends.google.GoogleOAuth2',
 
- 'django.contrib.auth.backends.ModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
 )
 
 LOGIN_URL = 'judge:login'
