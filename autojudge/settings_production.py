@@ -8,9 +8,11 @@ from .settings import *
 SECRET_KEY = os.environ.get('AUTOJUDGE_SECRET_KEY')
 DEBUG = False
 
-# TODO Edit the url
+# Edit/Add the settings during deployment
 ALLOWED_HOSTS: List[str] = ['autojudge.iith.ac.in']
 
-# TODO Confiure Postgrsql as database
+# Confiure Postgresql as database
+# https://docs.djangoproject.com/en/2.2/ref/settings/#std:setting-DATABASES
 
-# TODO Configure static root and static url
+# Configure static root and static url
+# https://docs.djangoproject.com/en/2.2/howto/static-files/deployment/#serving-static-files-in-production
