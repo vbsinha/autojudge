@@ -46,7 +46,8 @@ def saver(sub_id):
             verdict.append(sep[1])
             time.append(sep[2])
             memory.append(sep[3])
-            msg.append(sep[4] if len(sep) == 5 else '')
+            msg.append(open(os.path.join(MONITOR_DIRECTORY, sep[4])).readlines())
+            os.remove(os.path.join(MONITOR_DIRECTORY, sep[4]))  # Remove after reading
 
     # Delete the file after reading
     os.remove(os.path.join(MONITOR_DIRECTORY, 'sub_run_' + sub_id + '.txt'))

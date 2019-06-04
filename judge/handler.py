@@ -3,15 +3,23 @@ import pickle
 
 from re import compile
 from io import StringIO
-from logging import error as log_error
 from traceback import print_exc
 from csv import writer as csvwriter
 from shutil import rmtree, copyfile
+from logging import error as log_error
 from datetime import timedelta, datetime
 from typing import Tuple, Optional, Dict, Any, List, Union
 
 from django.utils import timezone
+from django.core.files.uploadedfile import InMemoryUploadedFile
+
 from . import models
+
+
+def _check_and_remove(*fullpaths):
+    for fullpath in fullpaths:
+        if os.path.exists(fullpath):
+            os.remove(fullpath)
 
 
 def process_contest(contest_name: str, contest_start: datetime, contest_soft_end: datetime,
@@ -74,60 +82,75 @@ def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
         return (False, 'Contest could not be deleted')
 
 
-def process_problem(code: str, contest: int, name: str, statement: str, input_format: str,
-                    output_format: str, difficulty: int, time_limit: int, memory_limit: int,
-                    file_format: str, starting_code, max_score: int,
-                    compilation_script, test_script) -> Tuple[bool, Optional[str]]:
+def process_problem(
+    contest: int,
+    **kwargs: Union[str, int, Optional[InMemoryUploadedFile]]) -> Tuple[bool, Optional[str]]:
     """
     Function to process a new :class:`~judge.models.Problem`.
 
-    :param code: Problem code
     :param contest: Contest ID to which the problem belongs
+
+    :attr:`**kwargs` includes the following keyword arguments, which are directly passed
+    to the construct a :class:`~judge.models.Problem` object.
+
+    :param code: Problem code
+    :type code: str
     :param name: Problem name
+    :type name: str
     :param statement: Problem statement
+    :type statement: str
     :param input_format: Problem input format
+    :type statement: str
     :param output_format: Problem output format
+    :type statement: str
     :param difficulty: Problem difficulty
+    :type statement: int
     :param time_limit: Problem execution time limit
+    :type statement: int
     :param memory_limit: Problem virtual memory limit
-    :param file_format: Accepted file format for submissions
+    :type statement: int
+    :param file_exts: Accepted file format for submissions
+    :type statement: str
     :param starting_code: Starting code for the problem
+    :type statement: Optional[InMemoryUploadedFile]
     :param max_score: Maximum judge score per test case for the problem
+    :type statement: int
     :param compilation_script: Compilation script for the submissions
+    :type statement: Optional[InMemoryUploadedFile]
     :param test_script: Test script for the submissions
+    :type statement: Optional[InMemoryUploadedFile]
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
               2nd element providing an error message if processing is unsuccessful.
     """
     # Check if the Problem Code has already been taken
+    code = kwargs.get('code')
     try:
         models.Problem.objects.get(pk=code)
         return (False, '{} already a used Question code.'.format(code))
     except models.Problem.DoesNotExist:
         pass
 
-    statement = 'The problem statement is empty.' if statement is None else statement
-    input_format = 'No input format specified.' if input_format is None else input_format
-    output_format = 'No output format specified.' if output_format is None else output_format
+    if kwargs.get('statement') is None:
+        kwargs['statement'] = 'The problem statement is empty.'
+    if kwargs.get('input_format') is None:
+        kwargs['input_format'] = 'No input format specified.'
+    if kwargs.get('output_format') is None:
+        kwargs['output_format'] = 'No output format specified.'
 
     # if either one of compilation_script or test_script is None,
     # we create a Problem with the default compilation script and/or test_script
     # and then we copy a compilation script and/or test_script to the right location
     # and update the link after creation
-    no_comp_script, no_test_script = compilation_script is None, test_script is None
+    no_comp_script = kwargs.get('compilation_script') is None
+    no_test_script = kwargs.get('test_script') is None
     if no_comp_script:
-        compilation_script = './default/compilation_script.sh'
+        kwargs['compilation_script'] = './default/compilation_script.sh'
     if no_test_script:
-        test_script = './default/test_script.sh'
+        kwargs['test_script'] = './default/test_script.sh'
 
     try:
         c = models.Contest.objects.get(pk=contest)
-        p = models.Problem.objects.create(
-            code=code, contest=c, name=name, statement=statement,
-            input_format=input_format, output_format=output_format,
-            difficulty=difficulty, time_limit=time_limit, memory_limit=memory_limit,
-            file_format=file_format, start_code=starting_code, max_score=max_score,
-            compilation_script=compilation_script,
-            test_script=test_script)
+        p = models.Problem.objects.create(contest=c, **kwargs)
 
         if not os.path.exists(os.path.join('content', 'problems', p.code)):
             # Create the problem directory explictly if not yet created
@@ -210,17 +233,15 @@ def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
                 'content', 'testcase', 'inputfile_{}.txt'.format(testcase.pk))
             outputfile_path = os.path.join(
                 'content', 'testcase', 'outputfile_{}.txt'.format(testcase.pk))
-            if os.path.exists(inputfile_path):
-                os.remove(inputfile_path)
-            if os.path.exists(outputfile_path):
-                os.remove(outputfile_path)
+            _check_and_remove(inputfile_path, outputfile_path)
+
         submissions = models.Submission.objects.filter(problem=problem)
         for submission in submissions:
             submission_path = os.path.join(
                 'content', 'submissions',
                 'submission_{}{}'.format(submission.pk, submission.file_type))
-            if os.path.exists(submission_path):
-                os.remove(submission_path)
+            _check_and_remove(submission_path)
+
         rmtree(os.path.join('content', 'problems', problem_id))
 
         models.Problem.objects.filter(pk=problem_id).delete()
@@ -254,7 +275,8 @@ def process_person(email: str, rank: int = 0) -> Tuple[bool, Optional[str]]:
 
 
 def process_testcase(problem_id: str, test_type: str,
-                     input_file, output_file) -> Tuple[bool, Optional[str]]:
+                     input_file: InMemoryUploadedFile,
+                     output_file: InMemoryUploadedFile) -> Tuple[bool, Optional[str]]:
     """
     Function to process a new :class:`~judge.models.TestCase` for a problem.
 
@@ -300,10 +322,8 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
             'content', 'testcase', 'inputfile_{}.txt'.format(testcase_id))
         outputfile_path = os.path.join(
             'content', 'testcase', 'outputfile_{}.txt'.format(testcase_id))
-        if os.path.exists(inputfile_path):
-            os.remove(inputfile_path)
-        if os.path.exists(outputfile_path):
-            os.remove(outputfile_path)
+        _check_and_remove(inputfile_path, outputfile_path)
+
         models.TestCase.objects.filter(pk=testcase_id).delete()
         return (True, None)
     except Exception as e:
@@ -312,7 +332,7 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
 
 
 def process_submission(problem_id: str, participant: str, file_type: str,
-                       submission_file, timestamp: str) -> Tuple[bool, Optional[str]]:
+                       submission_file: InMemoryUploadedFile, timestamp: str) -> Tuple[bool, Optional[str]]:
     """
     Function to process a new :class:`~judge.models.Submission` for a problem by a participant.
 
@@ -326,9 +346,9 @@ def process_submission(problem_id: str, participant: str, file_type: str,
     """
     try:
         problem = models.Problem.objects.get(pk=problem_id)
-        if file_type not in problem.file_format.split(','):
+        if file_type not in problem.file_exts.split(','):
             return (False, 'Accepted file types: \"{}\"'
-                           .format(', '.join(problem.file_format.split(','))))
+                           .format(', '.join(problem.file_exts.split(','))))
         participant = models.Person.objects.get(email=participant)
         s = problem.submission_set.create(participant=participant, file_type=file_type,
                                           submission_file=submission_file, timestamp=timestamp)

@@ -466,8 +466,8 @@ def problem_starting_code(request, problem_id: str):
     perm = handler.get_personproblem_permission(None if user is None else user.email, problem_id)
     if perm is None:
         return handler404(request)
-    elif problem.start_code:
-        return _return_file_as_response(problem.start_code.path)
+    elif problem.starting_code:
+        return _return_file_as_response(problem.starting_code.path)
     else:
         return handler404(request)
 
@@ -551,9 +551,9 @@ def new_problem(request, contest_id):
     if request.method == 'POST':
         form = NewProblemForm(request.POST, request.FILES)
         if form.is_valid():
-            code = form.cleaned_data['code']
-            status, err = handler.process_problem(code, contest_id, **form.cleaned_data)
+            status, err = handler.process_problem(contest=contest_id, **form.cleaned_data)
             if status:
+                code = form.cleaned_data['code']
                 return redirect(reverse('judge:problem_detail', args=(code,)))
             else:
                 form.add_error(None, err)

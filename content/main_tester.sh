@@ -83,14 +83,13 @@ run_submission() {
   #       This is then checked normally using a diff
   #       The status is appended to the verdict_string along with the memory and time consumed
   VERDICT=""
-  ERR_MSG=""
   if [ "$TIMEOUT" = true ] ; then
     VERDICT=$(error_code_to_string $TLE ${TID})
   elif [ "$MEMOUT" = true ] ; then
     VERDICT=$(error_code_to_string $OOM ${TID})
   else
     clean_generated_output ${SID} ${TID}  # Delete the generated file to prevent any mismatch
-    ERR_MSG=$({ ${SUB_FDR}/submission_${SID} < ${TEST_FDR}/inputfile_${TID}.txt > ${TMP}/sub_output_${SID}_${TID}.txt; } 2>&1)
+    ${SUB_FDR}/submission_${SID} < ${TEST_FDR}/inputfile_${TID}.txt > ${TMP}/sub_output_${SID}_${TID}.txt 2> ${TMP}/sub_run_${SID}_${TID}.log
 
     case "$?" in
       "0")
@@ -105,7 +104,7 @@ run_submission() {
           ;;
     esac
   fi
-  VERDICT="${VERDICT} ${WCTIME} ${MAXVM} ${ERR_MSG}"
+  VERDICT="${VERDICT} ${WCTIME} ${MAXVM} sub_run_${SID}_${TID}.log"
   echo ${VERDICT}
 }
 
