@@ -15,6 +15,7 @@ compile_c() {
     return $SUCCESS
   else
     return $FAILURE
+  fi
 }
 
 # This is the function to compile .cpp files using g++

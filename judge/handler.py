@@ -130,11 +130,13 @@ def process_problem(
     except models.Problem.DoesNotExist:
         pass
 
-    if kwargs.get('statement') is None:
+    # Quill replaces empty input with this
+    NO_INPUT_QUILL = '{"ops":[{"insert":"\\n"}]}'
+    if kwargs.get('statement') == NO_INPUT_QUILL:
         kwargs['statement'] = 'The problem statement is empty.'
-    if kwargs.get('input_format') is None:
+    if kwargs.get('input_format') == NO_INPUT_QUILL:
         kwargs['input_format'] = 'No input format specified.'
-    if kwargs.get('output_format') is None:
+    if kwargs.get('output_format') == NO_INPUT_QUILL:
         kwargs['output_format'] = 'No output format specified.'
 
     # if either one of compilation_script or test_script is None,

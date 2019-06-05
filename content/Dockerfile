@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     golang && \
     echo 'export GOPATH=${HOME}/go' >> ~/.bashrc && \
     echo 'export PATH=${PATH}:${GOPATH}/bin' >> ~/.bashrc && \
-    source ~/.bashrc && \
+    . ~/.bashrc && \
     rm -rf /var/lib/apt/lists/*
 
 # Install ghc for Haskell
@@ -29,7 +29,7 @@ RUN add-apt-repository -y ppa:hvr/ghc && \
     apt-get update && apt-get install -y --no-install-recommends \
     ghc-8.6.5 && \
     echo 'export PATH=${PATH}:/opt/ghc/bin/' >> ~/.bashrc && \
-    source ~/.bashrc && \
+    . ~/.bashrc && \
     rm -rf /var/lib/apt/lists/*
 
 ### TIMER_TOOL SUPPORT BELOW
@@ -55,4 +55,4 @@ ENV SUB_ID=-1
 WORKDIR /app
 
 # Run the meta script
-CMD python compile_and_test.py --submission_config tmp/sub_run_${SUB_ID}.txt
+CMD python3.6 compile_and_test.py --submission_config tmp/sub_run_${SUB_ID}.txt

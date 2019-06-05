@@ -34,7 +34,7 @@ except subprocess.CalledProcessError as e:  # If compilation fails, end this scr
         for testcase_id in sub_info[5:]:
             log_file_name = 'sub_run_{}_{}.log'.format(sub_info[1], testcase_id)
 
-            with open(log_file_name, "w") as log_file:
+            with open('tmp/' + log_file_name, "w") as log_file:
                 log_file.write(error_msg)
 
             stat_file.write("{} {} 0 0 {}\n"
