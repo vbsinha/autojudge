@@ -35,7 +35,7 @@
                 <span class="btn-inner--text">Update poster score</span>
             </button>
             <div class="modal fade" id="modal-update-score" tabindex="-1" role="dialog" aria-hidden="true">
-                <div class="modal-dialog modal- modal-dialog-centered modal-sm" role="document">
+                <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
                     <div class="modal-content">
                         <div class="modal-body p-0">
                             <div class="card bg-secondary shadow border-0">
@@ -118,23 +118,69 @@
         <table class="table table-striped">
             <thead class="thead-dark">
                 <tr>
-                    <th>Test Case</th>
-                    <th>Verdict</th>
-                    <th>Time taken</th>
-                    <th>Memory taken</th>
-                    <th>Is public test case?</th>
-                    <th>Message</th>
+                    <th>Test cases</th>
                 </tr>
             </thead>
             <tbody>
                 {% for test_id, res in test_results.items %}
                 <tr>
-                    <td>{{ test_id }}</td>
-                    <td>{{ res.0 }}</td>
-                    <td>{{ res.1 }}</td>
-                    <td>{{ res.2 }}</td>
-                    <td>{% if res.3 %}Yes{% else %}No{% endif %}</td>
-                    <td>{{ res.4 }}</td>
+                    <td>
+                        <a href="#" data-toggle="modal" data-target="#modal-{{ test_id }}">{{ test_id }}</a>
+                        {% if res.3 %}
+                        <span class="badge badge-pill badge-primary">Public</span>
+                        {% else %}
+                        <span class="badge badge-pill badge-default">Private</span>
+                        {% endif %}
+                        {% if res.0 == "Pass" %}
+                        <span class="badge badge-pill badge-success">{{ res.0 }}</span>
+                        {% elif res.0 == "Running" %}
+                        <span class="badge badge-pill badge-secondary">{{ res.0 }}</span>
+                        {% else %}
+                        <span class="badge badge-pill badge-danger">{{ res.0 }}</span>
+                        {% endif %}
+                        <div class="modal fade" id="modal-{{ test_id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-body p-0">
+                                        <div class="card shadow border-0">
+                                            <div class="card-body px-lg-5 py-lg-5">
+                                                <div class="text-center mb-4">
+                                                    Test case
+                                                </div>
+                                                <div>
+                                                    <table class="table">
+                                                        <tbody>
+                                                            <tr>
+                                                                <th>Id</th>
+                                                                <td>{{ test_id }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>Verdict</th>
+                                                                <td>{{ res.0 }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>Time taken</th>
+                                                                <td>{{ res.1 }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>Memory taken</th>
+                                                                <td>{{ res.2 }}</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <p>
+                                                        <b>Message:</b><br>
+                                                        <textarea class="form-control" disabled>{{ res.4 }}</textarea>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
