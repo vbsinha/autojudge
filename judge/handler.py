@@ -83,8 +83,8 @@ def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
 
 
 def process_problem(
-    contest: int,
-    **kwargs: Union[str, int, Optional[InMemoryUploadedFile]]) -> Tuple[bool, Optional[str]]:
+        contest: int,
+        **kwargs: Union[str, int, Optional[InMemoryUploadedFile]]) -> Tuple[bool, Optional[str]]:
     """
     Function to process a new :class:`~judge.models.Problem`.
 
@@ -678,7 +678,7 @@ def get_personcontest_score(person: str, contest: int) -> Tuple[bool, Union[floa
 
 
 def get_submissions(problem_id: str, person_id: Optional[str]) \
-                    -> Tuple[bool, Union[Dict[str, List[Any]], str]]:
+        -> Tuple[bool, Union[Dict[str, List[Any]], str]]:
     """
     Function to retrieve all submissions made by everyone or a specific person for this
     problem.
