@@ -332,7 +332,8 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
 
 
 def process_submission(problem_id: str, participant: str, file_type: str,
-                       submission_file: InMemoryUploadedFile, timestamp: str) -> Tuple[bool, Optional[str]]:
+                       submission_file: InMemoryUploadedFile,
+                       timestamp: str) -> Tuple[bool, Optional[str]]:
     """
     Function to process a new :class:`~judge.models.Submission` for a problem by a participant.
 

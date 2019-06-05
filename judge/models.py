@@ -245,14 +245,14 @@ class SubmissionTestCase(models.Model):
 
     # Possible Verdicts
     VERDICT = (
-        ('F', 'Fail'),
-        ('P', 'Pass'),
+        ('F', 'Failed'),
+        ('P', 'Passed'),
         ('R', 'Running'),
-        ('TE', 'TLE'),
-        ('ME', 'OOM'),
-        ('CE', 'COMPILATION_ERROR'),
-        ('RE', 'RUNTIME_ERROR'),
-        ('NA', 'NOT_AVAILABLE'))
+        ('TE', 'Time Limit Exceeded'),
+        ('ME', 'Out Of Memory'),
+        ('CE', 'Compilation Error'),
+        ('RE', 'Runtime Error'),
+        ('NA', 'Internal Failure'))
 
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
     """Foreign key to submission"""
