@@ -52,7 +52,7 @@ MEMLIMIT=$1
 shift
 
 # Effectively importing the testing function : validate_submission_output()
-. ${PROB_FDR}/${PROB_CODE}/test_script.sh
+# . ${PROB_FDR}/${PROB_CODE}/test_script.sh
 
 # Run submission function
 # If the executable runs fine, then the output validation is done
@@ -94,7 +94,9 @@ run_submission() {
 
     case "$?" in
       "0")
-          validate_submission_output ${TEST_FDR}/outputfile_${TID}.txt ${TMP}/sub_output_${SID}_${TID}.txt
+          # validate_submission_output ${TEST_FDR}/outputfile_${TID}.txt ${TMP}/sub_output_${SID}_${TID}.txt
+          chmod +x ${PROB_FDR}/${PROB_CODE}/test_script.sh
+          ${PROB_FDR}/${PROB_CODE}/test_script.sh ${TEST_FDR}/outputfile_${TID}.txt ${TMP}/sub_output_${SID}_${TID}.txt
           VERDICT=$(error_code_to_string $? ${TID})
           ;;
       "1")
