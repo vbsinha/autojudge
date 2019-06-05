@@ -10,7 +10,7 @@ NA=5
 # return $PASS, otherwise return $FAIL
 # Any technical glitch returns $NA
 validate_submission_output() {
-  diff $1 $2 > /dev/null
+  diff -b -Z $1 $2 > /dev/null
 
   case "$?" in
     "0")
