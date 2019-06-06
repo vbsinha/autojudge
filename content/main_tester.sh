@@ -146,12 +146,12 @@ error_code_to_string() {
   echo "$TESTCASE_ID $STRCODE"
 }
 
+# Add executable permission
+chmod +x ${PROB_FDR}/${PROB_CODE}/test_script
+
 # Iterate over all testcase IDs passed as command line arguments
 for TESTCASE_ID in "$@";
   do
-    # Add executable permission
-    chmod +x ${PROB_FDR}/${PROB_CODE}/test_script
-
     # Run the submission using run_submission
     run_submission ${SUB_ID} ${TESTCASE_ID} ${TIMELIMIT} ${MEMLIMIT} >> ${TMP}/sub_run_${SUB_ID}.txt
 
