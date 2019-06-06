@@ -51,9 +51,6 @@ shift
 MEMLIMIT=$1
 shift
 
-# Effectively importing the testing function : validate_submission_output()
-# . ${PROB_FDR}/${PROB_CODE}/test_script.sh
-
 # Run submission function
 # If the executable runs fine, then the output validation is done
 # Otherwise, an appropriate error code is returned
@@ -94,8 +91,7 @@ run_submission() {
 
     case "$?" in
       "0")
-          # validate_submission_output ${TEST_FDR}/outputfile_${TID}.txt ${TMP}/sub_output_${SID}_${TID}.txt
-          ./${PROB_FDR}/${PROB_CODE}/test_script ${TEST_FDR}/outputfile_${TID}.txt ${TMP}/sub_output_${SID}_${TID}.txt
+          ./${PROB_FDR}/${PROB_CODE}/test_script ${TEST_FDR}/outputfile_${TID}.txt ${TMP}/sub_output_${SID}_${TID}.txt > /dev/null
           VERDICT=$(error_code_to_string $? ${TID})
           ;;
       "1")
