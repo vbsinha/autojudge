@@ -144,8 +144,8 @@ def process_problem(code: str, contest: int, name: str, statement: str, input_fo
         if no_test_script:
             # Copy the default test_script if the user did not upload custom
             copyfile(os.path.join('judge', 'default', 'test_script.sh'),
-                     os.path.join('content', 'problems', p.code, 'test_script.sh'))
-            p.test_script = os.path.join('content', 'problems', p.code, 'test_script.sh')
+                     os.path.join('content', 'problems', p.code, 'test_script'))
+            p.test_script = os.path.join('content', 'problems', p.code, 'test_script')
 
         # In this case, either one of compilation_script or test_script hasn't been copied
         # and saving with update the link(s)

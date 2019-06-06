@@ -14,7 +14,8 @@ def start_code_name(instance, filename):
 def compilation_test_upload_location(instance, filename, is_compilation):
     # We disregard the filename argument
     file_prefix = 'compilation' if is_compilation else 'test'
-    file_name = '{}_script.sh'.format(file_prefix)
+    file_extension = '.sh' if is_compilation else ''
+    file_name = '{}_script{}'.format(file_prefix, file_extension)
     return 'content/problems/{}/{}'.format(instance.code, file_name)
 
 
