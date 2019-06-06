@@ -95,7 +95,7 @@ run_submission() {
     case "$?" in
       "0")
           # validate_submission_output ${TEST_FDR}/outputfile_${TID}.txt ${TMP}/sub_output_${SID}_${TID}.txt
-          ./${PROB_FDR}/${PROB_CODE}/test_script.sh ${TEST_FDR}/outputfile_${TID}.txt ${TMP}/sub_output_${SID}_${TID}.txt
+          ./${PROB_FDR}/${PROB_CODE}/test_script ${TEST_FDR}/outputfile_${TID}.txt ${TMP}/sub_output_${SID}_${TID}.txt
           VERDICT=$(error_code_to_string $? ${TID})
           ;;
       "1")
@@ -154,7 +154,7 @@ error_code_to_string() {
 for TESTCASE_ID in "$@";
   do
     # Add executable permission
-    chmod +x ${PROB_FDR}/${PROB_CODE}/test_script.sh
+    chmod +x ${PROB_FDR}/${PROB_CODE}/test_script
 
     # Run the submission using run_submission
     run_submission ${SUB_ID} ${TESTCASE_ID} ${TIMELIMIT} ${MEMLIMIT} >> ${TMP}/sub_run_${SUB_ID}.txt
