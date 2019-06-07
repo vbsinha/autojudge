@@ -57,4 +57,4 @@ ENV SUB_ID=-1
 WORKDIR /app
 
 # Run the meta script
-CMD python compile_and_test.py --submission_config tmp/sub_run_${SUB_ID}.txt
+CMD python3.6 compile_and_test.py --submission_config tmp/sub_run_${SUB_ID}.txt

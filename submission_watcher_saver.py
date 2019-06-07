@@ -14,8 +14,7 @@ from judge import models, handler  # noqa: E402
 CONTENT_DIRECTORY = 'content'
 TMP_DIRECTORY = 'tmp'
 MONITOR_DIRECTORY = os.path.join(CONTENT_DIRECTORY, TMP_DIRECTORY)
-DOCKER_VERSION = '1'
-DOCKER_IMAGE_NAME = 'autojudge_docker_{}'.format(DOCKER_VERSION)
+DOCKER_IMAGE_NAME = 'autojudge_docker'
 
 LS: List[Any] = []
 REFRESH_LS_TRIGGER = 10
@@ -46,7 +45,9 @@ def saver(sub_id):
             verdict.append(sep[1])
             time.append(sep[2])
             memory.append(sep[3])
-            msg.append(sep[4] if len(sep) == 5 else '')
+            with open(os.path.join(MONITOR_DIRECTORY, sep[4])) as log_file:
+                msg.append(str(log_file.read()))
+            os.remove(os.path.join(MONITOR_DIRECTORY, sep[4]))  # Remove after reading
 
     # Delete the file after reading
     os.remove(os.path.join(MONITOR_DIRECTORY, 'sub_run_' + sub_id + '.txt'))
@@ -106,7 +107,7 @@ def saver(sub_id):
     ppf.save()
 
     if update_lb:
-        # Update the leaderboard only if the submission imporved the final score
+        # Update the leaderboard only if the submission improved the final score
         handler.update_leaderboard(problem.contest.pk, s.participant.email)
 
     return True
@@ -119,7 +120,7 @@ os.chdir(os.path.join(cur_path, CONTENT_DIRECTORY))
 out = 1
 while out != 0:
     # Build docker image using docker run
-    out = call(['docker', 'build', '-q', '-t', DOCKER_IMAGE_NAME, './'])
+    out = call(['docker', 'build', '-t', DOCKER_IMAGE_NAME, './'])
 
 # Move back to old directory
 os.chdir(cur_path)
@@ -133,8 +134,10 @@ if not os.path.exists(MONITOR_DIRECTORY):
 
 while True:
     if len(LS) < REFRESH_LS_TRIGGER:
+        # Neglect .log files in tmp/; these are for error
+        # messages arising at any stage of the evaluation
         LS = [os.path.join(MONITOR_DIRECTORY, sub_file)
-              for sub_file in os.listdir(MONITOR_DIRECTORY)]
+              for sub_file in os.listdir(MONITOR_DIRECTORY) if sub_file[:-4] != '.log']
         LS.sort(key=os.path.getctime)
 
     if len(LS) > 0:
@@ -146,6 +149,7 @@ while True:
         os.chdir(os.path.join(cur_dir, CONTENT_DIRECTORY))
 
         # Run docker image
+        print("INFO: evaluating submission: {}".format(sub_id))
         call(['docker', 'run', '--rm', '-v', '{}:/app'.format(os.getcwd()),
               '-e', 'SUB_ID={}'.format(sub_id), DOCKER_IMAGE_NAME])
 

@@ -7,7 +7,7 @@ from datetime import timedelta
 from django.utils import timezone
 
 
-def start_code_name(instance, filename):
+def starting_code_name(instance, filename):
     return 'content/problems/{}/start_code{}'.format(instance.code, splitext(filename)[1])
 
 
@@ -105,10 +105,10 @@ class Problem(models.Model):
     """Problem memory limit"""
 
     # Support upto 30 file formats
-    file_format = models.CharField(max_length=100, default='.py,.cpp')
-    """Accepted file formats for submissions to problem"""
+    file_exts = models.CharField(max_length=100, default='.py,.cpp')
+    """Accepted file extensions for submissions to problem"""
 
-    start_code = models.FileField(upload_to=start_code_name, null=True)
+    starting_code = models.FileField(upload_to=starting_code_name, null=True)
     """Problem starting code"""
 
     max_score = models.PositiveSmallIntegerField(default=0)
@@ -246,14 +246,14 @@ class SubmissionTestCase(models.Model):
 
     # Possible Verdicts
     VERDICT = (
-        ('F', 'Fail'),
-        ('P', 'Pass'),
+        ('F', 'Failed'),
+        ('P', 'Passed'),
         ('R', 'Running'),
-        ('TE', 'TLE'),
-        ('ME', 'OOM'),
-        ('CE', 'COMPILATION_ERROR'),
-        ('RE', 'RUNTIME_ERROR'),
-        ('NA', 'NOT_AVAILABLE'))
+        ('TE', 'Time Limit Exceeded'),
+        ('ME', 'Out Of Memory'),
+        ('CE', 'Compilation Error'),
+        ('RE', 'Runtime Error'),
+        ('NA', 'Internal Failure'))
 
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
     """Foreign key to submission"""
