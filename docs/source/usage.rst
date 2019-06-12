@@ -27,7 +27,7 @@ Install the requirements specified in `requirements.txt <../../../requirements.t
 Phase 2 : Run ``autojudge``
 ---------------------------
 
-Activate your environment. 
+Activate your environment.
 
 Create and apply database migrations in Django with the following commands:
 
@@ -49,3 +49,46 @@ The program ``submission_watcher_saver.py`` scores the submissions. It can be st
 .. code:: bash
 
     python submission_watcher_saver.py
+
+
+Production
+----------
+
+1. Update the environmental variable `AUTOJUDGE_SECRET_KEY` with a random string. (This should be secret and never exposed to anyone)
+
+2. Update the setting for production in autojudge/settings_production.py file.
+  1. For databases:
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mydatabase',
+        'USER': 'mydatabaseuser',
+        'PASSWORD': 'mypassword',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
+    }
+}
+
+Also install postgresql from https://www.postgresql.org/download/linux/ubuntu/
+
+  2. For static files
+
+configure the STATIC_ROOT path where you want the static files to be generated
+
+run
+python manage.py collectstatic --settings=autojudge.settings_production.py
+
+The static files are generated in the path specified by STATIC_ROOT previously.
+
+Now host the static files on a server and configure the url in STATIC_URL in the settings file.
+
+i.e. if you had hosted the generated static files at https://static.autojudge.com add then change the STATIC_URL to https://static.autojudge.com/ (note the trailing slash is required).
+
+Optionally you want to configure cache server follow here https://docs.djangoproject.com/en/2.2/ref/settings/#std:setting-CACHES
+
+Configure the security settings in settings_production.py (Leave it to default if you will be hosting on https)
+
+To configure the Apache server using wsgi, follow the instructions here: https://docs.djangoproject.com/en/2.2/howto/deployment/wsgi/
+
+Do note that you have to set environmental variable `DJANGO_SETTINGS_MODULE` to `autojudge.settings_production`

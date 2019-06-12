@@ -16,3 +16,13 @@ ALLOWED_HOSTS: List[str] = ['autojudge.iith.ac.in']
 
 # Configure static root and static url
 # https://docs.djangoproject.com/en/2.2/howto/static-files/deployment/#serving-static-files-in-production
+STATIC_ROOT = 'static_files'
+STATIC_URL = 'https://static.autojudge.iith.ac.in/'
+
+# Security
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+X_FRAME_OPTIONS = 'DENY'
+CSRF_COOKIE_SECURE = True
