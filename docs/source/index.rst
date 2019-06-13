@@ -1,8 +1,8 @@
 Welcome to autojudge's documentation!
 =====================================
 
-Using ``autojudge``
--------------------
+Setting up and running ``autojudge``
+------------------------------------
 
 .. toctree::
    :maxdepth: 1
