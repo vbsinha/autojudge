@@ -15,11 +15,15 @@ Currently, the judge supports 5 languages: C, C++, Python, Go and Haskell but th
 
 To run this application, you will require **Python 3.6 or above**. While we tested this primarily with Python 3.6 or above, we expect it to work for other Python versions > 3 that support Django 2.2.2.
 
-Other primary requirements are specified in [requirements.txt](requirements.txt).
+Other primary requirements are specified in [requirements.txt](requirements.txt). To setup documentation locally, please check the requirements specified in [docs/requirements.txt](docs/requirements.txt).
 
 ## Setting up and running the application
 
 The instructions to setup and run this application are specified in our [documentation](https://autojudge.readthedocs.io/en/latest/usage.html).
+
+## Understanding how `autojudge` works
+
+If you are interested in understanding how `autojudge` works, please find the API documentation [here](https://autojudge.readthedocs.io/en/latest/api.html).
 
 ## License
 
