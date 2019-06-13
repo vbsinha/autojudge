@@ -12,10 +12,10 @@ DEBUG = False
 ALLOWED_HOSTS: List[str] = ['autojudge.com']
 
 # Configure PostgreSQL as database
-# https://docs.djangoproject.com/en/2.2.2/ref/settings/#std:setting-DATABASES
+# https://docs.djangoproject.com/en/2.2/ref/settings/#std:setting-DATABASES
 
 # Configure static root and static url
-# https://docs.djangoproject.com/en/2.2.2/howto/static-files/deployment/#serving-static-files-in-production
+# https://docs.djangoproject.com/en/2.2/howto/static-files/deployment/#serving-static-files-in-production
 STATIC_ROOT = 'static_files'
 STATIC_URL = 'https://static.autojudge.com/'
 
