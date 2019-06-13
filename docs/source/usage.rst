@@ -13,16 +13,21 @@ Phase 1a: Getting ``autojudge``
 
 Extract the compressed files and you now have ``autojudge`` ready to use.
 
-If you are a fan of ``master``, then clone the repository, either using ``git`` or by downloading from GitHub from `here <https://github.com/vbsinha/autojudge>`_.
+If you are a fan of ``master``, then clone the repository, either using ``git`` or by downloading from GitHub from `here <https://github.com/vbsinha/autojudge>`__.
 
 Phase 1b: Setting up your environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The evaluation of submissions are conducted on a Docker image that is built while initializing the application. Please install Docker using the instructions provided on `their installation page <https://docs.docker.com/install/linux/docker-ce/ubuntu>`_.
+The evaluation of submissions are conducted on a Docker image that is built while initializing the application. Please install Docker using the instructions provided on `their installation page <https://docs.docker.com/install/linux/docker-ce/ubuntu>`__.
 
 If you are very conservative about populating your default environment with random Python packages, create a virtual environment for installing some *new* packages either using ``virtualenv`` or ``conda-env``.
 
-Install the requirements specified in `requirements.txt <../../../requirements.txt>`_. Don't forget to activate your environment if you have one.
+Install the requirements specified in |requirements.txt|_. Don't forget to activate your environment if you have one.
+
+.. |requirements.txt| replace:: ``requirements.txt``
+.. _requirements.txt: ../../../requirements.txt
+
+If you going to deploy ``autojudge``, please install PostgreSQL using the instructions provided on `their installation page <https://www.postgresql.org/download/linux/ubuntu/>`__.
 
 Phase 2 : Run ``autojudge``
 ---------------------------
@@ -36,15 +41,23 @@ Create and apply database migrations in Django with the following commands:
     python manage.py makemigrations
     python manage.py migrate
 
-To run the judge locally:
+There are two ways of using ``autojudge``.
+
+Development
+~~~~~~~~~~~
+
+To run ``autojudge`` locally:
 
 .. code:: bash
 
     python manage.py runserver
 
-Go to ``localhost:8000`` in your favourite browser. Keep yourself connected to internet for full functionality.
+Go to ``localhost:8000`` in your favourite browser. Keep yourself connected to internet for full functionality as certain frontend support such as JavaScript scripts are pulled from the internet.
 
-The program ``submission_watcher_saver.py`` scores the submissions. It can be started anytime after the server has started, but it is preferred that the program be kept running in parallel with the server. Run it using:
+The program |submission_watcher_saver.py|_ scores the submissions serially in the chronological order of submissions. It can be started anytime after the server has started, but it is preferred that the program be kept running in parallel with the server. Run it using:
+
+.. |submission_watcher_saver.py| replace:: ``submission_watcher_saver.py``
+.. _submission_watcher_saver.py: ../../../submission_watcher_saver.py
 
 .. code:: bash
 
@@ -52,43 +65,47 @@ The program ``submission_watcher_saver.py`` scores the submissions. It can be st
 
 
 Production
-----------
+~~~~~~~~~~
 
-1. Update the environmental variable `AUTOJUDGE_SECRET_KEY` with a random string. (This should be secret and never exposed to anyone)
+The procedure to deploy ``autojudge`` is different from running locally. Below are a series of steps that will help you deploy ``autojudge``.
 
-2. Update the setting for production in autojudge/settings_production.py file.
-  1. For databases:
+Set the environmental variable ``AUTOJUDGE_SECRET_KEY`` to a random string, which should not be exposed to anyone. Think of it to be a private key.
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydatabase',
-        'USER': 'mydatabaseuser',
-        'PASSWORD': 'mypassword',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+Now modify a few more settings to |settings_production.py|_. The first is to setup the database. We suggest using a PostgreSQL database. This modification can be done by adding the below dictionary to |settings_production.py|_. Modify the values ``NAME``, ``USER``, ``PASSWORD``, ``HOST`` and ``PORT`` accordingly.
+
+.. code:: python
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'mydatabase',  # Sample
+            'USER': 'mydatabaseuser',  # Sample
+            'PASSWORD': 'mypassword',  # Sample
+            'HOST': '127.0.0.1',  # Sample
+            'PORT': '5432',  # Sample
+        }
     }
-}
 
-Also install postgresql from https://www.postgresql.org/download/linux/ubuntu/
 
-  2. For static files
+Next we setup the ``STATIC_ROOT`` path, the location where you would like the static files to be generated. This has to be set in |settings_production.py|_.
 
-configure the STATIC_ROOT path where you want the static files to be generated
+To generate the static files, run:
 
-run
-python manage.py collectstatic --settings=autojudge.settings_production.py
+.. code:: bash
 
-The static files are generated in the path specified by STATIC_ROOT previously.
+    python manage.py collectstatic --settings=autojudge.settings_production.py
 
-Now host the static files on a server and configure the url in STATIC_URL in the settings file.
+The static files are generated in the path specified by ``STATIC_ROOT`` previously. 
 
-i.e. if you had hosted the generated static files at https://static.autojudge.com add then change the STATIC_URL to https://static.autojudge.com/ (note the trailing slash is required).
+Now host the static files on a server and configure the URL in ``STATIC_URL`` in |settings_production.py|_. If you have hosted the generated static files at https://static.autojudge.com, then change the ``STATIC_URL`` to https://static.autojudge.com/ (note the trailing slash is required).
 
-Optionally you want to configure cache server follow here https://docs.djangoproject.com/en/2.2/ref/settings/#std:setting-CACHES
+You could optionally setup a cache server. Instructions to do this are specified `here <https://docs.djangoproject.com/en/2.2/ref/settings/#std:setting-CACHES>`__.
 
-Configure the security settings in settings_production.py (Leave it to default if you will be hosting on https)
+Configure the security settings in |settings_production.py|_ (leave it to the default values if you will be hosting on ``https``).
 
-To configure the Apache server using wsgi, follow the instructions here: https://docs.djangoproject.com/en/2.2/howto/deployment/wsgi/
+.. |settings_production.py| replace:: ``settings_production.py``
+.. _settings_production.py: ../../../autojudge/settings_production.py
 
-Do note that you have to set environmental variable `DJANGO_SETTINGS_MODULE` to `autojudge.settings_production`
+To configure the Apache server using ``WSGI``, follow the instructions `here <https://docs.djangoproject.com/en/2.2/howto/deployment/wsgi/>`__.
+
+And finally, set environment variable ``DJANGO_SETTINGS_MODULE`` to ``autojudge.settings_production`` as opposed to ``autojudge.settings`` which is present by default.
