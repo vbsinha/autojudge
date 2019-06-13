@@ -7,4 +7,5 @@
   "python.linting.pylintEnabled": false,
   "python.linting.mypyEnabled": true,
   "files.insertFinalNewline": true,
+  "restructuredtext.confPath": "${workspaceFolder}/docs/source",
 }
