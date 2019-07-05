@@ -60,11 +60,6 @@
                         <div class="card-body px-lg-5 py-lg-5">
                             <div class="text-center text-muted mb-4">UPDATE CONTEST</div>
                             <form method="POST" role="form">
-                                {% if form.non_field_errors %}
-                                <div class="alert alert-danger alter-dismissible fade show" role="alert">
-                                    {{ form.non_field_errors }}
-                                </div>
-                                {% endif %}
                                 {% csrf_token %}
                                 {% for field in form %}
                                 <div class="form-group mb-1">
@@ -118,7 +113,7 @@
         {% empty %}
         <div class="card my-4">
             <div class="card-body">
-                There are no problems in this contests.
+                No problems posted yet.
             </div>
         </div>
         {% endfor %}
