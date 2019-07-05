@@ -89,11 +89,6 @@ def new_contest(request):
         if form.is_valid():
             status, msg = handler.process_contest(**form.cleaned_data)
             if status:
-                # This is a hotpatch
-                # Admins created via createsuperuser don't necessarily have an email ID.
-                # We will use their username to generate a dummy email ID for convenience.
-                if user.email == '':
-                    user.email = user.get_username() + '@autojudge'
                 handler.add_person_to_contest(user.email, msg, True)
                 return redirect(reverse('judge:index'))
             else:
