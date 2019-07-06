@@ -29,7 +29,18 @@
         {% endif %}
     </div>
     <div class="col-12">
-        <form method="POST" id="autojudge-delete-form">{% csrf_token %}{{ form }}</form>
+        <form method="POST" id="autojudge-delete-form">{% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger mt-2" role="alert">
+                {% for err in form.non_field_errors %}
+                    {{ err }}
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% for field in form %}
+                {{ field }}
+            {% endfor %}
+        </form>
         <div class="list-group">
             {% for person in persons %}
             <div class="list-group-item">

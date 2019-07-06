@@ -52,8 +52,8 @@ def process_contest(contest_name: str, contest_start: datetime, contest_soft_end
     except Exception as e:
         # Exception Case
         print_exc()
-        log_error(e.__str__())
-        return (False, 'Contest could not be created')
+        log_error(str(e))
+        return (False, 'Contest could not be created. Cause: {}'.format(str(e)))
 
 
 def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
@@ -78,8 +78,8 @@ def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
         return (True, None)
     except Exception as e:
         print_exc()
-        log_error(e.__str__())
-        return (False, 'Contest could not be deleted')
+        log_error(str(e))
+        return (False, 'Contest could not be deleted. Cause: {}'.format(str(e)))
 
 
 def process_problem(
@@ -180,7 +180,7 @@ def process_problem(
         return (True, None)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def update_problem(code: str, name: str, statement: str, input_format: str,
@@ -212,7 +212,7 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
         return (False, '{} code does not exist.'.format(code))
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
@@ -250,8 +250,8 @@ def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
         return (True, None)
     except Exception as e:
         print_exc()
-        log_error(e.__str__())
-        return (False, 'Contest could not be deleted')
+        log_error(str(e))
+        return (False, 'Contest could not be deleted. Cause: {}'.format(str(e)))
 
 
 def process_person(email: str, rank: int = 0) -> Tuple[bool, Optional[str]]:
@@ -273,7 +273,7 @@ def process_person(email: str, rank: int = 0) -> Tuple[bool, Optional[str]]:
         return (True, None)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def process_testcase(problem_id: str, test_type: str,
@@ -302,7 +302,7 @@ def process_testcase(problem_id: str, test_type: str,
         return (True, None)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
@@ -330,7 +330,7 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
         return (True, None)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def process_submission(problem_id: str, participant: str, file_type: str,
@@ -358,7 +358,7 @@ def process_submission(problem_id: str, participant: str, file_type: str,
         s.save()
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
     testcases = models.TestCase.objects.filter(problem=problem)
 
@@ -389,7 +389,7 @@ def process_submission(problem_id: str, participant: str, file_type: str,
                                                      time_taken=timedelta(seconds=0))
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
     return (True, None)
 
@@ -426,7 +426,7 @@ def update_poster_score(submission_id: str, new_score: int):
                                submission.participant.email)
         return (True, None)
     except Exception as e:
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def add_person_to_contest(person: str, contest: int,
@@ -460,7 +460,7 @@ def add_person_to_contest(person: str, contest: int,
             return (True, None)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def add_person_rgx_to_contest(rgx: str, contest: int,
@@ -490,7 +490,7 @@ def add_person_rgx_to_contest(rgx: str, contest: int,
         return (True, None)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def add_persons_to_contest(persons: List[str], contest: int,
@@ -530,7 +530,7 @@ def add_persons_to_contest(persons: List[str], contest: int,
         return (True, None)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def get_personcontest_permission(person: Optional[str], contest: int) -> Optional[bool]:
@@ -595,7 +595,7 @@ def delete_personcontest(person: str, contest: int) -> Tuple[bool, Optional[str]
         return (True, None)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def get_personproblem_permission(person: Optional[str], problem: str) -> Optional[bool]:
@@ -630,7 +630,7 @@ def get_posters(contest: int) -> Tuple[bool, Union[str, List[str]]]:
         return (True, cps)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def get_participants(contest: int) -> Tuple[bool, Union[str, List[str]]]:
@@ -652,7 +652,7 @@ def get_participants(contest: int) -> Tuple[bool, Union[str, List[str]]]:
         return (True, cps)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def get_personcontest_score(person: str, contest: int) -> Tuple[bool, Union[float, str]]:
@@ -677,7 +677,7 @@ def get_personcontest_score(person: str, contest: int) -> Tuple[bool, Union[floa
         return (True, score)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def get_submissions(problem_id: str, person_id: Optional[str]) \
@@ -721,7 +721,7 @@ def get_submissions(problem_id: str, person_id: Optional[str]) \
         return (True, result)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def get_submission_status(submission: str):
@@ -754,7 +754,7 @@ def get_submission_status(submission: str):
         return (True, (verdict_dict, score_tuple))
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def get_leaderboard(contest: int) -> Tuple[bool, Union[str, List[List[Union[str, float]]]]]:
@@ -776,7 +776,7 @@ def get_leaderboard(contest: int) -> Tuple[bool, Union[str, List[List[Union[str,
         return (True, data)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def update_leaderboard(contest: int, person: str) -> bool:
@@ -843,7 +843,7 @@ def process_comment(problem: str, person: str, commenter: str,
         return (True, None)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def get_comments(problem: str, person: str) -> Tuple[bool, Union[str, List[Tuple[Any]]]]:
@@ -866,7 +866,7 @@ def get_comments(problem: str, person: str) -> Tuple[bool, Union[str, List[Tuple
         return (True, result)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))
 
 
 def get_csv(contest: int) -> Tuple[bool, Union[str, StringIO]]:
@@ -928,4 +928,4 @@ def get_csv(contest: int) -> Tuple[bool, Union[str, StringIO]]:
         return (True, csvstring)
     except Exception as e:
         print_exc()
-        return (False, e.__str__())
+        return (False, str(e))

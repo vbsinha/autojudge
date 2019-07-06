@@ -60,6 +60,13 @@
                         <div class="card-body px-lg-5 py-lg-5">
                             <div class="text-center text-muted mb-4">UPDATE CONTEST</div>
                             <form method="POST" role="form">
+                                {% if form.non_field_errors %}
+                                <div class="alert alert-danger mt-2" role="alert">
+                                {% for nfe in form.non_field_errors %}
+                                    {{ nfe }}
+                                {% endfor %}
+                                </div>
+                                {% endif %}
                                 {% csrf_token %}
                                 {% for field in form %}
                                 <div class="form-group mb-1">
