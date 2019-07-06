@@ -45,8 +45,10 @@
                                     </div>
                                     <form method="POST" role="form">
                                         {% if form.non_field_errors %}
-                                        <div class="alert alert-danger alter-dismissible fade show" role="alert">
-                                            {{ form.non_field_errors }}
+                                        <div class="alert alert-danger mt-2" role="alert">
+                                            {% for nfe in form.non_field_errors %}
+                                                {{ nfe }}
+                                            {% endfor %}
                                         </div>
                                         {% endif %}
                                         {% csrf_token %}
