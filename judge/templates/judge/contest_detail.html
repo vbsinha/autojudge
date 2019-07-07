@@ -61,11 +61,11 @@
                             <div class="text-center text-muted mb-4">UPDATE CONTEST</div>
                             <form method="POST" role="form">
                                 {% if form.non_field_errors %}
-                                <div class="alert alert-danger mt-2" role="alert">
                                 {% for nfe in form.non_field_errors %}
-                                    {{ nfe }}
-                                {% endfor %}
+                                <div class="alert alert-danger mt-2" role="alert">
+                                        {{ nfe }}
                                 </div>
+                                {% endfor %}
                                 {% endif %}
                                 {% csrf_token %}
                                 {% for field in form %}

@@ -66,11 +66,11 @@
     <div class="col-12 col-md-8">
         <form action="{% url 'judge:edit_problem' problem.code %}" method="POST">
             {% if form.non_field_errors %}
+            {% for nfe in form.non_field_errors %}
             <div class="alert alert-danger mt-2" role="alert">
-                {% for nfe in form.non_field_errors %}
                     {{ nfe }}
-                {% endfor %}
             </div>
+            {% endfor %}
             {% endif %}
             {% csrf_token %}
             {% for field in form %}

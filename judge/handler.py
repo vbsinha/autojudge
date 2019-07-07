@@ -453,7 +453,7 @@ def add_person_to_contest(person: str, contest: int,
                 return (False, '{} is already a {}'.format(
                     p.email, 'Poster' if permission else 'Participant'))
             else:
-                return (False, '{} already exists with other permission'.format(p.email))
+                return (False, '{} already exists with conflicting permission'.format(p.email))
         except models.ContestPerson.DoesNotExist:
             cp = p.contestperson_set.create(contest=c, role=permission)
             cp.save()
@@ -516,14 +516,20 @@ def add_persons_to_contest(persons: List[str], contest: int,
             return (True, None)
 
         person_list = [models.Person.objects.get(email=person) for person in persons]
+        err_person_list = []
         for p in person_list:
             try:
                 # Check that person is not already registered in the contest with other permission
                 cp = models.ContestPerson.objects.get(person=p, contest=c)
                 if cp.role == (not permission):
-                    return (False, '{} already exists with other permission'.format(p.email))
+                    err_person_list.append(p.email)
             except models.ContestPerson.DoesNotExist:
                 continue
+        # Report all people with conflicting permissions
+        if len(err_person_list):
+            return (False,
+                    'The following people already exist with conflicting permissions: {}'
+                    .format(', '.join(err_person_list)))
 
         for p in person_list:
             models.ContestPerson.objects.get_or_create(contest=c, person=p, role=permission)

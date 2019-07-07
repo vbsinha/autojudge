@@ -35,11 +35,11 @@
     <div class="col-12 col-md-8">
         <form action="{% url 'judge:new_contest' %}" method="POST">
             {% if form.non_field_errors %}
-            <div class="alert alert-danger mt-2" role="alert">
             {% for nfe in form.non_field_errors %}
-                {{ nfe }}
-            {% endfor %}
+            <div class="alert alert-danger mt-2" role="alert">
+                    {{ nfe }}
             </div>
+            {% endfor %}
             {% endif %}
             {% csrf_token %}
             {% for field in form %}

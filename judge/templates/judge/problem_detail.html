@@ -249,11 +249,11 @@
             <div class="card-body">
                 <form method="POST" enctype="multipart/form-data">
                     {% if form.non_field_errors %}
+                    {% for nfe in form.non_field_errors %}
                     <div class="alert alert-danger mt-2" role="alert">
-                        {% for nfe in form.non_field_errors %}
                             {{ nfe }}
-                        {% endfor %}
                     </div>
+                    {% endfor %}
                     {% endif %}
                     {% csrf_token %}
                     {% for field in form %}
