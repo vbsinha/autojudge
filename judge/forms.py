@@ -2,15 +2,21 @@ from django import forms
 from django.core.validators import RegexValidator, validate_email, EMPTY_VALUES
 
 
+CONTEST_START_SOFT_END_INVALID = -1
+CONTEST_SOFT_END_HARD_END_INVALID = +1
+CONTEST_VALID = 0
+
+
 def _check_valid_date(cleaned_data):
     cont_start = cleaned_data.get("contest_start")
     cont_soft_end = cleaned_data.get("contest_soft_end")
     cont_hard_end = cleaned_data.get("contest_hard_end")
     if cont_start and cont_soft_end and cont_hard_end:
         if cont_start > cont_soft_end:
-            raise forms.ValidationError("Contest cannot end before it starts!")
+            return CONTEST_START_SOFT_END_INVALID
         if cont_soft_end > cont_hard_end:
-            raise forms.ValidationError("The final deadline cannot be before the soft deadline")
+            return CONTEST_SOFT_END_HARD_END_INVALID
+    return CONTEST_VALID
 
 
 class MultiEmailField(forms.Field):
@@ -86,7 +92,18 @@ class NewContestForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        _check_valid_date(cleaned_data)
+        error = _check_valid_date(cleaned_data)
+        if error == CONTEST_START_SOFT_END_INVALID:
+            err_ = forms.ValidationError("Contest cannot end before it starts!",
+                                         code='invalid')
+            self.add_error('contest_start', err_)
+            self.add_error('contest_soft_end', err_)
+
+        elif error == CONTEST_SOFT_END_HARD_END_INVALID:
+            err_ = forms.ValidationError(
+                       "The final deadline cannot be before the soft deadline.", code='invalid')
+            self.add_error('contest_soft_end', err_)
+            self.add_error('contest_hard_end', err_)
 
 
 class UpdateContestForm(forms.Form):
@@ -114,7 +131,18 @@ class UpdateContestForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        _check_valid_date(cleaned_data)
+        error = _check_valid_date(cleaned_data)
+        if error == CONTEST_START_SOFT_END_INVALID:
+            err_ = forms.ValidationError("Contest cannot end before it starts!",
+                                         code='invalid')
+            self.add_error('contest_start', err_)
+            self.add_error('contest_soft_end', err_)
+
+        elif error == CONTEST_SOFT_END_HARD_END_INVALID:
+            err_ = forms.ValidationError(
+                       "The final deadline cannot be before the soft deadline.", code='invalid')
+            self.add_error('contest_soft_end', err_)
+            self.add_error('contest_hard_end', err_)
 
 
 class AddPersonToContestForm(forms.Form):
