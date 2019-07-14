@@ -620,11 +620,11 @@ def problem_submissions(request, problem_id: str):
             if perm is False and form.cleaned_data['participant_email'] != user.email:
                 form.add_error(None, 'Your comment was not posted.')
             else:
-                status, msg = handler.process_comment(
+                status, maybe_error = handler.process_comment(
                     problem_id, form.cleaned_data['participant_email'], user.email,
                     timezone.now(), form.cleaned_data['comment'])
                 if not status:
-                    form.add_error(None, msg)
+                    form.add_error(None, maybe_error)
                 else:
                     form = NewCommentForm()
     else:
@@ -634,11 +634,8 @@ def problem_submissions(request, problem_id: str):
         status, all_subs = handler.get_submissions(problem_id, None)
         if status:
             for email, subs in all_subs.items():
-                status, comm = handler.get_comments(problem_id, email)
-                if not status:
-                    log_debug(comm)
-                    return handler404(request)
-                submissions[email] = (subs, comm)
+                comment_set = handler.get_comments(problem_id, email)
+                submissions[email] = (subs, comment_set)
             context['submissions'] = submissions
         else:
             log_debug(all_subs)

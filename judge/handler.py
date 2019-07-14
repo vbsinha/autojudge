@@ -10,7 +10,9 @@ from logging import error as log_error
 from datetime import timedelta, datetime
 from typing import Tuple, Optional, Dict, Any, List, Union
 
+from django.db.models import Q
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from . import models
@@ -724,11 +726,11 @@ def get_submissions(problem_id: str, person_id: Optional[str]) \
         return (False, e.__str__())
 
 
-def get_submission_status(submission: str):
+def get_submission_status(submission_id: str):
     """
     Function to get the current status of the submission given its submission ID.
 
-    :param submission: Submission ID
+    :param submission_d: Submission ID
     :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
               If successful, a tuple consisting of a dictionary and a smaller tuple.
               The key for the dictionary is the testcase ID, and value is another smaller
@@ -739,47 +741,45 @@ def get_submission_status(submission: str):
               the file type of submission.
               If unsuccessful, an error message is provided.
     """
-    try:
-        s = models.Submission.objects.get(pk=submission)
-        testcases = models.TestCase.objects.filter(problem=s.problem)
+    submission = models.Submission.objects.filter(pk=submission_id)
+    if not submission.exists():
+        return (False,
+                ValidationError('Submission with primary key = {} not found'
+                                .format(submission_id)))
+    submission = submission[0]        
+    testcases = models.TestCase.objects.filter(problem=submission.problem)
 
-        verdict_dict = dict()
-        for testcase in testcases:
-            st = models.SubmissionTestCase.objects.get(
-                submission=s, testcase=testcase)
-            verdict_dict[testcase.pk] = (st.get_verdict_display, st.time_taken,
-                                         st.memory_taken, testcase.public, st.message)
-        score_tuple = (s.judge_score, s.poster_score, s.linter_score, s.final_score,
-                       s.timestamp, s.file_type)
-        return (True, (verdict_dict, score_tuple))
-    except Exception as e:
-        print_exc()
-        return (False, e.__str__())
+    verdict_dict = {}
+    for testcase in testcases:
+        st = models.SubmissionTestCase.objects.get(submission=submission_id, testcase=testcase)
+        verdict_dict[testcase.pk] = (st.get_verdict_display, st.time_taken,
+                                     st.memory_taken, testcase.public, st.message)
+
+    score_tuple = (s.judge_score, s.poster_score, s.linter_score, s.final_score,
+                   s.timestamp, s.file_type)
+    return (True, (verdict_dict, score_tuple))
 
 
-def get_leaderboard(contest: int) -> Tuple[bool, Union[str, List[List[Union[str, float]]]]]:
+def get_leaderboard(contest_id: int) -> Tuple[bool, Union[str, List[List[Union[str, float]]]]]:
     """
     Function to returns the current leaderboard for a contest given its contest ID.
 
-    :param contest: Contest ID
-    :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
-              If successful, a list of 2-length lists is returned ordered by decreasing
+    :param contest_id: Contest ID
+    :returns: A 2-tuple - 1st element indicating whether leaderboard has been initialized or not.
+              If initialized, a list of 2-length lists is returned ordered by decreasing
               scores. The first element is the rank, and the second element is the score.
-              If unsuccessful, an error message is provided.
+              If uninitialized, a suitable message is provided
     """
-    leaderboard_path = os.path.join('content', 'contests', str(contest) + '.lb')
+    leaderboard_path = os.path.join('content', 'contests', str(contest_id) + '.lb')
     if not os.path.exists(leaderboard_path):
         return (False, 'Leaderboard not yet initialized for this contest.')
-    try:
-        with open(leaderboard_path, 'rb') as f:
-            data = pickle.load(f)
-        return (True, data)
-    except Exception as e:
-        print_exc()
-        return (False, e.__str__())
+
+    with open(leaderboard_path, 'rb') as f:
+        data = pickle.load(f)
+    return (True, data)
 
 
-def update_leaderboard(contest: int, person: str) -> bool:
+def update_leaderboard(contest_id: int, person: str) -> bool:
     """
     Function to update the leaderboard for a person-contest pair given their IDs.
 
@@ -789,14 +789,14 @@ def update_leaderboard(contest: int, person: str) -> bool:
         Remember to call this function whenever
         :class:`~judge.models.PersonProblemFinalScore` is updated.
 
-    :param contest: Contest ID
+    :param contest_id: Contest ID
     :param person: Person ID
     :returns: If update is successful, then ``True``. If unsuccessful, then ``False``.
     """
     os.makedirs(os.path.join('content', 'contests'), exist_ok=True)
-    pickle_path = os.path.join('content', 'contests', str(contest) + '.lb')
+    pickle_path = os.path.join('content', 'contests', str(contest_id) + '.lb')
 
-    status, score = get_personcontest_score(person, contest)
+    status, score = get_personcontest_score(person, contest_id)
 
     if status:
         if not os.path.exists(pickle_path):
@@ -821,111 +821,130 @@ def update_leaderboard(contest: int, person: str) -> bool:
         return False
 
 
-def process_comment(problem: str, person: str, commenter: str,
-                    timestamp: datetime, comment: str) -> Tuple[bool, Optional[str]]:
+def process_comment(problem_id: str, person_id: str, commenter_id: str,
+                    timestamp: datetime, comment: str) -> Tuple[bool, Optional[ValidationError]]:
     """
     Function to process a new :class:`~judge.models.Comment` on the problem.
 
-    :param problem: Problem ID
-    :param person: Person ID
-    :param commenter: Commenter (another person) ID
+    :param problem_id: Problem ID
+    :param person_id: Person ID
+    :param commenter_id: Commenter (another person) ID
     :param timestamp: Date and Time of comment
     :param comment: Comment content
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
               2nd element providing an error message if processing is unsuccessful.
     """
+    problem = models.Problem.objects.filter(pk=problem_id)
+    if not problem.exists():
+        return (False,
+                ValidationError('Problem with primary key = {} not found'.format(problem_id)))
+    problem = problem[0]
+
+    person = models.Person.objects.filter(email=person_id)
+    if not person.exists():
+        return (False,
+                ValidationError('Person with primary key = {} not found'.format(person_id)))
+    person = person[0]
+
+    commenter = models.Person.objects.filter(email=commenter)
+    if not commenter.exists():
+        return (False,
+                ValidationError('Person with primary key = {} not found'.format(commenter_id)))
+    commenter = commenter[0]
+
     try:
-        problem = models.Problem.objects.get(pk=problem)
-        person = models.Person.objects.get(email=person)
-        commenter = models.Person.objects.get(email=commenter)
         models.Comment.objects.create(problem=problem, person=person,
                                       commenter=commenter, timestamp=timestamp, comment=comment)
         return (True, None)
-    except Exception as e:
+
+    # Catch any weird errors that might pop up during the creation
+    except Exception as other_err:
         print_exc()
-        return (False, e.__str__())
+        return (False, ValidationError(str(other_err)))
 
 
-def get_comments(problem: str, person: str) -> Tuple[bool, Union[str, List[Tuple[Any]]]]:
+def get_comments(problem_id: str,
+                 person_id: str) -> Tuple[bool, List[Tuple[Any, Any, Any]]]:
     """
     Function to get the private comments on the problem for the person.
 
-    :param problem: Problem ID
-    :param person: Person ID
-    :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
-              If successful, then the 2nd element consists of list of 3-tuple of comments -
+    :param problem_id: Problem ID
+    :param person_id: Person ID
+    :returns: List of 3-tuple of comments -
               the person who commented, the timestamp and the comment content, sorted in
               chronological order.
-              If unsuccessful, an error message is provided.
     """
-    try:
-        comments = models.Comment.objects.filter(
-            problem=problem, person=person).order_by('timestamp')
-        result = [(comment.commenter, comment.timestamp, comment.comment)
-                  for comment in comments]
-        return (True, result)
-    except Exception as e:
-        print_exc()
-        return (False, e.__str__())
+    comments = models.Comment.objects.filter(problem=problem_id,
+                                             person=person_id).order_by('timestamp')
+    result = [(comment.commenter, comment.timestamp, comment.comment)
+              for comment in comments]
+    return result
 
 
-def get_csv(contest: int) -> Tuple[bool, Union[str, StringIO]]:
+def get_csv(contest_id: int) -> Tuple[bool, Union[ValidationError, StringIO]]:
     """
     Function to get the CSV (in string form) of the current scores of
     all participants in a contest given its contest ID.
 
-    :param contest: Contest ID
+    :param contest_id: Contest ID
     :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded, and
-              2nd element providing an error message if processing is unsuccessful or a
+              2nd element providing a ValidationError if processing is unsuccessful or a
               ``StringIO`` object if successful.
     """
-    try:
-        c = models.Contest.objects.get(pk=contest)
-        problems = models.Problem.objects.filter(contest=c)
+    contest = models.Contest.objects.filter(pk=contest_id)
+    # In this case, we return a non-field ValidationError to state that the
+    # primary key couldn't be found.
+    # While it is not very possible that this case would arise, this is being done to
+    # maintain uniformity
+    if not contest.exists():
+        return (False,
+                ValidationError('Contest with primary key = {} not found'.format(contest_id)))
 
-        csvstring = StringIO()
-        writer = csvwriter(csvstring)
-        writer.writerow(['Email', 'Score'])
+    problems = models.Problem.objects.filter(contest=contest[0])
 
-        if problems.exists():
-            # Get the final scores for each problem for any participant who has attempted.
-            submissions = models.PersonProblemFinalScore.objects.filter(problem=problems[0])
-            for problem in problems[1:]:
-                submissions |= models.PersonProblemFinalScore.objects.filter(problem=problem)
+    csvstring = StringIO()
+    writer = csvwriter(csvstring)
+    writer.writerow(['Email', 'Score'])
 
-            if submissions.exists():
-                # Now sort all the person-problem-scores by 'person' and 'problem'
-                # This will create scores like:
-                # [('p1', 3(Say score corresponding to problem2)),
-                #  ('p1', 2(score corresponding to problem4)),
-                #  ('p2', 5(score corresponding to problem3)),
-                #  ('p2', 0(score corresponding to problem1)) ... ]
-                # We do not need to save exactly which problem the score correspondes to
-                # we only need to know scores on all problems by a participant
-                submissions.order_by('person', 'problem')
-                scores = [(submission.person, submission.score)
-                          for submission in submissions]
+    if problems.exists():
+        # For every problem, get the final scores given for any participant
+        # who has attempted it
+        full_filter = Q()
+        for problem in problems:
+            full_filter |= Q(problem=problem)
 
-                # Here we aggregate the previous list.
-                # We simply iterate over scores and for each participant,
-                # we sum up how much has he scored in all the problems.
-                # To do this we exploit the fact that list is already sorted.
-                # In the above case after aggregating we'll write
-                # 'p1', 5
-                # 'p2', 5 etc. in csvstring
-                curr_person = scores[0][0]
-                sum_scores = 0
-                for score in scores:
-                    if curr_person == score[0]:
-                        sum_scores += score[1]
-                    else:
-                        writer.writerow([curr_person, sum_scores])
-                        curr_person = score[0]
-                        sum_scores = score[1]
-                writer.writerow([curr_person, sum_scores])
+        submissions = models.PersonProblemFinalScore.objects.filter(full_filter)
 
-        csvstring.seek(0)
-        return (True, csvstring)
-    except Exception as e:
-        print_exc()
-        return (False, e.__str__())
+        if submissions.exists():
+            # Now sort all the person-problem-scores by 'person' and 'problem'
+            # This will create scores like:
+            # [('p1', 3 -> (score corresponding to problem2)),
+            #  ('p1', 2 -> (score corresponding to problem4)),
+            #  ('p2', 5 -> (score corresponding to problem3)),
+            #  ('p2', 0 -> (score corresponding to problem1)) ... ]
+            # We do not need to save exactly which problem the score corresponds to
+            # we only need to know scores on all problems by a participant
+            submissions.order_by('person', 'problem')
+            scores = [(submission.person, submission.score)
+                      for submission in submissions]
+
+            # Here we aggregate the previous list.
+            # We simply iterate over scores and for each participant,
+            # we sum up how much has he scored in all the problems.
+            # To do this we exploit the fact that list is already sorted.
+            # In the above case after aggregating we'll write
+            # 'p1', 5
+            # 'p2', 5 etc. in csvstring
+            curr_person = scores[0][0]
+            sum_scores = 0
+            for score in scores:
+                if curr_person == score[0]:
+                    sum_scores += score[1]
+                else:
+                    writer.writerow([curr_person, sum_scores])
+                    curr_person = score[0]
+                    sum_scores = score[1]
+            writer.writerow([curr_person, sum_scores])
+
+    csvstring.seek(0)
+    return (True, csvstring)
