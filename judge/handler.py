@@ -1,7 +1,6 @@
 import os
 import pickle
 
-from re import compile
 from io import StringIO
 from traceback import print_exc
 from csv import writer as csvwriter
@@ -10,7 +9,7 @@ from logging import error as log_error
 from datetime import timedelta, datetime
 from typing import Tuple, Optional, Dict, Any, List, Union
 
-from django.db.models import Q
+from django.db.models import Q, Sum, Max
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -229,7 +228,7 @@ def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
               2nd element providing an error message if deletion is unsuccessful.
     """
     try:
-        problem = models.Problem.objects.get(pk=problem_id)
+        problem = models.Problem.objects.get(code=problem_id)
         # First delete all the files stored corresponding to this problem
         testcases = models.TestCase.objects.filter(problem=problem)
         for testcase in testcases:
@@ -248,7 +247,7 @@ def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
 
         rmtree(os.path.join('content', 'problems', problem_id))
 
-        models.Problem.objects.filter(pk=problem_id).delete()
+        models.Problem.objects.filter(code=problem_id).delete()
         return (True, None)
     except Exception as e:
         print_exc()
@@ -296,15 +295,23 @@ def process_testcase(problem_id: str, test_type: str,
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
               2nd element providing an error message if processing is unsuccessful.
     """
+    problem = models.Problem.objects.filter(code=problem_id)
+    if not problem.exists():
+        return (False,
+                ValidationError('Problem with code = {} not found'
+                                .format(problem_id)))
+    problem = problem[0]
+
     try:
-        problem = models.Problem.objects.get(pk=problem_id)
         t = problem.testcase_set.create(
             public=(test_type == 'public'), inputfile=input_file, outputfile=output_file)
         t.save()
-        return (True, None)
-    except Exception as e:
+    # Catch any weird errors that might pop up during the creation
+    except Exception as other_err:
         print_exc()
-        return (False, e.__str__())
+        return (False, ValidationError(str(other_err)))
+    else:
+        return (True, None)
 
 
 def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
@@ -321,46 +328,63 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
     :returns: A 2-tuple - 1st element indicating whether the deletion has succeeded, and
               2nd element providing an error message if deletion is unsuccessful.
     """
+    inputfile_path = os.path.join(
+        'content', 'testcase', 'inputfile_{}.txt'.format(testcase_id))
+    outputfile_path = os.path.join(
+        'content', 'testcase', 'outputfile_{}.txt'.format(testcase_id))
+    _check_and_remove(inputfile_path, outputfile_path)
+
     try:
-        inputfile_path = os.path.join(
-            'content', 'testcase', 'inputfile_{}.txt'.format(testcase_id))
-        outputfile_path = os.path.join(
-            'content', 'testcase', 'outputfile_{}.txt'.format(testcase_id))
-        _check_and_remove(inputfile_path, outputfile_path)
-
         models.TestCase.objects.filter(pk=testcase_id).delete()
-        return (True, None)
-    except Exception as e:
+    except Exception as other_err:
         print_exc()
-        return (False, e.__str__())
+        return (False, ValidationError(str(other_err)))
+    else:
+        return (True, None)
 
 
-def process_submission(problem_id: str, participant: str, file_type: str,
+def process_submission(problem_id: str, participant_id: str, file_type: str,
                        submission_file: InMemoryUploadedFile,
                        timestamp: str) -> Tuple[bool, Optional[str]]:
     """
     Function to process a new :class:`~judge.models.Submission` for a problem by a participant.
 
     :param problem_id: Problem ID for the problem corresponding to the submission
-    :param participant: Participant ID
+    :param participant_id: Participant ID
     :param file_type: Submission file type
     :param submission_file: Submission file
     :param timestamp: Time at submission
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
               2nd element providing an error message if processing is unsuccessful.
     """
+    problem = models.Problem.objects.filter(code=problem_id)
+    if not problem.exists():
+        return (False,
+                ValidationError('Problem with code = {} not found'
+                                .format(problem_id)))
+    problem = problem[0]
+
+    if file_type not in problem.file_exts.split(','):
+        return (False,
+                ValidationError({'file_type':
+                                 ['Accepted file types: \"{}\"'
+                                  .format(', '.join(problem.file_exts.split(',')))]}))
+
+    participant = models.Person.objects.filter(email=participant_id)
+    if not participant.exists():
+        return (False,
+                ValidationError('Person with email = {} not found'
+                                .format(participant_id)))
+    participant = participant[0]
+
     try:
-        problem = models.Problem.objects.get(pk=problem_id)
-        if file_type not in problem.file_exts.split(','):
-            return (False, 'Accepted file types: \"{}\"'
-                           .format(', '.join(problem.file_exts.split(','))))
-        participant = models.Person.objects.get(email=participant)
-        s = problem.submission_set.create(participant=participant, file_type=file_type,
-                                          submission_file=submission_file, timestamp=timestamp)
-        s.save()
-    except Exception as e:
+        sub = problem.submission_set.create(participant=participant, file_type=file_type,
+                                            submission_file=submission_file, timestamp=timestamp)
+        sub.save()
+    # Catch any weird errors that might pop up during the creation
+    except Exception as other_err:
         print_exc()
-        return (False, e.__str__())
+        return (False, ValidationError(str(other_err)))
 
     testcases = models.TestCase.objects.filter(problem=problem)
 
@@ -375,9 +399,9 @@ def process_submission(problem_id: str, participant: str, file_type: str,
     # TESTCASE_1
     # TESTCASE_2
     # ....
-    with open(os.path.join('content', 'tmp', 'sub_run_' + str(s.pk) + '.txt'), 'w') as f:
+    with open(os.path.join('content', 'tmp', 'sub_run_' + str(sub.pk) + '.txt'), 'w') as f:
         f.write('{}\n'.format(problem.pk))
-        f.write('{}\n'.format(s.pk))
+        f.write('{}\n'.format(sub.pk))
         f.write('{}\n'.format(file_type))
         f.write('{}\n'.format(int(problem.time_limit.total_seconds())))
         f.write('{}\n'.format(problem.memory_limit))
@@ -386,14 +410,15 @@ def process_submission(problem_id: str, participant: str, file_type: str,
 
     try:
         for testcase in testcases:
-            models.SubmissionTestCase.objects.create(submission=s, testcase=testcase,
+            models.SubmissionTestCase.objects.create(submission=sub, testcase=testcase,
                                                      verdict='R', memory_taken=0,
                                                      time_taken=timedelta(seconds=0))
-    except Exception as e:
+    # Catch any weird errors that might pop up during the creation
+    except Exception as other_err:
         print_exc()
-        return (False, e.__str__())
-
-    return (True, None)
+        return (False, ValidationError(other_err))
+    else:
+        return (True, None)
 
 
 def update_poster_score(submission_id: str, new_score: int):
@@ -404,98 +429,97 @@ def update_poster_score(submission_id: str, new_score: int):
     :param submission_id: Submission ID of the submission
     :param new_score: New score to be assigned
     :returns: A 2-tuple - 1st element indicating whether the update has succeeded, and
-              2nd element providing an error message if update is unsuccessful.
+              2nd element providing a ValidationError if update is unsuccessful.
     """
+    submission = models.Submission.objects.get(pk=submission_id)
+    if not submission.exists():
+        return (False,
+                ValidationError('Submission with ID = {} not found'
+                                .format(submission_id)))
+    submission = submission[0]
+
     try:
-        submission = models.Submission.objects.get(pk=submission_id)
         submission.final_score -= submission.poster_score
         submission.poster_score = new_score
         submission.final_score += submission.poster_score
         submission.save()
+    # Catch any weird errors that might pop up during the modification
+    except Exception as other_err:
+        return (False, ValidationError(str(other_err)))
 
-        highest_scoring_submission = models.Submission.objects.filter(
-            problem=submission.problem.pk, participant=submission.participant.pk).\
-            order_by('-final_score').first()
+    highest_scoring_submission = models.Submission.objects.filter(
+        problem=submission.problem.pk,
+        participant=submission.participant.pk).aggregate(Max('final_score'))['final_score__max']
+
+    try:
         ppf, _ = models.PersonProblemFinalScore.objects.get_or_create(
             person=submission.participant, problem=submission.problem)
         old_highscore = ppf.score
         ppf.score = highest_scoring_submission.final_score
         ppf.save()
+    # Catch any weird errors that might pop up during the creation
+    except Exception as other_err:
+        return (False, ValidationError(str(other_err)))
 
-        if old_highscore != ppf.score:
-            # Update the leaderboard only if submission imporved the final score
-            update_leaderboard(submission.problem.contest.pk,
-                               submission.participant.email)
-        return (True, None)
-    except Exception as e:
-        return (False, e.__str__())
+    if old_highscore != ppf.score:
+        # Update the leaderboard only if submission improved the final score
+        update_leaderboard(submission.problem.contest.pk,
+                           submission.participant.email)
+    return (True, None)
 
 
-def add_person_to_contest(person: str, contest: int,
+def add_person_to_contest(person_id: str, contest_id: int,
                           permission: bool) -> Tuple[bool, Optional[str]]:
     """
     Function to relate a person to a contest with permissions.
 
-    :param person: Person ID
-    :param contest: Contest ID
+    :param person_id: Person ID
+    :param contest_id: Contest ID
     :param permission: If ``True``, then poster, if ``False``, then participant
     :returns: A 2-tuple - 1st element indicating whether the addition has succeeded, and
-              2nd element providing an error message if addition is unsuccessful.
+              2nd element providing a ValidationError if addition is unsuccessful.
     """
     try:
-        (p, _) = models.Person.objects.get_or_create(email=person)
-        c = models.Contest.objects.get(pk=contest)
-        if c.public is True and permission is False:
-            # Do not store participants for public contests
-            return (True, None)
-        try:
-            # Check that the person is not already registered in the contest with other permission
-            cp = models.ContestPerson.objects.get(person=p, contest=c)
-            if cp.role == permission:
-                return (False, '{} is already a {}'.format(
-                    p.email, 'Poster' if permission else 'Participant'))
-            else:
-                return (False, '{} already exists with other permission'.format(p.email))
-        except models.ContestPerson.DoesNotExist:
-            cp = p.contestperson_set.create(contest=c, role=permission)
-            cp.save()
-            return (True, None)
-    except Exception as e:
-        print_exc()
-        return (False, e.__str__())
+        (person, _) = models.Person.objects.get_or_create(email=person_id)
+    # Catch any weird errors that might pop up during the creation
+    except Exception as other_err:
+        return (False, ValidationError(str(other_err)))
 
-
-def add_person_rgx_to_contest(rgx: str, contest: int,
-                              permission: bool) -> Tuple[bool, Optional[str]]:
-    """
-    Function to relate a set of person to a contest based on a regex with permissions.
-    Note that unlike :func:`add_person_to_contest`, this function does not create any new persons.
-
-    :param rgx: The regex to be passed
-    :param contest: Contest ID
-    :param permission: If ``True``, then poster, if ``False``, then participant
-    :returns: A 2-tuple - 1st element indicating whether the relation creation has succeeded, and
-              2nd element providing an error message if relation creation is unsuccessful.
-    """
-    pattern = compile(rgx)
-    try:
-        person_emails = [p.email for p in models.Person.objects.all()]
-        emails_matches = [email for email in person_emails if bool(pattern.match(email))]
-        c = models.Contest.objects.get(pk=contest)
-        if c.public is True and permission is False:
-            # Do not store participants for public contests
-            return (True, None)
-        if len(emails_matches) == 0:
-            return (False, 'Regex {} did not match any person registered'.format(rgx))
-        for email in emails_matches:
-            add_person_to_contest(email, contest, permission)
+    contest = models.Contest.objects.filter(pk=contest_id)
+    if not contest.exists():
+        return (False,
+                ValidationError('Contest with ID = {} not found'
+                                .format(contest_id)))
+    contest = contest[0]
+    if contest.public and not permission:
+        # Do not store participants for public contests
         return (True, None)
-    except Exception as e:
-        print_exc()
-        return (False, e.__str__())
+
+    # Check that the person is not already registered in the contest with any permission
+    cp = models.ContestPerson.objects.filter(person=person, contest=contest)
+    if cp.exists():
+        cp = cp[0]
+        if cp.role == permission:
+            return (False,
+                    ValidationError('{} is already a {}'
+                                    .format(person.email,
+                                            'Poster' if permission else 'Participant')))
+        else:
+            return (False,
+                    ValidationError('{} already exists with conflicting permission'
+                                    .format(person.email)))
+    else:
+        try:
+            cp = person.contestperson_set.create(contest=contest, role=permission)
+            cp.save()
+        # Catch any weird errors that might pop up during the creation
+        except Exception as other_err:
+            return (False, str(other_err))
+        else:
+            return (True, None)
 
 
-def add_persons_to_contest(persons: List[str], contest: int,
+def add_persons_to_contest(persons: List[str], contest_id: int,
                            permission: bool) -> Tuple[bool, Optional[str]]:
     """
     Function to relate a list of persons and contest with permissions. This function
@@ -503,187 +527,237 @@ def add_persons_to_contest(persons: List[str], contest: int,
     of whether anyone has conflict or not.
 
     :param persons: List of person IDs
-    :param contest: Contest ID
+    :param contest_id: Contest ID
     :param permission: If ``True``, then poster, if ``False``, then participant
     :returns: A 2-tuple - 1st element indicating whether the relation creation has succeeded, and
-              2nd element providing an error message if relation creation is unsuccessful.
+              2nd element providing a ValidationError if relation creation is unsuccessful.
     """
     try:
         for person in persons:
             models.Person.objects.get_or_create(email=person)
+    # Catch any weird errors that might pop up during the creation
+    except Exception as other_err:
+        return (False, ValidationError(str(other_err)))
 
-        c = models.Contest.objects.get(pk=contest)
-        if c.public is True and permission is False:
-            # Do not store participants for public contests
-            return (True, None)
-
-        person_list = [models.Person.objects.get(email=person) for person in persons]
-        for p in person_list:
-            try:
-                # Check that person is not already registered in the contest with other permission
-                cp = models.ContestPerson.objects.get(person=p, contest=c)
-                if cp.role == (not permission):
-                    return (False, '{} already exists with other permission'.format(p.email))
-            except models.ContestPerson.DoesNotExist:
-                continue
-
-        for p in person_list:
-            models.ContestPerson.objects.get_or_create(contest=c, person=p, role=permission)
+    contest = models.Contest.objects.get(pk=contest_id)
+    if contest.public and not permission:
+        # Do not store participants for public contests
         return (True, None)
-    except Exception as e:
-        print_exc()
-        return (False, e.__str__())
+
+    full_filter = Q()
+    for person in persons:
+        full_filter |= Q(email=person)
+    person_list = models.Person.objects.filter(full_filter)
+    err_person_list = []
+    for person in person_list:
+        # Check that person is not already registered in the contest with other permission
+        cpset = models.ContestPerson.objects.filter(person=person, contest=contest)
+        if cpset.exists():
+            if cpset[0].role != permission:
+                err_person_list.append(person.email)
+    if len(err_person_list):
+        return (False,
+                ValidationError('The following people already exist with conflicting '
+                                'permissions: {}'.format(', '.join(err_person_list))))
+
+    try:
+        for person in person_list:
+            models.ContestPerson.objects.get_or_create(contest=contest,
+                                                       person=person, role=permission)
+    # Catch any weird errors that might pop up during the creation
+    except Exception as other_err:
+        return (False, ValidationError(str(other_err)))
+    else:
+        return (True, None)
 
 
-def get_personcontest_permission(person: Optional[str], contest: int) -> Optional[bool]:
+def get_personcontest_permission(person_id: Optional[str], contest_id: int) -> Optional[bool]:
     """
     Function to give the relation between a :class:`~judge.models.Person` and a
     :class:`~judge.models.Contest`.
 
-    :param person: Person ID
-    :param contest: Contest ID
+    :param person_id: Person ID
+    :param contest_id: Contest ID
     :returns: If participant, then ``False``, if poster, then ``True``, if neither, then ``None``
     """
     curr = timezone.now()
-    if person is None:
-        try:
-            c = models.Contest.objects.get(pk=contest)
-            # The curr >= c.start_datetime is present because contests aren't visible
-            # prior to the deadline
-            if c.public and curr >= c.start_datetime:
-                return False
-            else:
-                return None
-        except Exception:
-            return None
-    p = models.Person.objects.get(email=person)
-    c = models.Contest.objects.get(pk=contest)
-    # participant and Current datetime < C.date_time -> None
-    try:
-        cp = models.ContestPerson.objects.get(person=p, contest=c)
-        if cp.role is False and curr < c.start_datetime:
-            return None
-        return cp.role
-    except models.ContestPerson.DoesNotExist:
-        if c.public and curr >= c.start_datetime:
-            return False
-    except Exception:
+    contest = models.Contest.objects.filter(pk=contest_id)
+    if not contest.exists():
         return None
-    return None
+    contest = contest[0]
+
+    if person_id is None:
+        # The curr >= contest.start_datetime is present because contests aren't visible
+        # prior to the deadline
+        if contest.public and curr >= contest.start_datetime:
+            return False
+        else:
+            return None
+    else:
+        person = models.Person.objects.filter(email=person_id)
+        if not person.exists():
+            return None
+        person = person[0]
+
+        cp = models.ContestPerson.objects.filter(person=person, contest=contest)
+        if cp.exists():
+            cp = cp[0]
+            # participant and curr >= contest.start_datetime -> None
+            if cp.role is False and curr < contest.start_datetime:
+                return None
+            return cp.role
+        else:
+            if contest.public and curr >= contest.start_datetime:
+                return False
+            return None
 
 
-def delete_personcontest(person: str, contest: int) -> Tuple[bool, Optional[str]]:
+def delete_personcontest(person_id: str, contest_id: int) -> Tuple[bool, Optional[str]]:
     """
     Function to delete the relation between a person and a contest.
 
-    :param person: Person ID
-    :param contest: Contest ID
+    :param person_id: Person ID
+    :param contest_id: Contest ID
     :returns: A 2-tuple - 1st element indicating whether the deletion has succeeded, and
               2nd element providing an error message if deletion is unsuccessful.
     """
+    contest = models.Contest.objects.filter(pk=contest_id)
+    if not contest.exists():
+        return (False,
+                ValidationError('Contest with ID = {} not found'
+                                .format(contest_id)))
+    contest = contest[0]
+
+    person = models.Problem.objects.filter(email=person_id)
+    if not person.exists():
+        return (False,
+                ValidationError('Person with email = {} not found'
+                                .format(person_id)))
+    person = person[0]
+
+    cpset = models.ContestPerson.objects.filter(person=person, contest=contest)
     try:
-        p = models.Person.objects.get(email=person)
-        c = models.Contest.objects.get(pk=contest)
-        cpset = models.ContestPerson.objects.filter(person=p, contest=c)
         if cpset.exists():
             cp = cpset[0]
             if (cp.role is False) or \
-               (models.ContestPerson.objects.filter(contest=c, role=True).count() > 1):
+               (models.ContestPerson.objects.filter(contest=contest, role=True).count() > 1):
                 # If the person to be deleted is a participant or there are more than 1 posters
                 # then we can delete the record from db.
                 cpset.delete()
             else:
-                return (False, 'This contest cannot be orphaned!')
+                return (False, ValidationError('This contest cannot be orphaned!'))
         return (True, None)
-    except Exception as e:
+
+    # Catch any weird errors that might pop up during the deletion
+    except Exception as other_err:
         print_exc()
-        return (False, e.__str__())
+        return (False, ValidationError(str(other_err)))
 
 
-def get_personproblem_permission(person: Optional[str], problem: str) -> Optional[bool]:
+def get_personproblem_permission(person_id: Optional[str], problem_id: str) -> Optional[bool]:
     """
     Function to give the relation between a :class:`~judge.models.Person` and a
     :class:`~judge.models.Contest`. This dispatches to :func:`get_personcontest_permission`
     with relevant arguments.
 
-    :param person: Person ID
-    :param problem: Problem ID
+    :param person_id: Person ID
+    :param problem_id: Problem ID
     :returns: If participant, then ``False``, if poster, then ``True``, if neither, then ``None``
     """
-    p = models.Problem.objects.get(pk=problem)
-    if p.contest is None:
+    problem = models.Problem.objects.filter(code=problem_id)
+    if not problem.exists():
         return False
-    return get_personcontest_permission(person, p.contest.pk)
+    problem = problem[0]
+
+    if problem.contest is None:
+        return False
+    return get_personcontest_permission(person_id, problem.contest.pk)
 
 
-def get_posters(contest: int) -> Tuple[bool, Union[str, List[str]]]:
+def get_posters(contest_id: int) -> Tuple[bool, Union[str, List[str]]]:
     """
     Function to return the list of the posters for a :class:`~judge.models.Contest`.
 
-    :param contest: Contest ID
+    :param contest_id: Contest ID
     :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
               If successful, a list of IDs are present in the 2nd element.
-              If unsucessful, an error message is provided.
+              If unsuccessful, a ValidationError is additionally returned.
     """
-    try:
-        c = models.Contest.objects.get(pk=contest)
-        cps = models.ContestPerson.objects.filter(contest=c, role=True)
-        cps = [cp.person.email for cp in cps]
-        return (True, cps)
-    except Exception as e:
-        print_exc()
-        return (False, e.__str__())
+    contest = models.Contest.objects.filter(pk=contest_id)
+    if not contest.exists():
+        return (False,
+                ValidationError('Contest with ID = {} not found'
+                                .format(contest_id)))
+    contest = contest[0]
+
+    cpset = models.ContestPerson.objects.filter(contest=contest, role=True)
+    poster_list = [cp.person.email for cp in cpset]
+    return (True, poster_list)
 
 
-def get_participants(contest: int) -> Tuple[bool, Union[str, List[str]]]:
+def get_participants(contest_id: int) -> Tuple[bool, Union[str, List[str]]]:
     """
     Function to return the list of the participants for a :class:`~judge.models.Contest`.
 
-    :param contest: Contest ID
+    :param contest_id: Contest ID
     :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
               If successful, a list of IDs are present in the 2nd element. The list is
               empty if the contest is public.
-              If unsucessful, an error message is provided.
+              If unsuccessful, a ValidationError is additionally returned.
     """
-    try:
-        c = models.Contest.objects.get(pk=contest)
-        if c.public is True:
-            return (True, [])
-        cps = models.ContestPerson.objects.filter(contest=c, role=False)
-        cps = [cp.person.email for cp in cps]
-        return (True, cps)
-    except Exception as e:
-        print_exc()
-        return (False, e.__str__())
+    contest = models.Contest.objects.filter(pk=contest_id)
+    if not contest.exists():
+        return (False,
+                ValidationError('Contest with ID = {} not found'
+                                .format(contest_id)))
+    contest = contest[0]
+
+    if contest.public is True:
+        return (True, [])
+    else:
+        cpset = models.ContestPerson.objects.filter(contest=contest, role=False)
+        participant_list = [cp.person.email for cp in cpset]
+        return (True, participant_list)
 
 
-def get_personcontest_score(person: str, contest: int) -> Tuple[bool, Union[float, str]]:
+def get_personcontest_score(person_id: str, contest_id: int) -> Tuple[bool, Union[float, str]]:
     """
     Function to get the final score, which is the sum of individual final scores
     of all problems in a contest for a particular person.
 
-    :param person: Person ID
-    :param contest: Contest ID
+    :param person_id: Person ID
+    :param contest_id: Contest ID
     :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
               If successful, the final score is present in the 2nd element.
-              If unsuccesful, an error message is provided.
+              If unsuccesful, a ValidationError is additionally returned.
     """
-    try:
-        p = models.Person.objects.get(email=person)
-        c = models.Contest.objects.get(pk=contest)
-        problems = models.Problem.objects.filter(contest=c)
-        score = 0
-        for problem in problems:
-            score += models.PersonProblemFinalScore.objects.get(
-                person=p, problem=problem).score
-        return (True, score)
-    except Exception as e:
-        print_exc()
-        return (False, e.__str__())
+    person = models.Person.objects.filter(email=person_id)
+    if not person.exists():
+        return (False,
+                ValidationError('Person with email = {} not found'
+                                .format(person_id)))
+    person = person[0]
+
+    contest = models.Contest.objects.filter(pk=contest_id)
+    if not contest.exists():
+        return (False,
+                ValidationError('Contest with ID = {} not found'
+                                .format(contest_id)))
+    contest = contest[0]
+
+    problems = models.Problem.objects.filter(contest=contest)
+    full_filter = Q()
+    full_filter |= Q(person=person)
+    for problem in problems:
+        full_filter |= Q(person=person, problem=problem)
+
+    score = models.PersonProblemFinalScore.objects.filter(
+                                            full_filter).aggregate(Sum('score'))['score__sum']
+    return (True, score)
 
 
-def get_submissions(problem_id: str, person_id: Optional[str]) \
-        -> Tuple[bool, Union[Dict[str, List[Any]], str]]:
+def get_submissions(problem_id: str,
+                    person_id: Optional[str]) -> Tuple[bool, Union[Dict[str, List[Any]], str]]:
     """
     Function to retrieve all submissions made by everyone or a specific person for this
     problem.
@@ -695,35 +769,49 @@ def get_submissions(problem_id: str, person_id: Optional[str]) \
               pertaining to each person is placed in a dictionary, and if :attr:`person_id`
               is provided, then the list of submissions pertaining to the specific person is
               placed in a dictionary and returned.
-              If unsuccessful, then an error message is provided.
+              If unsuccessful, then a ValidationError is additionally returned.
     """
-    try:
-        p = models.Problem.objects.get(code=problem_id)
+    problem = models.Problem.objects.filter(code=problem_id)
+    if not problem.exists():
+        return (False,
+                ValidationError('Problem with code = {} not found'
+                                .format(problem_id)))
+    problem = problem[0]
+
+    if person_id is None:
+        submission_set = models.Submission.objects.filter(
+            problem=problem).order_by('participant')
+    else:
+        person = models.Person.objects.filter(email=person_id)
+        if not person.exists():
+            return (False,
+                    ValidationError('Person with email = {} not found'
+                                    .format(person_id)))
+        person = person[0]
+        submission_set = models.Submission.objects.filter(
+            problem=problem, participant=person)
+
+    # If submission_set is empty, then return an empty dictionary if no person_id is
+    # specified, otherwise return a dict with a key as the person_id and value as an
+    # empty list
+    if not submission_set.exists():
         if person_id is None:
-            submission_set = models.Submission.objects.filter(
-                problem=p).order_by('participant')
+            return (True, {})
         else:
-            person = models.Person.objects.get(email=person_id)
-            submission_set = models.Submission.objects.filter(
-                problem=p, participant=person)
-        result = {}
-        if submission_set.count() == 0:
-            if person_id is None:
-                return (True, {})
-            else:
-                return (True, {person.pk: []})
-        curr_person = submission_set[0].participant.pk
-        result[curr_person] = [submission_set[0]]
-        for i in range(1, len(submission_set)):
-            if submission_set[i].participant.pk == curr_person:
-                result[curr_person].append(submission_set[i])
-            else:
-                curr_person = submission_set[i].participant.pk
-                result[curr_person] = [submission_set[i]]
-        return (True, result)
-    except Exception as e:
-        print_exc()
-        return (False, e.__str__())
+            return (True, {person.pk: []})
+
+    # The below code creates a dictionary with keys = person IDs and values
+    # as a list of submissions made by the person (given by the key) for the problem
+    result = {}
+    curr_person = submission_set[0].participant.pk
+    result[curr_person] = [submission_set[0]]
+    for i in range(1, len(submission_set)):
+        if submission_set[i].participant.pk == curr_person:
+            result[curr_person].append(submission_set[i])
+        else:
+            curr_person = submission_set[i].participant.pk
+            result[curr_person] = [submission_set[i]]
+    return (True, result)
 
 
 def get_submission_status(submission_id: str):
@@ -739,14 +827,14 @@ def get_submission_status(submission_id: str):
               The smaller tuple consists of the score given by the judge, poster (if applicable),
               and linter (if applicable), as well as the final score, timestamp of submission and
               the file type of submission.
-              If unsuccessful, an error message is provided.
+              If unsuccessful, a ValidationError is additionally returned.
     """
     submission = models.Submission.objects.filter(pk=submission_id)
     if not submission.exists():
         return (False,
                 ValidationError('Submission with primary key = {} not found'
                                 .format(submission_id)))
-    submission = submission[0]        
+    submission = submission[0]
     testcases = models.TestCase.objects.filter(problem=submission.problem)
 
     verdict_dict = {}
@@ -755,8 +843,8 @@ def get_submission_status(submission_id: str):
         verdict_dict[testcase.pk] = (st.get_verdict_display, st.time_taken,
                                      st.memory_taken, testcase.public, st.message)
 
-    score_tuple = (s.judge_score, s.poster_score, s.linter_score, s.final_score,
-                   s.timestamp, s.file_type)
+    score_tuple = (submission.judge_score, submission.poster_score, submission.linter_score,
+                   submission.final_score, submission.timestamp, submission.file_type)
     return (True, (verdict_dict, score_tuple))
 
 
@@ -832,9 +920,9 @@ def process_comment(problem_id: str, person_id: str, commenter_id: str,
     :param timestamp: Date and Time of comment
     :param comment: Comment content
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
-              2nd element providing an error message if processing is unsuccessful.
+              2nd element providing a ValidationError if processing is unsuccessful.
     """
-    problem = models.Problem.objects.filter(pk=problem_id)
+    problem = models.Problem.objects.filter(code=problem_id)
     if not problem.exists():
         return (False,
                 ValidationError('Problem with primary key = {} not found'.format(problem_id)))
@@ -846,7 +934,7 @@ def process_comment(problem_id: str, person_id: str, commenter_id: str,
                 ValidationError('Person with primary key = {} not found'.format(person_id)))
     person = person[0]
 
-    commenter = models.Person.objects.filter(email=commenter)
+    commenter = models.Person.objects.filter(email=commenter_id)
     if not commenter.exists():
         return (False,
                 ValidationError('Person with primary key = {} not found'.format(commenter_id)))
@@ -899,8 +987,9 @@ def get_csv(contest_id: int) -> Tuple[bool, Union[ValidationError, StringIO]]:
     if not contest.exists():
         return (False,
                 ValidationError('Contest with primary key = {} not found'.format(contest_id)))
+    contest = contest[0]
 
-    problems = models.Problem.objects.filter(contest=contest[0])
+    problems = models.Problem.objects.filter(contest=contest)
 
     csvstring = StringIO()
     writer = csvwriter(csvstring)

@@ -631,26 +631,26 @@ def problem_submissions(request, problem_id: str):
         form = NewCommentForm()
     submissions = {}
     if perm:
-        status, all_subs = handler.get_submissions(problem_id, None)
+        status, all_subs_or_error = handler.get_submissions(problem_id, None)
         if status:
-            for email, subs in all_subs.items():
+            for email, subs in all_subs_or_error.items():
                 comment_set = handler.get_comments(problem_id, email)
                 submissions[email] = (subs, comment_set)
             context['submissions'] = submissions
         else:
-            log_debug(all_subs)
+            log_debug(all_subs_or_error.message)
             return handler404(request)
     elif user is not None:
-        status, subs = handler.get_submissions(problem_id, user.email)
+        status, subs_or_error = handler.get_submissions(problem_id, user.email)
         if status:
             context['participant'] = True
             status, comm = handler.get_comments(problem_id, user.email)
             if not status:
                 log_debug(comm)
                 return handler404(request)
-            submissions[user.email] = (subs[user.email], comm)
+            submissions[user.email] = (subs_or_error[user.email], comm)
         else:
-            log_debug(subs)
+            log_debug(subs_or_error.message)
             return handler404(request)
     else:
         return handler404(request)
