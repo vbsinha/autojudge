@@ -666,7 +666,7 @@ def delete_personcontest(person_id: str, contest_id: int) -> Tuple[bool, Optiona
                                 .format(contest_id)))
     contest = contest[0]
 
-    person = models.Problem.objects.filter(email=person_id)
+    person = models.Person.objects.filter(email=person_id)
     if not person.exists():
         return (False,
                 ValidationError('Person with email = {} not found'
