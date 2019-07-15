@@ -13,7 +13,7 @@
         enableTime: true,
         dateFormat: "Y-m-d H:i:S",
         allowInput: true,
-        enableSeconds: true,
+        enableSeconds: true
     }
     $("#id_contest_start").flatpickr(date_options)
     $("#id_contest_soft_end").flatpickr(date_options)
@@ -35,12 +35,11 @@
     <div class="col-12 col-md-8">
         <form action="{% url 'judge:new_contest' %}" method="POST">
             {% if form.non_field_errors %}
-            <div class="alert alert-danger alter-dismissible fade show" role="alert">
-                {{ form.non_field_errors }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+            {% for nfe in form.non_field_errors %}
+            <div class="alert alert-danger mt-2" role="alert">
+                    {{ nfe }}
             </div>
+            {% endfor %}
             {% endif %}
             {% csrf_token %}
             {% for field in form %}

@@ -61,17 +61,24 @@
                 </ul>
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" data-toggle="tooltip" data-placement="bottom"
-                            title="{{ user.email }}">Hi, {{ user.first_name }} {{ user.last_name }}</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-neutral btn-icon" href="{% url 'judge:logout' %}"><span
-                                class="btn-inner--icon">
-                                <i class="fas fa-sign-out-alt mr-2 mb-1"></i>
-                            </span>
-                            <span class="nav-link-inner--text">Log out</span></a>
-                    </li>
+                        {% if user.is_superuser %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-toggle="tooltip" data-placement="bottom"
+                                    title="{{ user.email }}">Hi Superuser <b>{{ user.get_username }}</b></a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-toggle="tooltip" data-placement="bottom"
+                                    title="{{ user.email }}">Hi <b>{{ user.get_full_name }}</b></a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="btn btn-neutral btn-icon" href="{% url 'judge:logout' %}"><span
+                                    class="btn-inner--icon">
+                                    <i class="fas fa-sign-out-alt mr-2 mb-1"></i>
+                                </span>
+                                <span class="nav-link-inner--text">Log out</span></a>
+                        </li>
                     {% else %}
                     <li class="nav-item">
                         <a class="btn btn-neutral btn-icon" href="{% url 'judge:social:begin' 'google-oauth2' %}"><span
@@ -83,11 +90,11 @@
                     {% endif %}
                     {% if user.is_staff %}
                     <li class="nav-item">
-                        <a class="btn btn-neutral btn-icon" href="/admin/" target="_blank"><span
+                        <a class="btn btn-warning btn-icon" href="/admin/" target="_blank"><span
                                 class="btn-inner--icon">
                                 <i class="fas fa-sign-in-alt mr-2 mb-1"></i>
                             </span>
-                            <span class="nav-link-inner--text">Admin</span></a>
+                            <span class="nav-link-inner--text">Administration</span></a>
                     </li>
                     {% endif %}
                 </ul>

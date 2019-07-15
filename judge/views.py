@@ -18,6 +18,13 @@ from .forms import NewCommentForm, UpdateContestForm, AddPosterScoreForm
 
 def _get_user(request) -> User:
     if request.user.is_authenticated:
+        # For superusers without email ID, we have to create a dummy email ID.
+        # This is a hotpatch: we need to fix the createsuperuser.
+        if request.user.email == '':
+            if request.user.is_superuser:
+                request.user.email = request.user.username + '@autojudge.superuser'
+            else:
+                return None
         return request.user
     else:
         return None
@@ -93,7 +100,7 @@ def new_contest(request):
                 return redirect(reverse('judge:index'))
             else:
                 log_debug(msg)
-                form.add_error(None, 'Contest could not be created.')
+                form.add_error(None, msg)
     else:
         form = NewContestForm()
     context = {'form': form}
@@ -270,7 +277,7 @@ def contest_detail(request, contest_id):
                         contest.hard_end_datetime = form.cleaned_data['contest_hard_end']
                         contest.save()
                     except Exception as e:
-                        form.add_error(None, e.__str__())
+                        form.add_error(None, str(e))
                 else:
                     form.add_error(None, 'Deadline cannot be extended if it has passed')
         else:
