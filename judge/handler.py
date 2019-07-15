@@ -5,7 +5,6 @@ from io import StringIO
 from traceback import print_exc
 from csv import writer as csvwriter
 from shutil import rmtree, copyfile
-from logging import error as log_error
 from datetime import timedelta, datetime
 from typing import Tuple, Optional, Dict, Any, List, Union
 
@@ -40,21 +39,27 @@ def process_contest(contest_name: str, contest_start: datetime, contest_soft_end
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
               2nd element providing an error message if processing is unsuccessful.
     """
+    contest_unique_check = not models.Contest.objects.filter(name=contest_name).exists()
+    if not contest_unique_check:
+        return (False,
+                ValidationError({'contest_name': ['Contest with name = {} already exists'
+                                                  .format(contest_name)]}))
     try:
-        c = models.Contest(name=contest_name, start_datetime=contest_start,
-                           soft_end_datetime=contest_soft_end,
-                           hard_end_datetime=contest_hard_end,
-                           penalty=penalty, public=is_public,
-                           enable_linter_score=enable_linter_score,
-                           enable_poster_score=enable_poster_score)
-        c.save()
-        # Successfully added to Database
-        return (True, str(c.pk))
-    except Exception as e:
+        new_contest = models.Contest.objects.create(name=contest_name,
+                                                    start_datetime=contest_start,
+                                                    soft_end_datetime=contest_soft_end,
+                                                    hard_end_datetime=contest_hard_end,
+                                                    penalty=penalty, public=is_public,
+                                                    enable_linter_score=enable_linter_score,
+                                                    enable_poster_score=enable_poster_score)
+    # Catch any weird errors that might pop up during the creation
+    except Exception as other_err:
         # Exception Case
         print_exc()
-        log_error(e.__str__())
-        return (False, 'Contest could not be created')
+        return (False, ValidationError('Contest could not be created due '
+                                       'to the following reason: {}'.format(str(other_err))))
+    else:
+        return (True, str(c.pk))
 
 
 def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
@@ -67,29 +72,36 @@ def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
     :returns: A 2-tuple - 1st element indicating whether the deletion has succeeded, and
               2nd element providing an error message if deletion is unsuccessful.
     """
-    try:
-        c = models.Contest.objects.get(pk=contest_id)
-        problems = models.Problem.objects.filter(contest=c)
-        for problem in problems:
-            delete_problem(problem.pk)
-        if os.path.exists(os.path.join('content', 'contests', str(contest_id))):
-            rmtree(os.path.join('content', 'contests', str(contest_id)))
+    contest = models.Contest.objects.filter(pk=contest_id)
+    if not contest.exists():
+        return (False, ValidationError('Contest with ID = {} not found'
+                                       .format(contest_id)))
+    contest = contest[0]
+    problems = models.Problem.objects.filter(contest=contest)
+    for problem in problems:
+        delete_problem(problem.pk)
+    if os.path.exists(os.path.join('content', 'contests', str(contest_id))):
+        rmtree(os.path.join('content', 'contests', str(contest_id)))
 
+    try:
         models.Contest.objects.filter(pk=contest_id).delete()
-        return (True, None)
-    except Exception as e:
+    # Catch any weird errors that might pop up during the deletion
+    except Exception as other_err:
         print_exc()
-        log_error(e.__str__())
-        return (False, 'Contest could not be deleted')
+        return (False,
+                ValidationError('Contest could not be deleted '
+                                'due to the following error = {}'.format(str(other_err))))
+    else:
+        return (True, None)
 
 
 def process_problem(
-        contest: int,
+        contest_id: int,
         **kwargs: Union[str, int, Optional[InMemoryUploadedFile]]) -> Tuple[bool, Optional[str]]:
     """
     Function to process a new :class:`~judge.models.Problem`.
 
-    :param contest: Contest ID to which the problem belongs
+    :param contest_id: Contest ID to which the problem belongs
 
     :attr:`**kwargs` includes the following keyword arguments, which are directly passed
     to the construct a :class:`~judge.models.Problem` object.
@@ -125,11 +137,10 @@ def process_problem(
     """
     # Check if the Problem Code has already been taken
     code = kwargs.get('code')
-    try:
-        models.Problem.objects.get(pk=code)
-        return (False, '{} already a used Question code.'.format(code))
-    except models.Problem.DoesNotExist:
-        pass
+    problem_unique_check = not models.Problem.objects.filter(code=code).exists()
+    if not problem_unique_check:
+        return (False, ValidationError({'code': ['Problem with code = {} already exists'
+                                                 .format(code)]}))
 
     # Quill replaces empty input with this
     NO_INPUT_QUILL = '{"ops":[{"insert":"\\n"}]}'
@@ -151,37 +162,47 @@ def process_problem(
     if no_test_script:
         kwargs['test_script'] = './default/test_script.sh'
 
+    contest = models.Contest.objects.filter(pk=contest_id)
+    if not contest.exists():
+        return (False, ValidationError('Contest with ID = {} not found'
+                                       .format(contest_id)))
+    contest = contest[0]
     try:
-        c = models.Contest.objects.get(pk=contest)
-        p = models.Problem.objects.create(contest=c, **kwargs)
+        new_problem = models.Problem.objects.create(contest=contest, **kwargs)
+    # Catch any weird errors that might pop up during the creation
+    except Exception as other_err:
+        return (False, ValidationError('Problem could not be created due to '
+                                       'the following reason: {}'.format(str(other_err))))
 
-        if not os.path.exists(os.path.join('content', 'problems', p.code)):
-            # Create the problem directory explictly if not yet created
-            # This will happen when both compilation_script and test_script were None
-            os.makedirs(os.path.join('content', 'problems', p.code))
+    if not os.path.exists(os.path.join('content', 'problems', p.code)):
+        # Create the problem directory explictly if not yet created
+        # This will happen when both compilation_script and test_script were None
+        os.makedirs(os.path.join('content', 'problems', p.code))
 
-        if no_comp_script:
-            # Copy the default comp_script if the user did not upload custom
-            copyfile(os.path.join('judge', 'default', 'compilation_script.sh'),
-                     os.path.join('content', 'problems', p.code, 'compilation_script.sh'))
-            p.compilation_script = os.path.join('content', 'problems',
-                                                p.code, 'compilation_script.sh')
+    if no_comp_script:
+        # Copy the default comp_script if the user did not upload custom
+        copyfile(os.path.join('judge', 'default', 'compilation_script.sh'),
+                 os.path.join('content', 'problems', p.code, 'compilation_script.sh'))
+        p.compilation_script = os.path.join('content', 'problems',
+                                            p.code, 'compilation_script.sh')
 
-        if no_test_script:
-            # Copy the default test_script if the user did not upload custom
-            copyfile(os.path.join('judge', 'default', 'test_script.sh'),
-                     os.path.join('content', 'problems', p.code, 'test_script'))
-            p.test_script = os.path.join('content', 'problems', p.code, 'test_script')
+    if no_test_script:
+        # Copy the default test_script if the user did not upload custom
+        copyfile(os.path.join('judge', 'default', 'test_script.sh'),
+                 os.path.join('content', 'problems', p.code, 'test_script'))
+        p.test_script = os.path.join('content', 'problems', p.code, 'test_script')
 
+    try:
         # In this case, either one of compilation_script or test_script hasn't been copied
         # and saving with update the link(s)
         if no_comp_script or no_test_script:
             p.save()
-
-        return (True, None)
-    except Exception as e:
+    # Catch any weird errors that might pop up during the modification
+    except Exception as other_err:
         print_exc()
-        return (False, e.__str__())
+        return (False, ValidationError(str(other_err)))
+    else:
+        return (True, None)
 
 
 def update_problem(code: str, name: str, statement: str, input_format: str,
@@ -200,20 +221,25 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
     :returns: A 2-tuple - 1st element indicating whether the update has succeeded, and
               2nd element providing an error message if update is unsuccessful.
     """
+    problem = models.Problem.objects.filter(code=code)
+    if not problem.exists():
+        return (False, ValidationError('Problem with code = {} not found'
+                                       .format(code)))
+    problem = problem[0]
+
+    problem.name = name
+    problem.statement = statement
+    problem.input_format = input_format
+    problem.output_format = output_format
+    problem.difficulty = difficulty
     try:
-        p = models.Problem.objects.get(pk=code)
-        p.name = name
-        p.statement = statement
-        p.input_format = input_format
-        p.output_format = output_format
-        p.difficulty = difficulty
         p.save()
-        return (True, None)
-    except models.Problem.DoesNotExist:
-        return (False, '{} code does not exist.'.format(code))
-    except Exception as e:
+    # Catch any weird errors that might pop up during the modification
+    except Exception as other_err:
         print_exc()
-        return (False, e.__str__())
+        return (False, ValidationError(str(other_err)))
+    else:
+        return (True, None)
 
 
 def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
@@ -227,32 +253,41 @@ def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
     :returns: A 2-tuple - 1st element indicating whether the deletion has succeeded, and
               2nd element providing an error message if deletion is unsuccessful.
     """
+    problem = models.Problem.objects.filter(code=problem_id)
+    if not problem.exists():
+        return (False, ValidationError('Problem with code = {} not found'
+                                       .format(problem_id)))
+    problem = problem[0]
+
+    problem = models.Problem.objects.get(code=problem_id)
+    # First delete all the files stored corresponding to this problem
+    testcases = models.TestCase.objects.filter(problem=problem)
+    for testcase in testcases:
+        inputfile_path = os.path.join(
+            'content', 'testcase', 'inputfile_{}.txt'.format(testcase.pk))
+        outputfile_path = os.path.join(
+            'content', 'testcase', 'outputfile_{}.txt'.format(testcase.pk))
+        _check_and_remove(inputfile_path, outputfile_path)
+
+    submissions = models.Submission.objects.filter(problem=problem)
+    for submission in submissions:
+        submission_path = os.path.join(
+            'content', 'submissions',
+            'submission_{}{}'.format(submission.pk, submission.file_type))
+        _check_and_remove(submission_path)
+
+    rmtree(os.path.join('content', 'problems', problem_id))
+
     try:
-        problem = models.Problem.objects.get(code=problem_id)
-        # First delete all the files stored corresponding to this problem
-        testcases = models.TestCase.objects.filter(problem=problem)
-        for testcase in testcases:
-            inputfile_path = os.path.join(
-                'content', 'testcase', 'inputfile_{}.txt'.format(testcase.pk))
-            outputfile_path = os.path.join(
-                'content', 'testcase', 'outputfile_{}.txt'.format(testcase.pk))
-            _check_and_remove(inputfile_path, outputfile_path)
-
-        submissions = models.Submission.objects.filter(problem=problem)
-        for submission in submissions:
-            submission_path = os.path.join(
-                'content', 'submissions',
-                'submission_{}{}'.format(submission.pk, submission.file_type))
-            _check_and_remove(submission_path)
-
-        rmtree(os.path.join('content', 'problems', problem_id))
-
         models.Problem.objects.filter(code=problem_id).delete()
-        return (True, None)
-    except Exception as e:
+    # Catch any weird errors that might pop up during the deletion
+    except Exception as other_err:
         print_exc()
-        log_error(e.__str__())
-        return (False, 'Contest could not be deleted')
+        return (False,
+                ValidationError('Problem could not be deleted '
+                                'due to the following error = {}'.format(str(other_err))))
+    else:
+        return (True, None)
 
 
 def process_person(email: str, rank: int = 0) -> Tuple[bool, Optional[str]]:
@@ -262,19 +297,21 @@ def process_person(email: str, rank: int = 0) -> Tuple[bool, Optional[str]]:
     :param email: Email of the person
     :param rank: Rank of the person (defaults to 0).
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
-              2nd element providing an error message if processing is unsuccessful.
+              2nd element providing a ValidationError if processing is unsuccessful.
     """
     if email is None:
-        return (False, 'Email passed is None.')
+        return (False, ValidationError('Email passed is None.'))
     try:
         (p, status) = models.Person.objects.get_or_create(email=email)
         if status:
             p.rank = 0 if rank is None else rank
             p.save()
-        return (True, None)
-    except Exception as e:
+    # Catch any weird errors that might pop up during the creation or modification
+    except Exception as other_err:
         print_exc()
-        return (False, e.__str__())
+        return (False, ValidationError(str(other_err)))
+    else:
+        return (True, None)
 
 
 def process_testcase(problem_id: str, test_type: str,
@@ -293,7 +330,7 @@ def process_testcase(problem_id: str, test_type: str,
     :param input_file: Input file for the testcase.
     :param output_file: Output file for the testcase.
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
-              2nd element providing an error message if processing is unsuccessful.
+              2nd element providing a ValidationError if processing is unsuccessful.
     """
     problem = models.Problem.objects.filter(code=problem_id)
     if not problem.exists():
@@ -326,7 +363,7 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
 
     :param testcase_id: the testcase ID
     :returns: A 2-tuple - 1st element indicating whether the deletion has succeeded, and
-              2nd element providing an error message if deletion is unsuccessful.
+              2nd element providing a ValidationError if deletion is unsuccessful.
     """
     inputfile_path = os.path.join(
         'content', 'testcase', 'inputfile_{}.txt'.format(testcase_id))

@@ -91,7 +91,7 @@ class HandlerTests(TestCase):
                                           hard_end_datetime='2019-04-27T12:30',
                                           penalty=0, public=True)
         status, msg = handler.process_problem(
-            code='testprob1', contest=c.pk, name='Test Problem 1',
+            code='testprob1', contest_id=c.pk, name='Test Problem 1',
             statement='Test Problem Statement',
             input_format='Test input format',
             output_format='Test output format', difficulty=5,
@@ -168,20 +168,20 @@ class HandlerTests(TestCase):
         self.assertTrue(one_cp.role)
         self.assertEqual(one_cp.person.email, 'testing1@test.com')
         self.assertEqual(one_cp.contest.name, 'Test Contest')
-        role = handler.get_personcontest_permission(person='testing1@test.com', contest=c.pk)
+        role = handler.get_personcontest_permission(person_id='testing1@test.com', contest_id=c.pk)
         self.assertTrue(role)
-        role = handler.get_personcontest_permission(person=None, contest=c.pk)
+        role = handler.get_personcontest_permission(person_id=None, contest_id=c.pk)
         self.assertFalse(role)
-        role = handler.get_personproblem_permission(person='testing1@test.com', problem='testprob1')
+        role = handler.get_personproblem_permission(person_id='testing1@test.com', problem_id='testprob1')
         self.assertTrue(role)
-        status, message = handler.delete_personcontest(person='testing1@test.com', contest=c.pk)
+        status, message = handler.delete_personcontest(person_id='testing1@test.com', contest_id=c.pk)
         self.assertFalse(status)
-        role = handler.get_personcontest_permission(person='testing2@test.com', contest=c.pk)
+        role = handler.get_personcontest_permission(person_id='testing2@test.com', contest_id=c.pk)
         self.assertFalse(role)
-        status, posters = handler.get_posters(contest=c.pk)
+        status, posters = handler.get_posters(contest_id=c.pk)
         self.assertTrue(status)
         self.assertEqual(len(posters), 1)
         self.assertEqual(posters[0], 'testing1@test.com')
-        status, participants = handler.get_participants(contest=c.pk)
+        status, participants = handler.get_participants(contest_id=c.pk)
         self.assertTrue(status)
         self.assertEqual(len(participants), 0)
