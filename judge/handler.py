@@ -8,8 +8,8 @@ from shutil import rmtree, copyfile
 from datetime import timedelta, datetime
 from typing import Tuple, Optional, Dict, Any, List, Union
 
-from django.db.models import Q, Sum, Max
 from django.utils import timezone
+from django.db.models import Q, Sum, Max
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
@@ -59,7 +59,7 @@ def process_contest(contest_name: str, contest_start: datetime, contest_soft_end
         return (False, ValidationError('Contest could not be created due '
                                        'to the following reason: {}'.format(str(other_err))))
     else:
-        return (True, str(c.pk))
+        return (True, str(new_contest.pk))
 
 
 def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
@@ -174,29 +174,30 @@ def process_problem(
         return (False, ValidationError('Problem could not be created due to '
                                        'the following reason: {}'.format(str(other_err))))
 
-    if not os.path.exists(os.path.join('content', 'problems', p.code)):
+    if not os.path.exists(os.path.join('content', 'problems', new_problem.code)):
         # Create the problem directory explictly if not yet created
         # This will happen when both compilation_script and test_script were None
-        os.makedirs(os.path.join('content', 'problems', p.code))
+        os.makedirs(os.path.join('content', 'problems', new_problem.code))
 
     if no_comp_script:
         # Copy the default comp_script if the user did not upload custom
         copyfile(os.path.join('judge', 'default', 'compilation_script.sh'),
-                 os.path.join('content', 'problems', p.code, 'compilation_script.sh'))
-        p.compilation_script = os.path.join('content', 'problems',
-                                            p.code, 'compilation_script.sh')
+                 os.path.join('content', 'problems', new_problem.code, 'compilation_script.sh'))
+        new_problem.compilation_script = os.path.join('content', 'problems',
+                                                      new_problem.code, 'compilation_script.sh')
 
     if no_test_script:
         # Copy the default test_script if the user did not upload custom
         copyfile(os.path.join('judge', 'default', 'test_script.sh'),
-                 os.path.join('content', 'problems', p.code, 'test_script'))
-        p.test_script = os.path.join('content', 'problems', p.code, 'test_script')
+                 os.path.join('content', 'problems', new_problem.code, 'test_script'))
+        new_problem.test_script = os.path.join('content', 'problems',
+                                               new_problem.code, 'test_script')
 
     try:
         # In this case, either one of compilation_script or test_script hasn't been copied
         # and saving with update the link(s)
         if no_comp_script or no_test_script:
-            p.save()
+            new_problem.save()
     # Catch any weird errors that might pop up during the modification
     except Exception as other_err:
         print_exc()
@@ -233,7 +234,7 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
     problem.output_format = output_format
     problem.difficulty = difficulty
     try:
-        p.save()
+        problem.save()
     # Catch any weird errors that might pop up during the modification
     except Exception as other_err:
         print_exc()

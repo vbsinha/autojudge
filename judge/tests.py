@@ -172,9 +172,11 @@ class HandlerTests(TestCase):
         self.assertTrue(role)
         role = handler.get_personcontest_permission(person_id=None, contest_id=c.pk)
         self.assertFalse(role)
-        role = handler.get_personproblem_permission(person_id='testing1@test.com', problem_id='testprob1')
+        role = handler.get_personproblem_permission(person_id='testing1@test.com',
+                                                    problem_id='testprob1')
         self.assertTrue(role)
-        status, message = handler.delete_personcontest(person_id='testing1@test.com', contest_id=c.pk)
+        status, message = handler.delete_personcontest(person_id='testing1@test.com',
+                                                       contest_id=c.pk)
         self.assertFalse(status)
         role = handler.get_personcontest_permission(person_id='testing2@test.com', contest_id=c.pk)
         self.assertFalse(role)
