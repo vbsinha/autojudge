@@ -19,8 +19,11 @@ MONITOR_DIRECTORY = os.path.join(CONTENT_DIRECTORY, TMP_DIRECTORY)
 DOCKER_IMAGE_NAME = 'autojudge_docker'
 
 LS: List[str] = []
+# Re-check the status of the submission folder if the number of unscored submissions
+# is less than REFRESH_LS_TRIGGER
 REFRESH_LS_TRIGGER = 5
-SLEEP_DUR_BEFORE_REFRESH = 10  # 10 seconds sleep if number of evaluations is less than REFRESH_LS_TRIGGER
+# Sleep duration if number of unscored submissions is less than REFRESH_LS_TRIGGER
+SLEEP_DUR_BEFORE_REFRESH = 10
 
 
 def _compute_lint_score(report):
