@@ -15,6 +15,8 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from . import models
 
+STATUS_AND_OPT_ERROR_T = Tuple[bool, Optional[ValidationError]]
+
 
 def _check_and_remove(*fullpaths):
     for fullpath in fullpaths:
@@ -24,7 +26,8 @@ def _check_and_remove(*fullpaths):
 
 def process_contest(contest_name: str, contest_start: datetime, contest_soft_end: datetime,
                     contest_hard_end: datetime, penalty: float, is_public: bool,
-                    enable_linter_score: bool, enable_poster_score: bool) -> Tuple[bool, str]:
+                    enable_linter_score: bool,
+                    enable_poster_score: bool) -> Tuple[bool, Union[ValidationError, str]]:
     """
     Function to process a new :class:`~judge.models.Contest`.
 
@@ -37,12 +40,12 @@ def process_contest(contest_name: str, contest_start: datetime, contest_soft_end
     :param enable_linter_score: Field to indicate if linter scoring is enabled in the contest
     :param enable_poster_score: Field to indicate if poster scoring is enabled in the contest
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
-              2nd element providing an error message if processing is unsuccessful.
+              2nd element providing a ``ValidationError`` if processing is unsuccessful.
     """
     contest_unique_check = not models.Contest.objects.filter(name=contest_name).exists()
     if not contest_unique_check:
         return (False,
-                ValidationError({'contest_name': ['Contest with name = {} already exists'
+                ValidationError({'contest_name': ['Contest named \"{}\" already exists'
                                                   .format(contest_name)]}))
     try:
         new_contest = models.Contest.objects.create(name=contest_name,
@@ -62,7 +65,7 @@ def process_contest(contest_name: str, contest_start: datetime, contest_soft_end
         return (True, str(new_contest.pk))
 
 
-def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
+def delete_contest(contest_id: int) -> STATUS_AND_OPT_ERROR_T:
     """
     Function to delete a :class:`~judge.models.Contest` given its contest ID.
     This will cascade delete in all the tables that have :attr:`contest_id` as a foreign key.
@@ -70,7 +73,7 @@ def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
 
     :param contest_id: the contest ID
     :returns: A 2-tuple - 1st element indicating whether the deletion has succeeded, and
-              2nd element providing an error message if deletion is unsuccessful.
+              2nd element providing a ``ValidationError`` if deletion is unsuccessful.
     """
     contest = models.Contest.objects.filter(pk=contest_id)
     if not contest.exists():
@@ -95,9 +98,9 @@ def delete_contest(contest_id: int) -> Tuple[bool, Optional[str]]:
         return (True, None)
 
 
-def process_problem(
-        contest_id: int,
-        **kwargs: Union[str, int, Optional[InMemoryUploadedFile]]) -> Tuple[bool, Optional[str]]:
+def process_problem(contest_id: int,
+                    **kwargs: Union[str, int,
+                                    Optional[InMemoryUploadedFile]]) -> STATUS_AND_OPT_ERROR_T:
     """
     Function to process a new :class:`~judge.models.Problem`.
 
@@ -133,7 +136,7 @@ def process_problem(
     :param test_script: Test script for the submissions
     :type statement: Optional[InMemoryUploadedFile]
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
-              2nd element providing an error message if processing is unsuccessful.
+              2nd element providing a ``ValidationError`` if processing is unsuccessful.
     """
     # Check if the Problem Code has already been taken
     code = kwargs.get('code')
@@ -207,7 +210,7 @@ def process_problem(
 
 
 def update_problem(code: str, name: str, statement: str, input_format: str,
-                   output_format: str, difficulty: str) -> Tuple[bool, Optional[str]]:
+                   output_format: str, difficulty: str) -> STATUS_AND_OPT_ERROR_T:
     """
     Function to update selected fields in a :class:`~judge.models.Problem` after creation.
     The fields that can be modified are `name`, `statement`, `input_format`, `output_format`
@@ -220,7 +223,7 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
     :param output_format: Modified problem output format
     :param difficulty: Modified problem difficulty
     :returns: A 2-tuple - 1st element indicating whether the update has succeeded, and
-              2nd element providing an error message if update is unsuccessful.
+              2nd element providing a ``ValidationError`` if update is unsuccessful.
     """
     problem = models.Problem.objects.filter(code=code)
     if not problem.exists():
@@ -243,7 +246,7 @@ def update_problem(code: str, name: str, statement: str, input_format: str,
         return (True, None)
 
 
-def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
+def delete_problem(problem_id: str) -> STATUS_AND_OPT_ERROR_T:
     """
     Function to delete a :class:`~judge.models.Problem` given its problem ID.
     This will cascade delete in all the tables that have :attr:`problem_id` as a foreign key.
@@ -252,7 +255,7 @@ def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
 
     :param problem_id: the problem ID
     :returns: A 2-tuple - 1st element indicating whether the deletion has succeeded, and
-              2nd element providing an error message if deletion is unsuccessful.
+              2nd element providing a ``ValidationError`` if deletion is unsuccessful.
     """
     problem = models.Problem.objects.filter(code=problem_id)
     if not problem.exists():
@@ -291,14 +294,14 @@ def delete_problem(problem_id: str) -> Tuple[bool, Optional[str]]:
         return (True, None)
 
 
-def process_person(email: str, rank: int = 0) -> Tuple[bool, Optional[str]]:
+def process_person(email: str, rank: int = 0) -> STATUS_AND_OPT_ERROR_T:
     """
     Function to process a new :class:`~judge.models.Person`.
 
     :param email: Email of the person
     :param rank: Rank of the person (defaults to 0).
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
-              2nd element providing a ValidationError if processing is unsuccessful.
+              2nd element providing a ``ValidationError`` if processing is unsuccessful.
     """
     if email is None:
         return (False, ValidationError('Email passed is None.'))
@@ -317,7 +320,7 @@ def process_person(email: str, rank: int = 0) -> Tuple[bool, Optional[str]]:
 
 def process_testcase(problem_id: str, test_type: str,
                      input_file: InMemoryUploadedFile,
-                     output_file: InMemoryUploadedFile) -> Tuple[bool, Optional[str]]:
+                     output_file: InMemoryUploadedFile) -> STATUS_AND_OPT_ERROR_T:
     """
     Function to process a new :class:`~judge.models.TestCase` for a problem.
 
@@ -331,7 +334,7 @@ def process_testcase(problem_id: str, test_type: str,
     :param input_file: Input file for the testcase.
     :param output_file: Output file for the testcase.
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
-              2nd element providing a ValidationError if processing is unsuccessful.
+              2nd element providing a ``ValidationError`` if processing is unsuccessful.
     """
     problem = models.Problem.objects.filter(code=problem_id)
     if not problem.exists():
@@ -352,7 +355,7 @@ def process_testcase(problem_id: str, test_type: str,
         return (True, None)
 
 
-def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
+def delete_testcase(testcase_id: str) -> STATUS_AND_OPT_ERROR_T:
     """
     Function to delete a :class:`~judge.models.TestCase` given its testcase ID.
     This will cascade delete in all the tables where this testcase appears.
@@ -364,7 +367,7 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
 
     :param testcase_id: the testcase ID
     :returns: A 2-tuple - 1st element indicating whether the deletion has succeeded, and
-              2nd element providing a ValidationError if deletion is unsuccessful.
+              2nd element providing a ``ValidationError`` if deletion is unsuccessful.
     """
     inputfile_path = os.path.join(
         'content', 'testcase', 'inputfile_{}.txt'.format(testcase_id))
@@ -383,7 +386,7 @@ def delete_testcase(testcase_id: str) -> Tuple[bool, Optional[str]]:
 
 def process_submission(problem_id: str, participant_id: str, file_type: str,
                        submission_file: InMemoryUploadedFile,
-                       timestamp: str) -> Tuple[bool, Optional[str]]:
+                       timestamp: str) -> STATUS_AND_OPT_ERROR_T:
     """
     Function to process a new :class:`~judge.models.Submission` for a problem by a participant.
 
@@ -393,7 +396,7 @@ def process_submission(problem_id: str, participant_id: str, file_type: str,
     :param submission_file: Submission file
     :param timestamp: Time at submission
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
-              2nd element providing an error message if processing is unsuccessful.
+              2nd element providing a ``ValidationError`` if processing is unsuccessful.
     """
     problem = models.Problem.objects.filter(code=problem_id)
     if not problem.exists():
@@ -467,7 +470,7 @@ def update_poster_score(submission_id: str, new_score: int):
     :param submission_id: Submission ID of the submission
     :param new_score: New score to be assigned
     :returns: A 2-tuple - 1st element indicating whether the update has succeeded, and
-              2nd element providing a ValidationError if update is unsuccessful.
+              2nd element providing a ``ValidationError`` if update is unsuccessful.
     """
     submission = models.Submission.objects.get(pk=submission_id)
     if not submission.exists():
@@ -507,7 +510,7 @@ def update_poster_score(submission_id: str, new_score: int):
 
 
 def add_person_to_contest(person_id: str, contest_id: int,
-                          permission: bool) -> Tuple[bool, Optional[str]]:
+                          permission: bool) -> STATUS_AND_OPT_ERROR_T:
     """
     Function to relate a person to a contest with permissions.
 
@@ -515,7 +518,7 @@ def add_person_to_contest(person_id: str, contest_id: int,
     :param contest_id: Contest ID
     :param permission: If ``True``, then poster, if ``False``, then participant
     :returns: A 2-tuple - 1st element indicating whether the addition has succeeded, and
-              2nd element providing a ValidationError if addition is unsuccessful.
+              2nd element providing a ``ValidationError`` if addition is unsuccessful.
     """
     try:
         (person, _) = models.Person.objects.get_or_create(email=person_id)
@@ -558,7 +561,7 @@ def add_person_to_contest(person_id: str, contest_id: int,
 
 
 def add_persons_to_contest(persons: List[str], contest_id: int,
-                           permission: bool) -> Tuple[bool, Optional[str]]:
+                           permission: bool) -> STATUS_AND_OPT_ERROR_T:
     """
     Function to relate a list of persons and contest with permissions. This function
     would create records for all the persons who are not present in the database irrespective
@@ -568,7 +571,7 @@ def add_persons_to_contest(persons: List[str], contest_id: int,
     :param contest_id: Contest ID
     :param permission: If ``True``, then poster, if ``False``, then participant
     :returns: A 2-tuple - 1st element indicating whether the relation creation has succeeded, and
-              2nd element providing a ValidationError if relation creation is unsuccessful.
+              2nd element providing a ``ValidationError`` if relation creation is unsuccessful.
     """
     try:
         for person in persons:
@@ -650,7 +653,7 @@ def get_personcontest_permission(person_id: Optional[str], contest_id: int) -> O
             return None
 
 
-def delete_personcontest(person_id: str, contest_id: int) -> Tuple[bool, Optional[str]]:
+def delete_personcontest(person_id: str, contest_id: int) -> STATUS_AND_OPT_ERROR_T:
     """
     Function to delete the relation between a person and a contest.
 
@@ -712,14 +715,14 @@ def get_personproblem_permission(person_id: Optional[str], problem_id: str) -> O
     return get_personcontest_permission(person_id, problem.contest.pk)
 
 
-def get_posters(contest_id: int) -> Tuple[bool, Union[str, List[str]]]:
+def get_posters(contest_id: int) -> Tuple[bool, Union[ValidationError, List[str]]]:
     """
     Function to return the list of the posters for a :class:`~judge.models.Contest`.
 
     :param contest_id: Contest ID
     :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
               If successful, a list of IDs are present in the 2nd element.
-              If unsuccessful, a ValidationError is additionally returned.
+              If unsuccessful, a ``ValidationError`` is additionally returned.
     """
     contest = models.Contest.objects.filter(pk=contest_id)
     if not contest.exists():
@@ -733,7 +736,7 @@ def get_posters(contest_id: int) -> Tuple[bool, Union[str, List[str]]]:
     return (True, poster_list)
 
 
-def get_participants(contest_id: int) -> Tuple[bool, Union[str, List[str]]]:
+def get_participants(contest_id: int) -> Tuple[bool, Union[ValidationError, List[str]]]:
     """
     Function to return the list of the participants for a :class:`~judge.models.Contest`.
 
@@ -741,7 +744,7 @@ def get_participants(contest_id: int) -> Tuple[bool, Union[str, List[str]]]:
     :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
               If successful, a list of IDs are present in the 2nd element. The list is
               empty if the contest is public.
-              If unsuccessful, a ValidationError is additionally returned.
+              If unsuccessful, a ``ValidationError`` is additionally returned.
     """
     contest = models.Contest.objects.filter(pk=contest_id)
     if not contest.exists():
@@ -758,7 +761,8 @@ def get_participants(contest_id: int) -> Tuple[bool, Union[str, List[str]]]:
         return (True, participant_list)
 
 
-def get_personcontest_score(person_id: str, contest_id: int) -> Tuple[bool, Union[float, str]]:
+def get_personcontest_score(person_id: str,
+                            contest_id: int) -> Tuple[bool, Union[float, ValidationError]]:
     """
     Function to get the final score, which is the sum of individual final scores
     of all problems in a contest for a particular person.
@@ -767,7 +771,7 @@ def get_personcontest_score(person_id: str, contest_id: int) -> Tuple[bool, Unio
     :param contest_id: Contest ID
     :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded.
               If successful, the final score is present in the 2nd element.
-              If unsuccesful, a ValidationError is additionally returned.
+              If unsuccesful, a ``ValidationError`` is additionally returned.
     """
     person = models.Person.objects.filter(email=person_id)
     if not person.exists():
@@ -795,7 +799,9 @@ def get_personcontest_score(person_id: str, contest_id: int) -> Tuple[bool, Unio
 
 
 def get_submissions(problem_id: str,
-                    person_id: Optional[str]) -> Tuple[bool, Union[Dict[str, List[Any]], str]]:
+                    person_id: Optional[str]) -> Tuple[bool,
+                                                       Union[Dict[str, List[Any]],
+                                                             ValidationError]]:
     """
     Function to retrieve all submissions made by everyone or a specific person for this
     problem.
@@ -807,7 +813,7 @@ def get_submissions(problem_id: str,
               pertaining to each person is placed in a dictionary, and if :attr:`person_id`
               is provided, then the list of submissions pertaining to the specific person is
               placed in a dictionary and returned.
-              If unsuccessful, then a ValidationError is additionally returned.
+              If unsuccessful, then a ``ValidationError`` is additionally returned.
     """
     problem = models.Problem.objects.filter(code=problem_id)
     if not problem.exists():
@@ -865,7 +871,7 @@ def get_submission_status(submission_id: str):
               The smaller tuple consists of the score given by the judge, poster (if applicable),
               and linter (if applicable), as well as the final score, timestamp of submission and
               the file type of submission.
-              If unsuccessful, a ValidationError is additionally returned.
+              If unsuccessful, a ``ValidationError`` is additionally returned.
     """
     submission = models.Submission.objects.filter(pk=submission_id)
     if not submission.exists():
@@ -948,7 +954,7 @@ def update_leaderboard(contest_id: int, person: str) -> bool:
 
 
 def process_comment(problem_id: str, person_id: str, commenter_id: str,
-                    timestamp: datetime, comment: str) -> Tuple[bool, Optional[ValidationError]]:
+                    timestamp: datetime, comment: str) -> STATUS_AND_OPT_ERROR_T:
     """
     Function to process a new :class:`~judge.models.Comment` on the problem.
 
@@ -958,7 +964,7 @@ def process_comment(problem_id: str, person_id: str, commenter_id: str,
     :param timestamp: Date and Time of comment
     :param comment: Comment content
     :returns: A 2-tuple - 1st element indicating whether the processing has succeeded, and
-              2nd element providing a ValidationError if processing is unsuccessful.
+              2nd element providing a ``ValidationError`` if processing is unsuccessful.
     """
     problem = models.Problem.objects.filter(code=problem_id)
     if not problem.exists():
@@ -990,7 +996,7 @@ def process_comment(problem_id: str, person_id: str, commenter_id: str,
 
 
 def get_comments(problem_id: str,
-                 person_id: str) -> Tuple[bool, List[Tuple[Any, Any, Any]]]:
+                 person_id: str) -> List[Tuple[Any, Any, Any]]:
     """
     Function to get the private comments on the problem for the person.
 
@@ -1014,7 +1020,7 @@ def get_csv(contest_id: int) -> Tuple[bool, Union[ValidationError, StringIO]]:
 
     :param contest_id: Contest ID
     :returns: A 2-tuple - 1st element indicating whether the retrieval has succeeded, and
-              2nd element providing a ValidationError if processing is unsuccessful or a
+              2nd element providing a ``ValidationError`` if processing is unsuccessful or a
               ``StringIO`` object if successful.
     """
     contest = models.Contest.objects.filter(pk=contest_id)
