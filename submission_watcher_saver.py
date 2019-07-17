@@ -1,10 +1,12 @@
 import os
 import django
 
-from pycodestyle import Checker
-from datetime import timedelta
+from time import sleep
 from subprocess import call
-from typing import List, Any
+from typing import List
+from datetime import timedelta
+from pycodestyle import Checker
+
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "autojudge.settings")
 django.setup()
@@ -16,8 +18,12 @@ TMP_DIRECTORY = 'tmp'
 MONITOR_DIRECTORY = os.path.join(CONTENT_DIRECTORY, TMP_DIRECTORY)
 DOCKER_IMAGE_NAME = 'autojudge_docker'
 
-LS: List[Any] = []
-REFRESH_LS_TRIGGER = 10
+LS: List[str] = []
+# Re-check the status of the submission folder if the number of unscored submissions
+# is less than REFRESH_LS_TRIGGER
+REFRESH_LS_TRIGGER = 5
+# Sleep duration if number of unscored submissions is less than REFRESH_LS_TRIGGER
+SLEEP_DUR_BEFORE_REFRESH = 10
 
 
 def _compute_lint_score(report):
@@ -119,8 +125,11 @@ os.chdir(os.path.join(cur_path, CONTENT_DIRECTORY))
 
 out = 1
 while out != 0:
+    print("Building Docker image: {}....".format(DOCKER_IMAGE_NAME))
     # Build docker image using docker run
     out = call(['docker', 'build', '-t', DOCKER_IMAGE_NAME, './'])
+    if out != 0:
+        print("Build failed, retrying...")
 
 # Move back to old directory
 os.chdir(cur_path)
@@ -136,6 +145,7 @@ while True:
     if len(LS) < REFRESH_LS_TRIGGER:
         # Neglect .log files in tmp/; these are for error
         # messages arising at any stage of the evaluation
+        sleep(SLEEP_DUR_BEFORE_REFRESH)
         LS = [os.path.join(MONITOR_DIRECTORY, sub_file)
               for sub_file in os.listdir(MONITOR_DIRECTORY) if sub_file[:-4] != '.log']
         LS.sort(key=os.path.getctime)

@@ -7,8 +7,6 @@ from django.http import HttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 
-from logging import debug as log_debug
-
 from . import handler
 from .models import Contest, Problem, TestCase, Submission
 from .forms import NewContestForm, AddPersonToContestForm, DeletePersonFromContestForm
@@ -69,11 +67,9 @@ def index(request):
     context = {}
     user = _get_user(request)
     if user is not None:
-        status, err = handler.process_person(request.user.email)
+        status, maybe_error = handler.process_person(request.user.email)
         if not status:
-            log_debug(
-                'Although user is not None, it could not be processed. More info: {}'.format(err))
-
+            return handler404(request)
     contests = Contest.objects.all()
     permissions = [handler.get_personcontest_permission(
         None if user is None else user.email, contest.pk) for contest in contests]
@@ -94,13 +90,12 @@ def new_contest(request):
     if request.method == 'POST':
         form = NewContestForm(request.POST)
         if form.is_valid():
-            status, msg = handler.process_contest(**form.cleaned_data)
+            status, code_or_error = handler.process_contest(**form.cleaned_data)
             if status:
-                handler.add_person_to_contest(user.email, msg, True)
+                handler.add_person_to_contest(user.email, code_or_error, True)
                 return redirect(reverse('judge:index'))
             else:
-                log_debug(msg)
-                form.add_error(None, msg)
+                form.add_error(None, code_or_error)
     else:
         form = NewContestForm()
     context = {'form': form}
@@ -132,19 +127,18 @@ def get_people(request, contest_id, role):
         form = DeletePersonFromContestForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
-            status, err = handler.delete_personcontest(email, contest_id)
+            status, maybe_error = handler.delete_personcontest(email, contest_id)
             if not status:
-                log_debug(err)
-                form.add_error(None, 'Could not delete {}. {}'.format(email, err))
+                form.add_error(None, maybe_error)
     else:
         form = DeletePersonFromContestForm()
     context['form'] = form
     if role:
-        status, value = handler.get_posters(contest_id)
+        status, value_or_error = handler.get_posters(contest_id)
     else:
-        status, value = handler.get_participants(contest_id)
+        status, value_or_error = handler.get_participants(contest_id)
     if status:
-        context['persons'] = value
+        context['persons'] = value_or_error
     else:
         return handler404(request)
     context['permission'] = perm
@@ -200,12 +194,12 @@ def add_person(request, contest_id, role):
         form = AddPersonToContestForm(request.POST)
         if form.is_valid():
             emails = form.cleaned_data['emails']
-            status, err = handler.add_persons_to_contest(emails, contest_id, role)
+            status, maybe_error = handler.add_persons_to_contest(emails, contest_id, role)
             if status:
                 return redirect(reverse('judge:get_{}s'.format(context['type'].lower()),
                                         args=(contest_id,)))
             else:
-                form.add_error(None, err)
+                form.add_error(None, maybe_error)
     else:
         form = AddPersonToContestForm()
     context['form'] = form
@@ -304,9 +298,9 @@ def contest_scores_csv(request, contest_id):
     perm = handler.get_personcontest_permission(
         None if user is None else user.email, contest_id)
     if perm:
-        status, csv = handler.get_csv(contest_id)
+        status, csv_or_error = handler.get_csv(contest_id)
         if status:
-            response = HttpResponse(csv.read())
+            response = HttpResponse(csv_or_error.read())
             response['Content-Disposition'] = \
                 "attachment; filename=contest_{}.csv".format(contest_id)
             return response
@@ -416,12 +410,12 @@ def problem_detail(request, problem_id):
         if request.method == 'POST':
             form = NewSubmissionForm(request.POST, request.FILES)
             if form.is_valid():
-                status, err = handler.process_submission(
+                status, maybe_error = handler.process_submission(
                     problem_id, user.email, **form.cleaned_data, timestamp=timezone.now())
                 if status:
                     return redirect(reverse('judge:problem_submissions', args=(problem_id,)))
                 if not status:
-                    form.add_error(None, err)
+                    form.add_error(None, maybe_error)
         else:
             form = NewSubmissionForm()
         context['form'] = form
@@ -430,11 +424,11 @@ def problem_detail(request, problem_id):
             if request.method == 'POST':
                 form = AddTestCaseForm(request.POST, request.FILES)
                 if form.is_valid():
-                    status, err = handler.process_testcase(problem_id, **form.cleaned_data)
+                    status, maybe_error = handler.process_testcase(problem_id, **form.cleaned_data)
                     if status:
                         redirect(reverse('judge:problem_submissions', args=(problem_id,)))
                     else:
-                        form.add_error(None, err)
+                        form.add_error(None, maybe_error)
             else:
                 form = AddTestCaseForm()
         else:
@@ -558,12 +552,13 @@ def new_problem(request, contest_id):
     if request.method == 'POST':
         form = NewProblemForm(request.POST, request.FILES)
         if form.is_valid():
-            status, err = handler.process_problem(contest=contest_id, **form.cleaned_data)
+            status, maybe_error = handler.process_problem(contest_id=contest_id,
+                                                          **form.cleaned_data)
             if status:
                 code = form.cleaned_data['code']
                 return redirect(reverse('judge:problem_detail', args=(code,)))
             else:
-                form.add_error(None, err)
+                form.add_error(None, maybe_error)
     else:
         form = NewProblemForm()
     context['form'] = form
@@ -590,11 +585,11 @@ def edit_problem(request, problem_id):
     if request.method == 'POST':
         form = EditProblemForm(request.POST)
         if form.is_valid():
-            status, err = handler.update_problem(problem.code, **form.cleaned_data)
+            status, maybe_error = handler.update_problem(problem.code, **form.cleaned_data)
             if status:
                 return redirect(reverse('judge:problem_detail', args=(problem.code,)))
             else:
-                form.add_error(None, err)
+                form.add_error(None, maybe_error)
     else:
         required_fields = ['name', 'statement', 'input_format', 'output_format', 'difficulty']
         form = EditProblemForm({field: getattr(problem, field) for field in required_fields})
@@ -627,40 +622,32 @@ def problem_submissions(request, problem_id: str):
             if perm is False and form.cleaned_data['participant_email'] != user.email:
                 form.add_error(None, 'Your comment was not posted.')
             else:
-                status, msg = handler.process_comment(
+                status, maybe_error = handler.process_comment(
                     problem_id, form.cleaned_data['participant_email'], user.email,
                     timezone.now(), form.cleaned_data['comment'])
                 if not status:
-                    form.add_error(None, msg)
+                    form.add_error(None, maybe_error)
                 else:
                     form = NewCommentForm()
     else:
         form = NewCommentForm()
     submissions = {}
     if perm:
-        status, all_subs = handler.get_submissions(problem_id, None)
+        status, all_subs_or_error = handler.get_submissions(problem_id, None)
         if status:
-            for email, subs in all_subs.items():
-                status, comm = handler.get_comments(problem_id, email)
-                if not status:
-                    log_debug(comm)
-                    return handler404(request)
-                submissions[email] = (subs, comm)
+            for email, subs in all_subs_or_error.items():
+                comment_set = handler.get_comments(problem_id, email)
+                submissions[email] = (subs, comment_set)
             context['submissions'] = submissions
         else:
-            log_debug(all_subs)
             return handler404(request)
     elif user is not None:
-        status, subs = handler.get_submissions(problem_id, user.email)
+        status, subs_or_error = handler.get_submissions(problem_id, user.email)
         if status:
             context['participant'] = True
-            status, comm = handler.get_comments(problem_id, user.email)
-            if not status:
-                log_debug(comm)
-                return handler404(request)
-            submissions[user.email] = (subs[user.email], comm)
+            comments = handler.get_comments(problem_id, user.email)
+            submissions[user.email] = (subs_or_error[user.email], comments)
         else:
-            log_debug(subs)
             return handler404(request)
     else:
         return handler404(request)
@@ -713,24 +700,23 @@ def submission_detail(request, submission_id: str):
             if request.method == 'POST':
                 form = AddPosterScoreForm(request.POST)
                 if form.is_valid():
-                    status, err = handler.update_poster_score(submission.pk,
-                                                              form.cleaned_data['score'])
+                    status, maybe_error = handler.update_poster_score(submission.pk,
+                                                                      form.cleaned_data['score'])
                     if not status:
-                        form.add_error(None, err)
+                        form.add_error(None, maybe_error)
             else:
                 form = AddPosterScoreForm(initial={'score': submission.poster_score})
             context['form'] = form
-        status, msg = handler.get_submission_status(submission_id)
+        status, info_or_error = handler.get_submission_status(submission_id)
         if status:
-            context['test_results'] = msg[0]
-            context['judge_score'] = msg[1][0]
-            context['poster_score'] = msg[1][1]
-            context['linter_score'] = msg[1][2]
-            context['final_score'] = msg[1][3]
-            context['timestamp'] = msg[1][4]
-            context['file_type'] = msg[1][5]
+            context['test_results'] = info_or_error[0]
+            context['judge_score'] = info_or_error[1][0]
+            context['poster_score'] = info_or_error[1][1]
+            context['linter_score'] = info_or_error[1][2]
+            context['final_score'] = info_or_error[1][3]
+            context['timestamp'] = info_or_error[1][4]
+            context['file_type'] = info_or_error[1][5]
         else:
-            log_debug(msg)
             return handler404(request)
 
         return render(request, 'judge/submission_detail.html', context)

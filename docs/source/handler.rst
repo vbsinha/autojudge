@@ -17,7 +17,6 @@ Addition Functions
 ------------------
 
     .. autofunction:: add_person_to_contest
-    .. autofunction:: add_person_rgx_to_contest
     .. autofunction:: add_persons_to_contest
 
 Update Functions
