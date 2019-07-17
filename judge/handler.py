@@ -589,17 +589,27 @@ def add_persons_to_contest(persons: List[str], contest_id: int,
     for person in persons:
         full_filter |= Q(email=person)
     person_list = models.Person.objects.filter(full_filter)
-    err_person_list = []
+    err_person_list_conflict = []
+    err_person_list_same = []
     for person in person_list:
         # Check that person is not already registered in the contest with other permission
         cpset = models.ContestPerson.objects.filter(person=person, contest=contest)
         if cpset.exists():
             if cpset[0].role != permission:
-                err_person_list.append(person.email)
-    if len(err_person_list):
-        return (False,
-                ValidationError('The following people already exist with conflicting '
-                                'permissions: {}'.format(', '.join(err_person_list))))
+                err_person_list_conflict.append(person.email)
+            if cpset[0].role == permission:
+                err_person_list_same.append(person.email)
+    if len(err_person_list_conflict) or len(err_person_list_same):
+        error_dict = {'emails': []}
+        if len(err_person_list_conflict):
+            error_dict['emails'].append('The following people already exist with '
+                                        'conflicting permissions: {}'
+                                        .format(', '.join(err_person_list_conflict)))
+        if len(err_person_list_same):
+            error_dict['emails'].append('The following people already exist with '
+                                        'same permissions: {}'
+                                        .format(', '.join(err_person_list_same)))
+        return (False, ValidationError(error_dict))
 
     try:
         for person in person_list:
@@ -911,7 +921,7 @@ def get_leaderboard(contest_id: int) -> Tuple[bool, Union[str, List[List[Union[s
     return (True, data)
 
 
-def update_leaderboard(contest_id: int, person: str) -> bool:
+def update_leaderboard(contest_id: int, person_id: str) -> bool:
     """
     Function to update the leaderboard for a person-contest pair given their IDs.
 
@@ -922,7 +932,7 @@ def update_leaderboard(contest_id: int, person: str) -> bool:
         :class:`~judge.models.PersonProblemFinalScore` is updated.
 
     :param contest_id: Contest ID
-    :param person: Person ID
+    :param person_id: Person ID
     :returns: If update is successful, then ``True``. If unsuccessful, then ``False``.
     """
     os.makedirs(os.path.join('content', 'contests'), exist_ok=True)

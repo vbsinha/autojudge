@@ -35,9 +35,11 @@
                 <small class="form-text text-muted">{{ field.help_text|safe }}</small>
                 {% endif %}
                 {% if field.errors %}
+                {% for fe in field.errors %}
                 <div class="alert alert-danger mt-2" role="alert">
-                    {{ field.errors|striptags }}
+                    {{ fe|striptags }}
                 </div>
+                {% endfor %}
                 {% endif %}
             </div>
             {% endfor %}
