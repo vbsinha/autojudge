@@ -574,8 +574,8 @@ def add_persons_to_contest(persons: List[str], contest_id: int,
               2nd element providing a ``ValidationError`` if relation creation is unsuccessful.
     """
     try:
-        for person in persons:
-            models.Person.objects.get_or_create(email=person)
+        for person_email in persons:
+            models.Person.objects.get_or_create(email=person_email)
     # Catch any weird errors that might pop up during the creation
     except Exception as other_err:
         return (False, ValidationError(str(other_err)))
@@ -586,8 +586,8 @@ def add_persons_to_contest(persons: List[str], contest_id: int,
         return (True, None)
 
     full_filter = Q()
-    for person in persons:
-        full_filter |= Q(email=person)
+    for person_email in persons:
+        full_filter |= Q(email=person_email)
     person_list = models.Person.objects.filter(full_filter)
     err_person_list_conflict = []
     err_person_list_same = []
@@ -600,7 +600,7 @@ def add_persons_to_contest(persons: List[str], contest_id: int,
             if cpset[0].role == permission:
                 err_person_list_same.append(person.email)
     if len(err_person_list_conflict) or len(err_person_list_same):
-        error_dict = {'emails': []}
+        error_dict: Dict[str, List[str]] = {'emails': []}
         if len(err_person_list_conflict):
             error_dict['emails'].append('The following people already exist with '
                                         'conflicting permissions: {}'

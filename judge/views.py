@@ -645,10 +645,8 @@ def problem_submissions(request, problem_id: str):
         status, subs_or_error = handler.get_submissions(problem_id, user.email)
         if status:
             context['participant'] = True
-            status, comments_or_error = handler.get_comments(problem_id, user.email)
-            if not status:
-                return handler404(request)
-            submissions[user.email] = (subs_or_error[user.email], comments_or_error.message)
+            comments = handler.get_comments(problem_id, user.email)
+            submissions[user.email] = (subs_or_error[user.email], comments)
         else:
             return handler404(request)
     else:
