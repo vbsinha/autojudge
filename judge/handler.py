@@ -938,12 +938,12 @@ def update_leaderboard(contest_id: int, person_id: str) -> bool:
     os.makedirs(os.path.join('content', 'contests'), exist_ok=True)
     pickle_path = os.path.join('content', 'contests', str(contest_id) + '.lb')
 
-    status, score = get_personcontest_score(person, contest_id)
+    status, score = get_personcontest_score(person_id, contest_id)
 
     if status:
         if not os.path.exists(pickle_path):
             with open(pickle_path, 'wb') as f:
-                data = [[person, score]]
+                data = [[person_id, score]]
                 pickle.dump(data, f)
             return True
         else:
@@ -951,11 +951,11 @@ def update_leaderboard(contest_id: int, person_id: str) -> bool:
                 data = pickle.load(f)
             with open(pickle_path, 'wb') as f:
                 for i in range(len(data)):
-                    if data[i][0] == person:
+                    if data[i][0] == person_id:
                         data[i][1] = score
                         break
                 else:
-                    data.append([person, score])
+                    data.append([person_id, score])
                 data = sorted(data, key=lambda x: x[1], reverse=True)
                 pickle.dump(data, f)
             return True

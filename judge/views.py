@@ -552,7 +552,8 @@ def new_problem(request, contest_id):
     if request.method == 'POST':
         form = NewProblemForm(request.POST, request.FILES)
         if form.is_valid():
-            status, maybe_error = handler.process_problem(contest_id=contest_id, **form.cleaned_data)
+            status, maybe_error = handler.process_problem(contest_id=contest_id,
+                                                          **form.cleaned_data)
             if status:
                 code = form.cleaned_data['code']
                 return redirect(reverse('judge:problem_detail', args=(code,)))
@@ -584,7 +585,7 @@ def edit_problem(request, problem_id):
     if request.method == 'POST':
         form = EditProblemForm(request.POST)
         if form.is_valid():
-            status, maybe_err = handler.update_problem(problem.code, **form.cleaned_data)
+            status, maybe_error = handler.update_problem(problem.code, **form.cleaned_data)
             if status:
                 return redirect(reverse('judge:problem_detail', args=(problem.code,)))
             else:
