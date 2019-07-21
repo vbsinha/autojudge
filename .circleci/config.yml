@@ -12,13 +12,15 @@ jobs:
             sudo pip install Django
             sudo pip install social-auth-app-django
       - run:
-          name: Install flake8
+          name: Install flake8 and mypy
           command: |
             sudo pip install flake8
+            sudo pip install mypy
       - run:
           name: Lint Check
           command: |
             flake8
+            mypy --ignore-missing-imports judge/
       - run:
           name: Django tests
           command: |
