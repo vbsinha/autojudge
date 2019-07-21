@@ -8,13 +8,15 @@ import functools
 import judge.models
 import uuid
 
+from typing import Tuple, List
+
 
 class Migration(migrations.Migration):
 
     initial = True
 
     dependencies = [
-    ]
+    ]  # type: List[Tuple[str, str]]
 
     operations = [
         migrations.CreateModel(
