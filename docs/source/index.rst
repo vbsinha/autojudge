@@ -8,7 +8,6 @@ Setting up and running ``autojudge``
    :maxdepth: 1
 
    usage
-   manual
 
 The internals of the ``judge`` app in ``autojudge``
 ---------------------------------------------------

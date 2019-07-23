@@ -1,39 +1,50 @@
 User Manual for ``autojudge``
 =============================
 
+Some important abstractions / terminology used in ``autojudge``
+---------------------------------------------------------------
+
+.. note::
+    Please make note of the terms in **bold**
+
+The judge works on graph between **contests** and **users**. A **contest** consists of a set of **problems**. A **user** is, well, a **user** - with different roles.
+
+A user can be either a **poster**, **participant** or neither. A **user** is associated with the **contest** with one and only one role - either a **poster**, **participant** or neither.
+
+The user who creates a new **contest** becomes the **poster** for the **contest** by default.
+This user can add more **posters** to help coordinate the **contest** (perhaps by setting new **problems**, verifying and commenting on **submissions**, and so on).
+
+While creating a new **contest**, the first **poster** has an option to either allow select **participants**, or to leave it open for all.
+The former kind of a **contest** is a **private contest**, and the latter kind of a **contest** is a **public contest** (for obvious reasons). No **poster** is allowed to take part in a **contest** as a **participant** i.e., he/she cannot submit solutions.
+
+If the **contest** is **public**, every user is either a **poster** or a **participant**. If the **contest** is **private**, a user can either be a **poster**, a **participant** or neither - in which case, he/she will not be permitted to participant in the **contest**.
+
+Maybe a short example will help you understand if something is confusing....
+
+Example:
+~~~~~~~~
+
+Take the case of a course assignment with programming questions. These programming questions could compose a **contest**, where each question is a **problem**. The instructor and the TAs can be thought of as the **posters**, while registered students for the course would be **participants**. Students not registered for the course will not be able to participate in this **contest** - as you would expect.
+
+Hands-on with ``autojudge``
+---------------------------
+
 Creating your account / Logging in
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-On the home page, click ``LOG IN`` (see top right corner).
-Login via your IITH Google account (OAuth).
+You need to be logged in to use ``autojudge``. On the home page, click ``LOG IN`` (see top right corner in the image below)
 
-Key Abstractions of ``autojudge`` for Users
--------------------------------------------
+.. image:: ../_images/log-in.png
+   :width: 400
+   :align: center
+   :alt: Log in screenshot
 
-The judge uses a system of ``Contest`` s.
-A ``Contest`` consists of a set of ``Problem`` s.
-The list of ``Contest`` s can be seen on the first page after login and is called the dashboard.
+If this is being used at an institution, please make sure you log in with your institutional account. Currently, we support Google OAuth logins.
 
-A user can be a ``Poster``, a ``Participant`` or neither for a ``Contest``.
-For each ``Contest`` a user will hold one and only one position.
+Creating a **contest**
+----------------------
 
-The user who creates a ``Contest`` becomes the ``Poster`` for the ``Contest`` by default.
-The ``Poster`` can add more ``Poster`` s, who would help in creating the problems, and/or in coordinating the ``Contest``.
-These ``Poster`` s together write a set of ``Problem`` s for the ``Contest``, and/or coordinate the ``Contest``.
-
-The ``Poster`` can leave the ``Contest`` open for all users to particpate, in which case it is called a ``Public Contest``. Or the ``Poster`` may specify a set of ``Participant`` s. In this case only these users can particpate in the ``Contest``. Such ``Contest`` s are also called ``Private Contest`` s.
-Note that no ``Poster`` can ever participate in a contest.
-
-If the ``Contest`` is ``Public`` every user is either a ``Poster`` or a ``Participant``.
-If the ``Contest`` is ``Private``, a user can be either a ``Poster`` or a ``Participant`` or neither. Users who are neither ``Participant`` s nor ``Poster`` s in a ``Private Contest`` will not be allowed to participate in it.
-
-Consider as an example a course assignment. It can be posted as a ``Contest``.
-Each individual question becomes a ``Problem``.
-The Instructor and the TAs can be ``Poster`` s, while the registered students for that course would be ``Participant`` s.
-No other user would be able to participate in that ``Contest``.
-
-Creating a ``Contest``
-------------------
+Once you are logged in, follow the steps below to create a new **contest**.
 
 1. Click the ``New Contest`` button on the dashboard.
 2. Fill out the form for creating the New Contest. 

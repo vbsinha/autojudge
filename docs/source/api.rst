@@ -5,7 +5,7 @@ This part of the documentation specifies routines and their description used in 
 .. toctree::
    :maxdepth: 3
 
-   models
-   forms
-   views
-   handler
+   api/models
+   api/forms
+   api/views
+   api/handler
