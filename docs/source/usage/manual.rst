@@ -32,39 +32,82 @@ Hands-on with ``autojudge``
 Creating your account / Logging in
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need to be logged in to use ``autojudge``. On the home page, click ``LOG IN`` (see top right corner in the image below)
+You need to be logged in to use ``autojudge``. On the home page, click ``LOG IN`` (see the top right corner in the image below)
 
 .. image:: ../_images/log-in.png
    :width: 400
    :align: center
-   :alt: Log in screenshot
+   :alt: Log in
 
 If this is being used at an institution, please make sure you log in with your institutional account. Currently, we support Google OAuth logins.
 
-Creating a **contest**
-----------------------
+Creating a contest
+------------------
 
-Once you are logged in, follow the steps below to create a new **contest**.
+Once you are logged in, follow the steps below to create a new contest.
 
-1. Click the ``New Contest`` button on the dashboard.
-2. Fill out the form for creating the New Contest. 
+1. Click the ``New Contest`` button on the dashboard (see beneath the blue header in the image below)
 
-    - Contest Name distingushes contests and so every contest must have a unique and new name.
-    - The ``Soft End Date`` of the ``Contest`` is the date after which all the submissions would incur penalty.
-    - The ``Hard End Date`` is the 'deadline' of the assignment; the judge stops accepting submissions after this time.
-    - ``Penalty`` is a value between 0 and 1 and specifies the per day penalty on submissions made after Soft End Date.
-    - A ``Contest`` having 0.1 penalty for example, would give 90% of the actaully scored points by a submission if it is made within 24 hours of ``Soft End Date`` but before the ``Hard End Date``.
-    - It is advised that linter scoring be disabled unless all code submissions are made in Python.
-    - Enable ``poster scoring`` if you would like the TA's to give points on top of the ones given by judge.
+.. image:: ../_images/new-contest-dashboard.png
+   :width: 400
+   :align: center
+   :alt: New contest dashboard
 
-3. You should be able to see the newly created ``Contest`` on your dashboard. No one else would be able to see this new ``Contest`` on their dashboard until the start time of the ``Contest``.
-4. Click on the ``Contest`` in the link on the dashboard to edit it.
-5. To add a ``Poster`` to the ``Contest`` click on ``SEE POSTERS``. You can add and delete ``Poster`` s from here. You can add multiple ``Poster`` s by adding their emails in a comma seperated list. The new ``Poster`` s would now be able to see this ``Contest`` on their dashboard (even before the start time). They can also edit the ``Contest``.
-6. In case of ``Private Contest`` the ``Poster`` s can also see a ``SEE PARTICIPANTS`` button through which they can edit the ``Participant`` list. Note that trying to add a User both as a ``Participant`` and a ``Poster`` will not be permitted. Avoid editing the ``Poster`` and ``Participant`` list after the ``Contest`` starts.
-7. The ``Poster`` can update the dates of the contest from ``UPDATE DATES``. Please update the dates before they actually happen. Updating the ``Soft End date`` and/or ``Hard End Date`` after they have passed would not be allowed.
-8. Note that a ``Participant`` cannot add or delete ``Participant`` or ``Poster``. Also (s)he cannot update the dates.
+2. Fill out the form for creating a new contest.
 
-In addition to these a ``Poster`` can delete a ``Contest`` from the button at the bottom of the contest page.
+   .. image:: ../_images/contest-form.gif
+      :width: 400
+      :align: center
+      :alt: Contest form
+
+   .. note::
+        The contest name distinguishes contests, hence every contest must have a unique name. Failure to provide a unique name will throw an interactive error.
+
+   .. note::
+       *Penalty* is a value between 0 and 1 and specifies the per day penalty on submissions made after *soft end date*. For example: a contest having 0.1 penalty for example, would give 90% of the actually scored points by a submission if it is made within 24 hours after *soft end date* but before *hard end date*.
+
+   .. note::
+       It is advised that *linter scoring* be disabled unless all code submissions are made in Python.
+
+   .. note::
+       Enable *poster scoring* if you would like the posters to give points in addition to those given by the judge.
+
+You should be able to see the newly created contest on your dashboard. No one else would be able to see this new contest on their dashboard until the start time of this contest.
+
+.. image:: ../_images/contest-created.png
+   :width: 400
+   :align: center
+   :alt: Contest created
+
+Click on the contest in the link on the dashboard to edit it.
+
+.. image:: ../_images/contest-detail-click.gif
+   :width: 400
+   :align: center
+   :alt: Contest detail click
+
+To add more posters to the contest, click on ``SEE POSTERS``.
+You can add one or more posters by adding their emails in a comma separated list after clicking on ``ADD POSTER``.
+The new poster(s) would now be able to see this contest on their dashboard (even before the start time). They can also edit the contest.
+To delete posters, click on the red bin button adjacent to each poster's email ID.
+
+.. image:: ../_images/poster-view.png
+   :width: 400
+   :align: center
+   :alt: Poster view
+
+In the case of a private contest, the poster(s) can also see a ``SEE PARTICIPANTS`` button.
+Clicking this will lead them to a page where they can edit the ``Participant`` list in the same manner as the poster list.
+
+.. note::
+    Trying to add a user both as a participant and a poster will not be permitted.
+
+Any of the posters can update the dates of the contest by clicking on ``UPDATE DATES``.
+Please update the dates before they pass, and attempting to do so will throw an interactive error.
+
+Note that a participant cannot add or delete other participants or posters. Also he/she cannot update the dates.
+
+A poster can also delete a contest using the button at the bottom of the contest page.
 
 Managing ``Problem``
 --------------------
@@ -81,12 +124,12 @@ A ``Contest`` consists of ``Problem`` s. Only a ``Poster`` can add / edit / dele
 3. A ``Poster`` can edit / delete a ``Problem`` using the 2 buttons on the top-right of the ``Problem`` page. Deletion of a ``Problem`` is only allowed until the ``Contest`` begins.
 
 Managing ``Submission`` for the ``Participant``
--------------------------------------------
+-----------------------------------------------
 
 TODO
 
 Managing ``Submission`` for the ``Poster``
---------------------------------------
+------------------------------------------
 
 TODO
 
