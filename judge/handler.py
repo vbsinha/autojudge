@@ -263,7 +263,6 @@ def delete_problem(problem_id: str) -> STATUS_AND_OPT_ERROR_T:
                                        .format(problem_id)))
     problem = problem[0]
 
-    problem = models.Problem.objects.get(code=problem_id)
     # First delete all the files stored corresponding to this problem
     testcases = models.TestCase.objects.filter(problem=problem)
     for testcase in testcases:
@@ -472,7 +471,7 @@ def update_poster_score(submission_id: str, new_score: int):
     :returns: A 2-tuple - 1st element indicating whether the update has succeeded, and
               2nd element providing a ``ValidationError`` if update is unsuccessful.
     """
-    submission = models.Submission.objects.get(pk=submission_id)
+    submission = models.Submission.objects.filter(pk=submission_id)
     if not submission.exists():
         return (False,
                 ValidationError('Submission with ID = {} not found'
@@ -496,7 +495,7 @@ def update_poster_score(submission_id: str, new_score: int):
         ppf, _ = models.PersonProblemFinalScore.objects.get_or_create(
             person=submission.participant, problem=submission.problem)
         old_highscore = ppf.score
-        ppf.score = highest_scoring_submission.final_score
+        ppf.score = highest_scoring_submission
         ppf.save()
     # Catch any weird errors that might pop up during the creation
     except Exception as other_err:

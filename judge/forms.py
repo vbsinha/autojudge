@@ -83,7 +83,7 @@ class NewContestForm(forms.Form):
     """Contest is_public property"""
 
     enable_linter_score = forms.BooleanField(label='Enable linter scoring',
-                                             required=False, initial=True)
+                                             required=False)
     """Contest enable_linter_score property"""
 
     enable_poster_score = forms.BooleanField(label='Enable poster scoring',

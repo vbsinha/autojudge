@@ -225,7 +225,7 @@ class TestCase(models.Model):
     """Determines if the test case is a public test case or a private test case"""
 
     # Self Generated PrimaryKey
-    id = models.CharField(max_length=32, primary_key=True, default=uuid4)
+    id = models.CharField(max_length=36, primary_key=True, default=uuid4)
 
     # Sample: ./content/testcase/inputfile_UUID.txt
     inputfile = models.FileField(upload_to=partial(testcase_upload_location, is_input=True),
