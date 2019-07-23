@@ -34,7 +34,7 @@ Creating your account / Logging in
 
 You need to be logged in to use ``autojudge``. On the home page, click ``LOG IN`` (see the top right corner in the image below)
 
-.. image:: ../_images/log-in.png
+.. figure:: ../_images/log-in.png
    :width: 400
    :align: center
    :alt: Log in
@@ -42,20 +42,20 @@ You need to be logged in to use ``autojudge``. On the home page, click ``LOG IN`
 If this is being used at an institution, please make sure you log in with your institutional account. Currently, we support Google OAuth logins.
 
 Creating a contest
-------------------
+~~~~~~~~~~~~~~~~~~
 
 Once you are logged in, follow the steps below to create a new contest.
 
 1. Click the ``New Contest`` button on the dashboard (see beneath the blue header in the image below)
 
-.. image:: ../_images/new-contest-dashboard.png
-   :width: 400
-   :align: center
-   :alt: New contest dashboard
+   .. figure:: ../_images/new-contest-dashboard.png
+      :width: 400
+      :align: center
+      :alt: New contest dashboard
 
 2. Fill out the form for creating a new contest.
 
-   .. image:: ../_images/contest-form.gif
+   .. figure:: ../_images/contest-form.gif
       :width: 400
       :align: center
       :alt: Contest form
@@ -74,14 +74,14 @@ Once you are logged in, follow the steps below to create a new contest.
 
 You should be able to see the newly created contest on your dashboard. No one else would be able to see this new contest on their dashboard until the start time of this contest.
 
-.. image:: ../_images/contest-created.png
+.. figure:: ../_images/contest-created.png
    :width: 400
    :align: center
    :alt: Contest created
 
 Click on the contest in the link on the dashboard to edit it.
 
-.. image:: ../_images/contest-detail-click.gif
+.. figure:: ../_images/contest-detail-click.gif
    :width: 400
    :align: center
    :alt: Contest detail click
@@ -91,7 +91,7 @@ You can add one or more posters by adding their emails in a comma separated list
 The new poster(s) would now be able to see this contest on their dashboard (even before the start time). They can also edit the contest.
 To delete posters, click on the red bin button adjacent to each poster's email ID.
 
-.. image:: ../_images/poster-view.png
+.. figure:: ../_images/poster-view.png
    :width: 400
    :align: center
    :alt: Poster view
@@ -109,54 +109,87 @@ Note that a participant cannot add or delete other participants or posters. Also
 
 A poster can also delete a contest using the button at the bottom of the contest page.
 
-Managing **Problem**
---------------------
+Managing problems in a contest
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A ``Contest`` consists of ``Problem`` s. Only a ``Poster`` can add / edit / delete ``Problem`` s.
+A contest consists of problems. Problems can be added, edited or deleted by the posters of the contest.
 
-1. ``Problem`` can be added only before the start time of the ``Contest``. To add a ``Problem`` click add ``ADD PROBLEM`` from the ``Contest`` page, and fill the form.
+A problem can be added to a contest only before the start time of the contest.
+To add a problem to the contest, follow the steps below:
 
-    - A unique problem code distinctly identifies a ``Problem``.
-    - In case the Compilation Script and Test Script are left empty, the default ones are used. The default scripts can be downloaded from the links just below the Browse buttons.
-    - Fill the other feilds appropriately.
+1. Click ``ADD PROBLEM`` from the contest's homepage.
 
-2. In the next page, called the ``Problem`` page, add and manage the test-cases. Public test-cases would be visible to the ``Participant`` s while Private ones won't be. Note that test-case addition / deletion will be allowed only till the start of the ``Contest``.
-3. A ``Poster`` can edit / delete a ``Problem`` using the 2 buttons on the top-right of the ``Problem`` page. Deletion of a ``Problem`` is only allowed until the ``Contest`` begins.
+   .. figure:: ../_images/new-problem-contest.png
+      :width: 400
+      :align: center
+      :alt: New problem contest
 
-Managing **Submission** for the **Participant**
------------------------------------------------
+2. Fill the form that follows. Short descriptions for fields in the form are provided.
 
-A **participant** can make submission for a **probem** from the problem page. Select the language and upload the submission file.
+   .. figure:: ../_images/problem-form.gif
+      :width: 400
+      :align: center
+      :alt: Problem form
 
-To check your previous **submissions**, and the judge's score, click the ``SEE MY PREVIOUS SUBMISSIONS`` button at the bottom of the problem page.
+   .. note::
+       The problem code distinctly identifies a problem, hence every problem must have a unique name. Failure to provide a unique name will throw an interactive error.
 
-To view detailed verdict of the judge, click on the specific submission. Here you can see the verdict of the judge on individual test-cases. You can also download your submission from here.
+   .. note::
+       In case the compilation script and test script are left empty, the default ones are used. The default scripts can be downloaded from the links just below the Browse button for each of them.
 
-Once the contest begins and **participants** start scoring, the leaderboard is initialized and can be seen on the **contest** page.
-The leaderboard sorts on the basis of the sum of scores in individual **problems** in the contest.
+3. After submission, you can add or delete **test cases** on the problem page. There are two kinds of test cases - **public test cases** and **private test cases**. **Public test cases** would be visible to the participants while **private test cases** won't be visible.
 
-Please note that the ``max score`` seen on the problem page is the max score per test-case, So if there are 5 test-cases and max score is 10 points, then a **participant** can score at most 50 points for that **problem**. 
+   .. figure:: ../_images/problem-test-case.gif
+      :width: 400
+      :align: center
+      :alt: Problem test case
 
-Managing **Submission** for the **Poster**
-------------------------------------------
+   .. note::
+       Test case addition and deletion will be allowed only till the start of the contest.
 
-**Poster** can see all the **submission** pertaining to a **problem** in the **probem** page by clicking on ``SEE ALL SUBMISSIONS`` at the bottom of the page. 
-**Submissions** made by all the **participants** for that specific **problem** would be available here. Click on any submission to open the **submission** page to see detailed judge verdict.
+Posters can edit or delete an existing problem in the contest using the 2 icons on the top-right of the problem page (see to the right of the problem title).
 
-In case poster scoring was enabled, the **poster** can give score from the **submission** page by clicking on ``UPDATE POSTER SCORE`` on the top right. Poster score can be positive, negative or zero.
+   .. figure:: ../_images/problem-edit-delete.png
+      :width: 400
+      :align: center
+      :alt: Problem edit delete
 
-The **poster** can also see the submission file from the **submission** page by clicking on ``DOWNLOAD`` button on the top right.
+   .. note::
+       Deletion of a problem is only allowed until the contest begins.
+
+Submitting and checking submissions: Participant end
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A participant can make **submission** for a problem from the problem page. Select the language and upload the submission file.
+
+To check your previous **submissions**, and the judge's score for your **submissions**, click ``SEE MY PREVIOUS SUBMISSIONS`` at the bottom of the problem page.
+
+If you want a detailed verdict of the judge for a **submission**, click on that **submission**. You can see the verdict of the judge on individual **test cases** concisely below or in detail by clicking on a **test case**. You can also download your **submission** from here as well.
+
+Once the contest begins and participants start submitting, the **leaderboard** is initialized and can be seen on the contest page.
+The leaderboard lists the participants in the decreasing order of sum of scores in individual problems in the contest.
+
+Please note that the *max score* seen on the problem page is the maximum score possible per test case. For example, if there are 5 test cases and *max score* is 10 points, then a participant can score at most 50 points for that problem by the judge (i.e., notwithstanding the linter score and/or the poster score).
+
+Managing submissions from the poster's side
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Posters can see all the **submissions** pertaining to a problem in the problem page by clicking ``SEE ALL SUBMISSIONS`` at the bottom of the page.
+
+**Submissions** made by all the participants for a given problem would be available here. Click on any **submission** to open the **submission** page. The layout is the same as that seen by the participants.
+
+In case *poster scoring* is enabled for the contest, the poster can give a score from the **submission** page by clicking on ``UPDATE POSTER SCORE`` on the top right adjacent to the download icon. Poster score can be any integer.
+
+The poster can also view the submission file from the **submission** page by downloading it via the ``DOWNLOAD`` button on the top right.
 
 Commenting
-----------
+~~~~~~~~~~
 
-A **poster** or **participant** can also comment. These comments are specific to each **problem** and **participant**.
-This is like having private comment between **participant** and **posters** for a specific **problem**.
+Posters and participants can also comment. A **comment** by a participant to a problem can be viewed by all posters but not by any other participants - similar to private comments on Google Classroom.
 
-To see old comments or create a new one, click on ``SEE ALL SUBMISSIONS`` in the problem page.
+To see old **comments** or create a new one, click on ``SEE ALL SUBMISSIONS`` on the problem page.
 
 Miscellaneous
--------------
+~~~~~~~~~~~~~
 
-1. Downloading CSV of all scores: A **poster** can download a CSV file containing the best scores of all **participants** in a **contest** by clicking on ``DOWNLOAD SCORES`` from the **contest** page.
-
+A poster can download a CSV file containing the best scores of all participants in a contest by clicking on ``DOWNLOAD SCORES`` from the contest page.
