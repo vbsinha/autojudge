@@ -13,7 +13,7 @@ Currently, the judge supports 5 languages: C, C++, Python, Go and Haskell but th
 
 ## Requirements
 
-To run this application, you will require **Python 3.6 or above**. While we tested this primarily with Python 3.6 or above, we expect it to work for other Python versions > 3 that support Django 2.2.2.
+To run this application, you will require **Python 3.6 or above**. While we tested this primarily with Python 3.6 or above, we expect it to work for other Python versions > 3 that support Django 2.2.3.
 
 Other primary requirements are specified in [requirements.txt](requirements.txt). To setup documentation locally, please check the requirements specified in [docs/requirements.txt](docs/requirements.txt).
 
