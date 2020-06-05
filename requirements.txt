@@ -1,4 +1,4 @@
-Django==3.0.3
+Django==3.0.7
 social-auth-app-django==3.1.0
 pycodestyle==2.5.0
 typing==3.6.4
