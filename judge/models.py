@@ -150,7 +150,7 @@ class Submission(models.Model):
     Model for a Submission.
     """
     # Self Generated PrimaryKey
-    id = models.CharField(max_length=32, primary_key=True, default=uuid4)
+    id = models.CharField(max_length=36, primary_key=True, default=uuid4)
 
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
     """Foreign key to problem for which this is a submission"""
@@ -290,7 +290,7 @@ class Comment(models.Model):
     """Foreign key to person"""
 
     # Self Generated PrimaryKey
-    id = models.CharField(max_length=32, primary_key=True, default=uuid4)
+    id = models.CharField(max_length=36, primary_key=True, default=uuid4)
 
     commenter = models.ForeignKey(
         Person, on_delete=models.CASCADE, related_name='commenter')
