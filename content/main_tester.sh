@@ -82,8 +82,10 @@ run_submission() {
   VERDICT=""
   if [ "$TIMEOUT" = true ] ; then
     VERDICT=$(error_code_to_string $TLE ${TID})
+    echo "Time limit exceeded" > ${TMP}/sub_run_${SID}_${TID}.log
   elif [ "$MEMOUT" = true ] ; then
     VERDICT=$(error_code_to_string $OOM ${TID})
+    echo "Memory limit exceeded" > ${TMP}/sub_run_${SID}_${TID}.log
   else
     clean_generated_output ${SID} ${TID}  # Delete the generated file to prevent any mismatch
     ${SUB_FDR}/submission_${SID} < ${TEST_FDR}/inputfile_${TID}.txt > ${TMP}/sub_output_${SID}_${TID}.txt 2> ${TMP}/sub_run_${SID}_${TID}.log
