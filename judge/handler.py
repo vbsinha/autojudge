@@ -984,13 +984,13 @@ def process_comment(problem_id: str, person_id: str, commenter_id: str,
     person = models.Person.objects.filter(email=person_id.lower())
     if not person.exists():
         return (False,
-                ValidationError('Person with primary key = {} not found'.format(person_id.lower())))
+                ValidationError('Person with email = {} not found'.format(person_id.lower())))
     person = person[0]
 
     commenter = models.Person.objects.filter(email=commenter_id.lower())
     if not commenter.exists():
         return (False,
-                ValidationError('Person with primary key = {} not found'.format(commenter_id.lower())))
+                ValidationError('Person with email = {} not found'.format(commenter_id.lower())))
     commenter = commenter[0]
 
     try:
