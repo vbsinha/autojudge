@@ -305,7 +305,7 @@ def process_person(email: str, rank: int = 0) -> STATUS_AND_OPT_ERROR_T:
     if email is None:
         return (False, ValidationError('Email passed is None.'))
     try:
-        (p, status) = models.Person.objects.get_or_create(email=email)
+        (p, status) = models.Person.objects.get_or_create(email=email.lower())
         if status:
             p.rank = 0 if rank is None else rank
             p.save()
@@ -410,11 +410,11 @@ def process_submission(problem_id: str, participant_id: str, file_type: str,
                                  ['Accepted file types: \"{}\"'
                                   .format(', '.join(problem.file_exts.split(',')))]}))
 
-    participant = models.Person.objects.filter(email=participant_id)
+    participant = models.Person.objects.filter(email=participant_id.lower())
     if not participant.exists():
         return (False,
                 ValidationError('Person with email = {} not found'
-                                .format(participant_id)))
+                                .format(participant_id.lower())))
     participant = participant[0]
 
     try:
@@ -489,7 +489,7 @@ def update_poster_score(submission_id: str, new_score: int):
 
     highest_scoring_submission = models.Submission.objects.filter(
         problem=submission.problem.pk,
-        participant=submission.participant.pk).aggregate(Max('final_score'))['final_score__max']
+        participant=submission.participant.email).aggregate(Max('final_score'))['final_score__max']
 
     try:
         ppf, _ = models.PersonProblemFinalScore.objects.get_or_create(
@@ -520,7 +520,7 @@ def add_person_to_contest(person_id: str, contest_id: int,
               2nd element providing a ``ValidationError`` if addition is unsuccessful.
     """
     try:
-        (person, _) = models.Person.objects.get_or_create(email=person_id)
+        (person, _) = models.Person.objects.get_or_create(email=person_id.lower())
     # Catch any weird errors that might pop up during the creation
     except Exception as other_err:
         return (False, ValidationError(str(other_err)))
@@ -574,7 +574,7 @@ def add_persons_to_contest(persons: List[str], contest_id: int,
     """
     try:
         for person_email in persons:
-            models.Person.objects.get_or_create(email=person_email)
+            models.Person.objects.get_or_create(email=person_email.lower())
     # Catch any weird errors that might pop up during the creation
     except Exception as other_err:
         return (False, ValidationError(str(other_err)))
@@ -586,7 +586,7 @@ def add_persons_to_contest(persons: List[str], contest_id: int,
 
     full_filter = Q()
     for person_email in persons:
-        full_filter |= Q(email=person_email)
+        full_filter |= Q(email=person_email.lower())
     person_list = models.Person.objects.filter(full_filter)
     err_person_list_conflict = []
     err_person_list_same = []
@@ -644,7 +644,7 @@ def get_personcontest_permission(person_id: Optional[str], contest_id: int) -> O
         else:
             return None
     else:
-        person = models.Person.objects.filter(email=person_id)
+        person = models.Person.objects.filter(email=person_id.lower())
         if not person.exists():
             return None
         person = person[0]
@@ -678,11 +678,11 @@ def delete_personcontest(person_id: str, contest_id: int) -> STATUS_AND_OPT_ERRO
                                 .format(contest_id)))
     contest = contest[0]
 
-    person = models.Person.objects.filter(email=person_id)
+    person = models.Person.objects.filter(email=person_id.lower())
     if not person.exists():
         return (False,
                 ValidationError('Person with email = {} not found'
-                                .format(person_id)))
+                                .format(person_id.lower())))
     person = person[0]
 
     cpset = models.ContestPerson.objects.filter(person=person, contest=contest)
@@ -782,11 +782,11 @@ def get_personcontest_score(person_id: str,
               If successful, the final score is present in the 2nd element.
               If unsuccesful, a ``ValidationError`` is additionally returned.
     """
-    person = models.Person.objects.filter(email=person_id)
+    person = models.Person.objects.filter(email=person_id.lower())
     if not person.exists():
         return (False,
                 ValidationError('Person with email = {} not found'
-                                .format(person_id)))
+                                .format(person_id.lower())))
     person = person[0]
 
     contest = models.Contest.objects.filter(pk=contest_id)
@@ -835,11 +835,11 @@ def get_submissions(problem_id: str,
         submission_set = models.Submission.objects.filter(
             problem=problem).order_by('participant')
     else:
-        person = models.Person.objects.filter(email=person_id)
+        person = models.Person.objects.filter(email=person_id.lower())
         if not person.exists():
             return (False,
                     ValidationError('Person with email = {} not found'
-                                    .format(person_id)))
+                                    .format(person_id.lower())))
         person = person[0]
         submission_set = models.Submission.objects.filter(
             problem=problem, participant=person)
@@ -851,18 +851,18 @@ def get_submissions(problem_id: str,
         if person_id is None:
             return (True, {})
         else:
-            return (True, {person.pk: []})
+            return (True, {person.email: []})
 
     # The below code creates a dictionary with keys = person IDs and values
     # as a list of submissions made by the person (given by the key) for the problem
     result = {}
-    curr_person = submission_set[0].participant.pk
+    curr_person = submission_set[0].participant.email
     result[curr_person] = [submission_set[0]]
     for i in range(1, len(submission_set)):
-        if submission_set[i].participant.pk == curr_person:
+        if submission_set[i].participant.email == curr_person:
             result[curr_person].append(submission_set[i])
         else:
-            curr_person = submission_set[i].participant.pk
+            curr_person = submission_set[i].participant.email
             result[curr_person] = [submission_set[i]]
     return (True, result)
 
@@ -981,16 +981,16 @@ def process_comment(problem_id: str, person_id: str, commenter_id: str,
                 ValidationError('Problem with primary key = {} not found'.format(problem_id)))
     problem = problem[0]
 
-    person = models.Person.objects.filter(email=person_id)
+    person = models.Person.objects.filter(email=person_id.lower())
     if not person.exists():
         return (False,
-                ValidationError('Person with primary key = {} not found'.format(person_id)))
+                ValidationError('Person with primary key = {} not found'.format(person_id.lower())))
     person = person[0]
 
-    commenter = models.Person.objects.filter(email=commenter_id)
+    commenter = models.Person.objects.filter(email=commenter_id.lower())
     if not commenter.exists():
         return (False,
-                ValidationError('Person with primary key = {} not found'.format(commenter_id)))
+                ValidationError('Person with primary key = {} not found'.format(commenter_id.lower())))
     commenter = commenter[0]
 
     try:
@@ -1016,7 +1016,7 @@ def get_comments(problem_id: str,
               chronological order.
     """
     comments = models.Comment.objects.filter(problem=problem_id,
-                                             person=person_id).order_by('timestamp')
+                                             person=person_id.lower()).order_by('timestamp')
     result = [(comment.commenter, comment.timestamp, comment.comment)
               for comment in comments]
     return result
