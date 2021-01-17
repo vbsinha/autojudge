@@ -798,7 +798,6 @@ def get_personcontest_score(person_id: str,
 
     problems = models.Problem.objects.filter(contest=contest)
     full_filter = Q()
-    full_filter |= Q(person=person)
     for problem in problems:
         full_filter |= Q(person=person, problem=problem)
 
