@@ -21,7 +21,7 @@ SUB_FILE=$2
 
 . ${PROB_FDR}/${PROB_CODE}/compilation_script.sh
 
-if ! file $SUBPATH | grep -i -q "ascii" ; then  # checking for ASCII source files
+if [[ ! "$(file --mime -b ${SUBPATH})" =~ 'ascii'$ ]] ; then  # checking for ASCII source files
     return $FAILURE
 fi
 
