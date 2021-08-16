@@ -406,7 +406,7 @@ def problem_detail(request, problem_id):
     }
     if perm is False and user is None:
         pass
-    elif perm is False and user.is_authenticated:
+    elif perm is False and user.is_authenticated and timezone.now() < problem.contest.hard_end_datetime:
         if request.method == 'POST':
             form = NewSubmissionForm(request.POST, request.FILES)
             if form.is_valid():

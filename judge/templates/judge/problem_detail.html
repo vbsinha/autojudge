@@ -239,7 +239,7 @@
     </div>
 </div>
 
-{% if type == 'Participant' and user.is_authenticated %}
+{% if type == 'Participant' and user.is_authenticated and curr_time < problem.contest.hard_end_datetime %}
 <div class="row">
     <div class="col-12 my-4">
         <div class="card">
