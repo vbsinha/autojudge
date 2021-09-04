@@ -418,7 +418,7 @@ def process_submission(problem_id: str, participant_id: str, file_type: str,
     participant = participant[0]
 
     try:
-        sub_id = "{}_{}_{}".format(participant_id.strip('@')[0], problem_id, len(models.Submission.objects.filter(problem=problem_id,participant=participant_id)))
+        sub_id = "{}_{}_{}".format(participant_id.split('@')[0], problem_id, len(models.Submission.objects.filter(problem=problem_id,participant=participant_id)))
         sub = problem.submission_set.create(id=sub_id, participant=participant, file_type=file_type,
                                             submission_file=submission_file, timestamp=timestamp)
         sub.save()
