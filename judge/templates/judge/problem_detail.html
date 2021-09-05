@@ -239,13 +239,14 @@
     </div>
 </div>
 
-{% if type == 'Participant' and user.is_authenticated and curr_time < problem.contest.hard_end_datetime %}
+{% if type == 'Participant' and user.is_authenticated %}
 <div class="row">
     <div class="col-12 my-4">
         <div class="card">
             <div class="card-header">
                 <h3>Submit Solution</h3>
             </div>
+            {% if curr_time < problem.contest.hard_end_datetime %}
             <div class="card-body">
                 <form method="POST" enctype="multipart/form-data">
                     {% if form.non_field_errors %}
@@ -290,6 +291,11 @@
                     </div>
                 </form>
             </div>
+            {% else %}
+            <div class="card-body">
+            <H2>Submissions Over!</H2>
+            </div>>
+            {% endif %}
         </div>
     </div>
     <div class="col-12">
